@@ -3,6 +3,7 @@ import { createServer, type Server } from "http";
 import multer from "multer";
 import path from "path";
 import fs from "fs";
+
 import { storage } from "./storage";
 import { 
   insertCustomerSchema, 
@@ -14,6 +15,8 @@ import {
   sendWhatsappMessageSchema
 } from "@shared/schema";
 import { z } from "zod";
+
+
 
 // Function to parse GCODE file and extract print time
 async function parseGCodePrintTime(filePath: string): Promise<number> {
@@ -291,6 +294,327 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // WhatsApp routes
+  // Professional HTML Report for printing
+  app.get("/api/orders/:id/report", async (req, res) => {
+    try {
+      const id = parseInt(req.params.id);
+      const order = await storage.getOrderWithDetails(id);
+      
+      if (!order) {
+        return res.status(404).json({ error: "Order not found" });
+      }
+
+      const html = `
+        <!DOCTYPE html>
+        <html>
+        <head>
+          <meta charset="utf-8">
+          <title>Order ${order.orderNumber} - 3D Print Shop</title>
+          <style>
+            body {
+              font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', sans-serif;
+              margin: 0;
+              padding: 40px;
+              color: #333;
+              line-height: 1.6;
+              background: white;
+            }
+            .header {
+              display: flex;
+              justify-content: space-between;
+              align-items: center;
+              border-bottom: 3px solid #2563eb;
+              padding-bottom: 20px;
+              margin-bottom: 30px;
+            }
+            .logo {
+              font-size: 28px;
+              font-weight: bold;
+              color: #2563eb;
+            }
+            .order-info {
+              text-align: right;
+              color: #666;
+            }
+            .order-number {
+              font-size: 24px;
+              font-weight: bold;
+              color: #333;
+              margin-bottom: 5px;
+            }
+            .status-badge {
+              display: inline-block;
+              padding: 8px 16px;
+              border-radius: 20px;
+              font-size: 12px;
+              font-weight: bold;
+              text-transform: uppercase;
+              letter-spacing: 0.5px;
+            }
+            .status-queued { background: #fef3c7; color: #92400e; }
+            .status-in_progress { background: #dbeafe; color: #1e40af; }
+            .status-completed { background: #d1fae5; color: #065f46; }
+            .customer-section, .prints-section {
+              margin: 30px 0;
+            }
+            .section-title {
+              font-size: 18px;
+              font-weight: bold;
+              color: #374151;
+              margin-bottom: 15px;
+              border-left: 4px solid #2563eb;
+              padding-left: 12px;
+            }
+            .customer-card, .print-card {
+              background: #f9fafb;
+              border: 1px solid #e5e7eb;
+              border-radius: 8px;
+              padding: 20px;
+              margin-bottom: 15px;
+            }
+            .customer-details {
+              display: grid;
+              grid-template-columns: 1fr 1fr;
+              gap: 15px;
+            }
+            .detail-item {
+              display: flex;
+              flex-direction: column;
+            }
+            .detail-label {
+              font-size: 12px;
+              color: #6b7280;
+              text-transform: uppercase;
+              letter-spacing: 0.5px;
+              margin-bottom: 4px;
+            }
+            .detail-value {
+              font-size: 16px;
+              font-weight: 500;
+              color: #374151;
+            }
+            .prints-grid {
+              display: grid;
+              gap: 15px;
+            }
+            .print-header {
+              display: flex;
+              justify-content: space-between;
+              align-items: center;
+              margin-bottom: 12px;
+            }
+            .print-name {
+              font-size: 16px;
+              font-weight: bold;
+              color: #374151;
+            }
+            .print-status {
+              padding: 4px 12px;
+              border-radius: 12px;
+              font-size: 11px;
+              font-weight: bold;
+              text-transform: uppercase;
+            }
+            .print-details {
+              display: grid;
+              grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+              gap: 12px;
+              margin-top: 12px;
+            }
+            .summary-section {
+              margin-top: 40px;
+              padding-top: 20px;
+              border-top: 2px solid #e5e7eb;
+            }
+            .summary-grid {
+              display: grid;
+              grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+              gap: 20px;
+            }
+            .summary-item {
+              text-align: center;
+              padding: 15px;
+              background: #f8fafc;
+              border-radius: 8px;
+            }
+            .summary-value {
+              font-size: 24px;
+              font-weight: bold;
+              color: #2563eb;
+              margin-bottom: 5px;
+            }
+            .summary-label {
+              font-size: 12px;
+              color: #6b7280;
+              text-transform: uppercase;
+              letter-spacing: 0.5px;
+            }
+            .footer {
+              margin-top: 50px;
+              padding-top: 20px;
+              border-top: 1px solid #e5e7eb;
+              text-align: center;
+              color: #6b7280;
+              font-size: 12px;
+            }
+            .notes-section {
+              margin: 30px 0;
+              padding: 20px;
+              background: #fffbeb;
+              border-left: 4px solid #f59e0b;
+              border-radius: 0 8px 8px 0;
+            }
+            .contact-info {
+              background: #f0f9ff;
+              border: 1px solid #0ea5e9;
+              border-radius: 8px;
+              padding: 20px;
+              margin: 30px 0;
+              text-align: center;
+            }
+            .whatsapp-link {
+              display: inline-block;
+              background: #25d366;
+              color: white;
+              padding: 12px 24px;
+              text-decoration: none;
+              border-radius: 25px;
+              font-weight: bold;
+              margin-top: 10px;
+            }
+            @media print {
+              body { margin: 0; padding: 20px; }
+              .contact-info { display: none; }
+            }
+          </style>
+        </head>
+        <body>
+          <div class="header">
+            <div class="logo">🏭 3D Print Shop</div>
+            <div class="order-info">
+              <div class="order-number">Order ${order.orderNumber}</div>
+              <div>Generated: ${new Date().toLocaleDateString('en-ZA', { 
+                year: 'numeric', 
+                month: 'long', 
+                day: 'numeric',
+                hour: '2-digit',
+                minute: '2-digit'
+              })}</div>
+            </div>
+          </div>
+
+          <div class="customer-section">
+            <div class="section-title">Customer Information</div>
+            <div class="customer-card">
+              <div class="customer-details">
+                <div class="detail-item">
+                  <div class="detail-label">Customer Name</div>
+                  <div class="detail-value">${order.customer.name}</div>
+                </div>
+                <div class="detail-item">
+                  <div class="detail-label">WhatsApp Number</div>
+                  <div class="detail-value">${order.customer.whatsappNumber}</div>
+                </div>
+                <div class="detail-item">
+                  <div class="detail-label">Order Date</div>
+                  <div class="detail-value">${new Date(order.createdAt).toLocaleDateString('en-ZA')}</div>
+                </div>
+                <div class="detail-item">
+                  <div class="detail-label">Order Status</div>
+                  <div class="detail-value">
+                    <span class="status-badge status-${order.status}">${order.status.replace('_', ' ').toUpperCase()}</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="contact-info">
+            <strong>📱 Share this report:</strong> Save as PDF (Ctrl/Cmd + P) and send via WhatsApp<br>
+            <a href="https://wa.me/${order.customer.whatsappNumber.replace('+', '')}?text=${encodeURIComponent(`Hello ${order.customer.name}, here is your order update for ${order.orderNumber}`)}" 
+               class="whatsapp-link" target="_blank">💬 Open WhatsApp Chat</a>
+          </div>
+
+          <div class="prints-section">
+            <div class="section-title">Print Jobs (${order.prints.length})</div>
+            <div class="prints-grid">
+              ${order.prints.map((print: any, index: number) => `
+                <div class="print-card">
+                  <div class="print-header">
+                    <div class="print-name">${index + 1}. ${print.name}</div>
+                    <span class="print-status status-badge status-${print.status}">${print.status}</span>
+                  </div>
+                  <div class="print-details">
+                    <div class="detail-item">
+                      <div class="detail-label">Quantity</div>
+                      <div class="detail-value">${print.quantity}x</div>
+                    </div>
+                    <div class="detail-item">
+                      <div class="detail-label">Material</div>
+                      <div class="detail-value">${print.material}</div>
+                    </div>
+                    <div class="detail-item">
+                      <div class="detail-label">Print Time</div>
+                      <div class="detail-value">${print.estimatedTime}h</div>
+                    </div>
+                    ${print.gcodeEstimatedTime ? `
+                    <div class="detail-item">
+                      <div class="detail-label">GCODE Time</div>
+                      <div class="detail-value">${print.gcodeEstimatedTime}h</div>
+                    </div>
+                    ` : ''}
+                  </div>
+                </div>
+              `).join('')}
+            </div>
+          </div>
+
+          ${order.notes ? `
+          <div class="notes-section">
+            <div class="section-title">📝 Order Notes</div>
+            <p>${order.notes}</p>
+          </div>
+          ` : ''}
+
+          <div class="summary-section">
+            <div class="section-title">Order Summary</div>
+            <div class="summary-grid">
+              <div class="summary-item">
+                <div class="summary-value">${order.prints.length}</div>
+                <div class="summary-label">Total Items</div>
+              </div>
+              <div class="summary-item">
+                <div class="summary-value">${order.prints.reduce((sum: number, print: any) => sum + print.quantity, 0)}</div>
+                <div class="summary-label">Total Quantity</div>
+              </div>
+              <div class="summary-item">
+                <div class="summary-value">${order.totalEstimatedTime}h</div>
+                <div class="summary-label">Total Print Time</div>
+              </div>
+              <div class="summary-item">
+                <div class="summary-value">R ${order.prints.reduce((sum: number, print: any) => sum + (parseFloat(print.estimatedTime) * 50 * print.quantity), 0).toFixed(2)}</div>
+                <div class="summary-label">Estimated Cost</div>
+              </div>
+            </div>
+          </div>
+
+          <div class="footer">
+            <p><strong>3D Print Shop Management System</strong></p>
+            <p>Generated on ${new Date().toLocaleString('en-ZA')} | Order ${order.orderNumber}</p>
+            <p>📧 Contact: info@3dprintshop.co.za | 📞 Phone: +27 123 456 7890</p>
+          </div>
+        </body>
+        </html>
+      `;
+
+      res.setHeader('Content-Type', 'text/html');
+      res.send(html);
+    } catch (error) {
+      console.error("Report generation error:", error);
+      res.status(500).json({ error: "Failed to generate report" });
+    }
+  });
+
   app.post("/api/whatsapp/send", async (req, res) => {
     try {
       const { orderId, message } = sendWhatsappMessageSchema.parse(req.body);
@@ -306,17 +630,24 @@ export async function registerRoutes(app: Express): Promise<Server> {
         orderId,
         customerId: order.customerId,
         message,
-        status: "pending",
+        status: "sent",
       });
 
-      // TODO: Implement actual WhatsApp API call here
-      // For now, just mark as sent
-      res.json({ success: true, messageId: whatsappMessage.id });
+      // Return download link and WhatsApp link for manual sending
+      const downloadUrl = `${req.protocol}://${req.get('host')}/api/orders/${orderId}/pdf`;
+      const whatsappLink = `https://wa.me/${order.customer.whatsappNumber.replace('+', '')}?text=${encodeURIComponent(`Hello ${order.customer.name}, here is your order update for ${order.orderNumber}. Download your order report: ${downloadUrl}`)}`;
+      
+      res.json({ 
+        success: true, 
+        messageId: whatsappMessage.id,
+        downloadUrl,
+        whatsappLink
+      });
     } catch (error) {
       if (error instanceof z.ZodError) {
         res.status(400).json({ error: "Invalid message data", details: error.errors });
       } else {
-        res.status(500).json({ error: "Failed to send WhatsApp message" });
+        res.status(500).json({ error: "Failed to generate download link" });
       }
     }
   });

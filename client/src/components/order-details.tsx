@@ -1,11 +1,12 @@
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
-import { MessageCircle, Edit, Phone } from "lucide-react";
+import { MessageCircle, Edit, Phone, Download, Share } from "lucide-react";
 import { format } from "date-fns";
 import { useMutation } from "@tanstack/react-query";
 import { apiRequest } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
+import { openOrderReport } from "@/lib/whatsapp";
 
 interface OrderDetailsProps {
   order: any;
@@ -21,11 +22,16 @@ export function OrderDetails({ order, onUpdate, getStatusColor, getStatusBgColor
     mutationFn: async (data: { orderId: number; message: string }) => {
       return apiRequest("POST", "/api/whatsapp/send", data);
     },
-    onSuccess: () => {
+    onSuccess: (response: any) => {
+      // Open WhatsApp with the generated link
+      if (response.whatsappLink) {
+        window.open(response.whatsappLink, '_blank');
+      }
       toast({
-        title: "WhatsApp message sent",
-        description: "Customer has been notified about the order status.",
+        title: "WhatsApp link generated",
+        description: "Opening WhatsApp to share the order report with your customer.",
       });
+      onUpdate();
     },
     onError: () => {
       toast({
@@ -130,12 +136,20 @@ export function OrderDetails({ order, onUpdate, getStatusColor, getStatusBgColor
 
         <div className="mt-6 pt-6 border-t border-gray-200 space-y-2">
           <Button
-            onClick={handleSendWhatsApp}
-            disabled={sendWhatsAppMutation.isPending}
+            onClick={() => openOrderReport(order.id)}
             className="w-full bg-primary hover:bg-blue-700 text-white"
           >
-            <MessageCircle className="h-4 w-4 mr-2" />
-            {sendWhatsAppMutation.isPending ? "Sending..." : "Send WhatsApp Update"}
+            <Download className="h-4 w-4 mr-2" />
+            Open Report & Print PDF
+          </Button>
+          <Button
+            onClick={handleSendWhatsApp}
+            disabled={sendWhatsAppMutation.isPending}
+            variant="outline"
+            className="w-full"
+          >
+            <Share className="h-4 w-4 mr-2" />
+            {sendWhatsAppMutation.isPending ? "Generating..." : "Get WhatsApp Share Link"}
           </Button>
           <Button variant="outline" className="w-full">
             <Edit className="h-4 w-4 mr-2" />

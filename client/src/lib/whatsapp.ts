@@ -9,6 +9,11 @@ export async function sendWhatsAppMessage(data: WhatsAppMessage): Promise<any> {
   return apiRequest("POST", "/api/whatsapp/send", data);
 }
 
+export function openOrderReport(orderId: number): void {
+  const reportUrl = `/api/orders/${orderId}/report`;
+  window.open(reportUrl, '_blank');
+}
+
 export function generateOrderStatusMessage(order: any): string {
   const customerName = order.customer?.name || "Customer";
   const orderNumber = order.orderNumber;
