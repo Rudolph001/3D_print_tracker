@@ -18,49 +18,166 @@ import { z } from "zod";
 
 
 
-// Function to parse GCODE file and extract print time
-async function parseGCodePrintTime(filePath: string): Promise<number> {
+// Function to parse GCODE file and extract comprehensive print data
+async function parseGCodeData(filePath: string): Promise<{
+  estimatedTime: number;
+  nozzleTemp?: number;
+  bedTemp?: number;
+  layerHeight?: number;
+  infillPercentage?: number;
+  printSpeed?: number;
+  layerCount?: number;
+  filamentLength?: number;
+  supportMaterial?: boolean;
+  objectDimensions?: { x: number; y: number; z: number };
+}> {
   try {
     const content = fs.readFileSync(filePath, 'utf8');
     const lines = content.split('\n');
     
-    // Look for time estimation comments in GCODE
-    for (const line of lines) {
-      // Check for common slicer time estimates
+    let estimatedTime = 4; // Default fallback
+    let nozzleTemp: number | undefined;
+    let bedTemp: number | undefined;
+    let layerHeight: number | undefined;
+    let infillPercentage: number | undefined;
+    let printSpeed: number | undefined;
+    let layerCount = 0;
+    let filamentLength: number | undefined;
+    let supportMaterial = false;
+    let minX = Infinity, maxX = -Infinity;
+    let minY = Infinity, maxY = -Infinity;
+    let minZ = Infinity, maxZ = -Infinity;
+    let currentZ = 0;
+    
+    for (let i = 0; i < lines.length; i++) {
+      const line = lines[i].trim();
+      
+      // Extract print time
       if (line.includes(';TIME:') || line.includes('; estimated printing time')) {
         const timeMatch = line.match(/(\d+(?:\.\d+)?)\s*(?:h|hours|minutes|m|s|seconds)/i);
         if (timeMatch) {
           const value = parseFloat(timeMatch[1]);
           if (line.toLowerCase().includes('h') || line.toLowerCase().includes('hour')) {
-            return value;
+            estimatedTime = value;
           } else if (line.toLowerCase().includes('m') || line.toLowerCase().includes('minute')) {
-            return value / 60;
+            estimatedTime = value / 60;
           } else if (line.toLowerCase().includes('s') || line.toLowerCase().includes('second')) {
-            return value / 3600;
+            estimatedTime = value / 3600;
           }
         }
       }
       
-      // PrusaSlicer format
+      // PrusaSlicer time format
       if (line.includes('; estimated printing time (normal mode)')) {
-        const nextLine = lines[lines.indexOf(line) + 1];
+        const nextLine = lines[i + 1];
         if (nextLine) {
           const timeMatch = nextLine.match(/;\s*(\d+)h\s*(\d+)m/);
           if (timeMatch) {
             const hours = parseInt(timeMatch[1]) || 0;
             const minutes = parseInt(timeMatch[2]) || 0;
-            return hours + (minutes / 60);
+            estimatedTime = hours + (minutes / 60);
           }
+        }
+      }
+      
+      // Extract temperatures
+      if (line.startsWith('M104') || line.startsWith('M109')) {
+        const tempMatch = line.match(/S(\d+)/);
+        if (tempMatch) nozzleTemp = parseInt(tempMatch[1]);
+      }
+      
+      if (line.startsWith('M140') || line.startsWith('M190')) {
+        const tempMatch = line.match(/S(\d+)/);
+        if (tempMatch) bedTemp = parseInt(tempMatch[1]);
+      }
+      
+      // Extract layer height from comments
+      if (line.includes('layer_height') || line.includes('Layer height')) {
+        const heightMatch = line.match(/(\d+\.?\d*)\s*mm/);
+        if (heightMatch) layerHeight = parseFloat(heightMatch[1]);
+      }
+      
+      // Extract infill percentage
+      if (line.includes('fill_density') || line.includes('infill')) {
+        const infillMatch = line.match(/(\d+)%/);
+        if (infillMatch) infillPercentage = parseInt(infillMatch[1]);
+      }
+      
+      // Extract filament length
+      if (line.includes('filament used') || line.includes('Filament used')) {
+        const lengthMatch = line.match(/(\d+\.?\d*)\s*m/);
+        if (lengthMatch) filamentLength = parseFloat(lengthMatch[1]);
+      }
+      
+      // Detect support material
+      if (line.includes('support') && (line.includes('TYPE:') || line.includes('SUPPORT'))) {
+        supportMaterial = true;
+      }
+      
+      // Extract movement commands to determine dimensions and speed
+      if (line.startsWith('G1') || line.startsWith('G0')) {
+        // Extract coordinates
+        const xMatch = line.match(/X([-\d.]+)/);
+        const yMatch = line.match(/Y([-\d.]+)/);
+        const zMatch = line.match(/Z([-\d.]+)/);
+        const fMatch = line.match(/F(\d+)/);
+        
+        if (xMatch) {
+          const x = parseFloat(xMatch[1]);
+          minX = Math.min(minX, x);
+          maxX = Math.max(maxX, x);
+        }
+        
+        if (yMatch) {
+          const y = parseFloat(yMatch[1]);
+          minY = Math.min(minY, y);
+          maxY = Math.max(maxY, y);
+        }
+        
+        if (zMatch) {
+          const z = parseFloat(zMatch[1]);
+          if (z > currentZ) {
+            layerCount++;
+            currentZ = z;
+          }
+          minZ = Math.min(minZ, z);
+          maxZ = Math.max(maxZ, z);
+        }
+        
+        if (fMatch && !printSpeed) {
+          printSpeed = parseInt(fMatch[1]);
         }
       }
     }
     
-    // If no time found, estimate based on file size (rough approximation)
-    const fileSizeKB = fs.statSync(filePath).size / 1024;
-    return Math.max(1, Math.round(fileSizeKB / 100)); // Very rough estimate
+    // Calculate object dimensions
+    const objectDimensions = (minX !== Infinity && maxX !== -Infinity) ? {
+      x: Math.round((maxX - minX) * 10) / 10,
+      y: Math.round((maxY - minY) * 10) / 10,
+      z: Math.round((maxZ - minZ) * 10) / 10
+    } : undefined;
+    
+    // If no time found, estimate based on file size
+    if (estimatedTime === 4) {
+      const fileSizeKB = fs.statSync(filePath).size / 1024;
+      estimatedTime = Math.max(1, Math.round(fileSizeKB / 100));
+    }
+    
+    return {
+      estimatedTime,
+      nozzleTemp,
+      bedTemp,
+      layerHeight,
+      infillPercentage,
+      printSpeed,
+      layerCount: layerCount > 0 ? layerCount : undefined,
+      filamentLength,
+      supportMaterial: supportMaterial || undefined,
+      objectDimensions
+    };
   } catch (error) {
     console.error('Error parsing GCODE:', error);
-    return 4; // Default fallback time
+    return { estimatedTime: 4 };
   }
 }
 
@@ -312,14 +429,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(400).json({ error: "No file uploaded" });
       }
 
-      // Parse GCODE file to extract print time
-      const printTime = await parseGCodePrintTime(req.file.path);
+      // Parse GCODE file to extract comprehensive print data
+      const gcodeData = await parseGCodeData(req.file.path);
       
       res.json({
         filename: req.file.originalname,
         path: req.file.path,
         size: req.file.size,
-        estimatedTime: printTime,
+        ...gcodeData,
       });
     } catch (error) {
       res.status(500).json({ error: "Failed to upload file" });
