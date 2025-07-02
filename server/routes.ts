@@ -2,6 +2,7 @@ import type { Express } from "express";
 import { createServer, type Server } from "http";
 import multer from "multer";
 import path from "path";
+import fs from "fs";
 import { storage } from "./storage";
 import { 
   insertCustomerSchema, 
@@ -14,14 +15,63 @@ import {
 } from "@shared/schema";
 import { z } from "zod";
 
+// Function to parse GCODE file and extract print time
+async function parseGCodePrintTime(filePath: string): Promise<number> {
+  try {
+    const content = fs.readFileSync(filePath, 'utf8');
+    const lines = content.split('\n');
+    
+    // Look for time estimation comments in GCODE
+    for (const line of lines) {
+      // Check for common slicer time estimates
+      if (line.includes(';TIME:') || line.includes('; estimated printing time')) {
+        const timeMatch = line.match(/(\d+(?:\.\d+)?)\s*(?:h|hours|minutes|m|s|seconds)/i);
+        if (timeMatch) {
+          const value = parseFloat(timeMatch[1]);
+          if (line.toLowerCase().includes('h') || line.toLowerCase().includes('hour')) {
+            return value;
+          } else if (line.toLowerCase().includes('m') || line.toLowerCase().includes('minute')) {
+            return value / 60;
+          } else if (line.toLowerCase().includes('s') || line.toLowerCase().includes('second')) {
+            return value / 3600;
+          }
+        }
+      }
+      
+      // PrusaSlicer format
+      if (line.includes('; estimated printing time (normal mode)')) {
+        const nextLine = lines[lines.indexOf(line) + 1];
+        if (nextLine) {
+          const timeMatch = nextLine.match(/;\s*(\d+)h\s*(\d+)m/);
+          if (timeMatch) {
+            const hours = parseInt(timeMatch[1]) || 0;
+            const minutes = parseInt(timeMatch[2]) || 0;
+            return hours + (minutes / 60);
+          }
+        }
+      }
+    }
+    
+    // If no time found, estimate based on file size (rough approximation)
+    const fileSizeKB = fs.statSync(filePath).size / 1024;
+    return Math.max(1, Math.round(fileSizeKB / 100)); // Very rough estimate
+  } catch (error) {
+    console.error('Error parsing GCODE:', error);
+    return 4; // Default fallback time
+  }
+}
+
 // Configure multer for file uploads
 const upload = multer({
   dest: 'uploads/',
   fileFilter: (req, file, cb) => {
-    if (file.mimetype === 'application/octet-stream' || file.originalname.endsWith('.stl')) {
+    if (file.mimetype === 'application/octet-stream' || 
+        file.originalname.endsWith('.stl') || 
+        file.originalname.endsWith('.gcode')) {
       cb(null, true);
     } else {
-      cb(new Error('Only STL files are allowed'), false);
+      const error = new Error('Only STL and GCODE files are allowed') as any;
+      cb(error, false);
     }
   },
   limits: {
@@ -198,6 +248,27 @@ export async function registerRoutes(app: Express): Promise<Server> {
         filename: req.file.originalname,
         path: req.file.path,
         size: req.file.size,
+      });
+    } catch (error) {
+      res.status(500).json({ error: "Failed to upload file" });
+    }
+  });
+
+  // File upload for GCODE files
+  app.post("/api/upload/gcode", upload.single('gcodeFile'), async (req, res) => {
+    try {
+      if (!req.file) {
+        return res.status(400).json({ error: "No file uploaded" });
+      }
+
+      // Parse GCODE file to extract print time
+      const printTime = await parseGCodePrintTime(req.file.path);
+      
+      res.json({
+        filename: req.file.originalname,
+        path: req.file.path,
+        size: req.file.size,
+        estimatedTime: printTime,
       });
     } catch (error) {
       res.status(500).json({ error: "Failed to upload file" });

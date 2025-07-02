@@ -46,6 +46,9 @@ export const prints = pgTable("prints", {
   status: text("status").notNull().default("queued"), // queued, printing, completed
   stlFileName: text("stl_file_name"),
   stlFileUrl: text("stl_file_url"),
+  gcodeFileName: text("gcode_file_name"),
+  gcodeFileUrl: text("gcode_file_url"),
+  gcodeEstimatedTime: decimal("gcode_estimated_time", { precision: 10, scale: 2 }),
   createdAt: timestamp("created_at").defaultNow().notNull(),
   updatedAt: timestamp("updated_at").defaultNow().notNull(),
 });

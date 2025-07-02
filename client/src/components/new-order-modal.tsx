@@ -35,7 +35,15 @@ interface NewOrderModalProps {
 export function NewOrderModal({ isOpen, onClose, onSuccess }: NewOrderModalProps) {
   const { toast } = useToast();
   const [prints, setPrints] = useState([
-    { name: "", quantity: 1, material: "PLA", estimatedTime: 4, stlFile: null as File | null }
+    { 
+      name: "", 
+      quantity: 1, 
+      material: "PLA", 
+      estimatedTime: 4, 
+      stlFile: null as File | null,
+      gcodeFile: null as File | null,
+      gcodeEstimatedTime: null as number | null
+    }
   ]);
 
   const form = useForm({
@@ -58,7 +66,15 @@ export function NewOrderModal({ isOpen, onClose, onSuccess }: NewOrderModalProps
       });
       onSuccess();
       form.reset();
-      setPrints([{ name: "", quantity: 1, material: "PLA", estimatedTime: 4, stlFile: null }]);
+      setPrints([{ 
+        name: "", 
+        quantity: 1, 
+        material: "PLA", 
+        estimatedTime: 4, 
+        stlFile: null,
+        gcodeFile: null,
+        gcodeEstimatedTime: null
+      }]);
     },
     onError: () => {
       toast({
@@ -70,7 +86,15 @@ export function NewOrderModal({ isOpen, onClose, onSuccess }: NewOrderModalProps
   });
 
   const addPrint = () => {
-    setPrints([...prints, { name: "", quantity: 1, material: "PLA", estimatedTime: 4, stlFile: null }]);
+    setPrints([...prints, { 
+      name: "", 
+      quantity: 1, 
+      material: "PLA", 
+      estimatedTime: 4, 
+      stlFile: null,
+      gcodeFile: null,
+      gcodeEstimatedTime: null
+    }]);
   };
 
   const removePrint = (index: number) => {
@@ -85,6 +109,43 @@ export function NewOrderModal({ isOpen, onClose, onSuccess }: NewOrderModalProps
 
   const handleFileUpload = (index: number, file: File | null) => {
     updatePrint(index, "stlFile", file);
+  };
+
+  const handleGcodeUpload = async (index: number, file: File | null) => {
+    if (!file) {
+      updatePrint(index, "gcodeFile", null);
+      updatePrint(index, "gcodeEstimatedTime", null);
+      return;
+    }
+
+    try {
+      const formData = new FormData();
+      formData.append('gcodeFile', file);
+      
+      const response = await fetch('/api/upload/gcode', {
+        method: 'POST',
+        body: formData,
+      });
+      
+      if (response.ok) {
+        const result = await response.json();
+        updatePrint(index, "gcodeFile", file);
+        updatePrint(index, "gcodeEstimatedTime", result.estimatedTime);
+        updatePrint(index, "estimatedTime", result.estimatedTime);
+        toast({
+          title: "GCODE uploaded successfully",
+          description: `Estimated print time: ${result.estimatedTime} hours`,
+        });
+      } else {
+        throw new Error('Upload failed');
+      }
+    } catch (error) {
+      toast({
+        title: "Upload failed",
+        description: "Could not upload GCODE file. Please try again.",
+        variant: "destructive",
+      });
+    }
   };
 
   const onSubmit = async (data: any) => {
@@ -112,8 +173,12 @@ export function NewOrderModal({ isOpen, onClose, onSuccess }: NewOrderModalProps
         name: print.name,
         quantity: print.quantity,
         material: print.material,
-        estimatedTime: (print.estimatedTime * print.quantity).toString(),
+        estimatedTime: (print.gcodeEstimatedTime || print.estimatedTime * print.quantity).toString(),
         stlFileName: print.stlFile?.name,
+        stlFileUrl: print.stlFile ? `/uploads/${print.stlFile.name}` : undefined,
+        gcodeFileName: print.gcodeFile?.name,
+        gcodeFileUrl: print.gcodeFile ? `/uploads/${print.gcodeFile.name}` : undefined,
+        gcodeEstimatedTime: print.gcodeEstimatedTime?.toString(),
       })),
     };
 
@@ -236,19 +301,41 @@ export function NewOrderModal({ isOpen, onClose, onSuccess }: NewOrderModalProps
                     </div>
                   </div>
                   
-                  <div className="mt-4">
-                    <Label>Upload STL File</Label>
-                    <div className="border-2 border-dashed border-gray-300 rounded-lg p-6 text-center hover:border-gray-400 transition-colors">
-                      <Upload className="h-8 w-8 mx-auto mb-2 text-gray-400" />
-                      <p className="text-sm text-gray-600">
-                        {print.stlFile ? print.stlFile.name : "Click to upload STL file"}
-                      </p>
-                      <input
-                        type="file"
-                        accept=".stl"
-                        className="hidden"
-                        onChange={(e) => handleFileUpload(index, e.target.files?.[0] || null)}
-                      />
+                  <div className="mt-4 grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                      <Label>Upload STL File</Label>
+                      <div className="border-2 border-dashed border-gray-300 rounded-lg p-4 text-center hover:border-gray-400 transition-colors cursor-pointer">
+                        <Upload className="h-6 w-6 mx-auto mb-2 text-gray-400" />
+                        <p className="text-xs text-gray-600">
+                          {print.stlFile ? print.stlFile.name : "Click to upload STL file"}
+                        </p>
+                        <input
+                          type="file"
+                          accept=".stl"
+                          className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
+                          onChange={(e) => handleFileUpload(index, e.target.files?.[0] || null)}
+                        />
+                      </div>
+                    </div>
+                    <div>
+                      <Label>Upload GCODE File (Auto-calculates time)</Label>
+                      <div className="border-2 border-dashed border-green-300 rounded-lg p-4 text-center hover:border-green-400 transition-colors cursor-pointer relative">
+                        <Upload className="h-6 w-6 mx-auto mb-2 text-green-500" />
+                        <p className="text-xs text-gray-600">
+                          {print.gcodeFile ? print.gcodeFile.name : "Click to upload GCODE file"}
+                        </p>
+                        {print.gcodeEstimatedTime && (
+                          <p className="text-xs text-green-600 font-medium">
+                            Est. time: {print.gcodeEstimatedTime}h
+                          </p>
+                        )}
+                        <input
+                          type="file"
+                          accept=".gcode,.g"
+                          className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
+                          onChange={(e) => handleGcodeUpload(index, e.target.files?.[0] || null)}
+                        />
+                      </div>
                     </div>
                   </div>
                 </div>

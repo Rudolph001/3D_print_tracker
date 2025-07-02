@@ -8,16 +8,18 @@ import { OrderCard } from "@/components/order-card";
 import { OrderDetails } from "@/components/order-details";
 import { ProductCard } from "@/components/product-card";
 import { NewOrderModal } from "@/components/new-order-modal";
+import { AddProductModal } from "@/components/add-product-modal";
 
 export default function Dashboard() {
   const [selectedOrderId, setSelectedOrderId] = useState<number | null>(null);
   const [isNewOrderModalOpen, setIsNewOrderModalOpen] = useState(false);
+  const [isAddProductModalOpen, setIsAddProductModalOpen] = useState(false);
 
   const { data: orders = [], refetch: refetchOrders } = useQuery({
     queryKey: ["/api/orders"],
   });
 
-  const { data: products = [] } = useQuery({
+  const { data: products = [], refetch: refetchProducts } = useQuery({
     queryKey: ["/api/products"],
   });
 
@@ -149,7 +151,10 @@ export default function Dashboard() {
               <div className="p-6 border-b border-gray-200">
                 <div className="flex items-center justify-between">
                   <h2 className="text-lg font-semibold text-gray-800">Product Catalog</h2>
-                  <Button className="bg-primary hover:bg-blue-700 text-white">
+                  <Button 
+                    onClick={() => setIsAddProductModalOpen(true)}
+                    className="bg-primary hover:bg-blue-700 text-white"
+                  >
                     <Plus className="h-4 w-4 mr-2" />
                     Add Product
                   </Button>
@@ -188,6 +193,16 @@ export default function Dashboard() {
         onSuccess={() => {
           setIsNewOrderModalOpen(false);
           refetchOrders();
+        }}
+      />
+
+      {/* Add Product Modal */}
+      <AddProductModal
+        isOpen={isAddProductModalOpen}
+        onClose={() => setIsAddProductModalOpen(false)}
+        onSuccess={() => {
+          setIsAddProductModalOpen(false);
+          refetchProducts();
         }}
       />
     </div>
