@@ -184,8 +184,9 @@ export function NewOrderModal({ isOpen, onClose, onSuccess }: NewOrderModalProps
         whatsappNumber: data.whatsappNumber,
       },
       order: {
+        orderNumber: `ORD-${Date.now()}-${Math.random().toString(36).substr(2, 9).toUpperCase()}`,
         notes: data.notes,
-        totalEstimatedTime: validPrints.reduce((sum, print) => sum + print.estimatedTime * print.quantity, 0).toString(),
+        totalEstimatedTime: validPrints.reduce((sum, print) => sum + (print.gcodeEstimatedTime || print.estimatedTime) * print.quantity, 0).toString(),
       },
       prints: validPrints.map(print => ({
         name: print.name,
