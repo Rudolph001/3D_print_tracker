@@ -1,0 +1,124 @@
+Objective:
+Build a full-featured 3D print shop management app that:
+
+Tracks orders with multiple prints per order
+
+Calculates total print time
+
+Sends WhatsApp updates to customers
+
+Displays a product catalog with interactive 3D previews of STL files
+
+🔩 Core Modules & Features (Updated)
+1. 📦 Order & Print Management
+🔁 Orders
+ Create new orders with:
+
+Customer name & WhatsApp number
+
+Order notes
+
+ List orders by status (Queued, In Progress, Completed)
+
+ Show:
+
+Total number of prints in order
+
+Combined estimated time (auto sum)
+
+Status bar of how many prints are done
+
+🖨️ Prints in Order
+ Each order can have multiple print jobs
+
+ For each print:
+
+Upload STL file
+
+Name, quantity, material, estimated print time
+
+Status: Queued, Printing, Completed
+
+ App should:
+
+Show total estimated time remaining
+
+Let you manually update status/time left
+
+Track which prints are done vs remaining
+
+2. 🧲 WhatsApp Integration
+ Use Twilio or WhatsApp API
+
+ Manual and automatic status updates:
+
+“Your order is now printing...”
+
+“Order completed: 5 parts in 12 hrs total.”
+
+ Send catalog or product previews via WhatsApp
+
+3. 🛍️ Product Catalog (with 3D Viewer)
+🗂️ Product Management
+ Add products to catalog:
+
+Name, category, description
+
+Upload STL file
+
+Estimated print time & price
+
+ View catalog in app and public-facing version
+
+🎥 3D Interactive Preview
+ Must include real-time 3D rendering of STL files
+
+ Integrate a 3D viewer (recommend: Three.js + STLLoader)
+
+ Allow:
+
+Orbit controls (rotate, zoom, pan)
+
+Clean white/light background for professional look
+
+ Preview should work on mobile & desktop
+
+🧾 Optional:
+ Render a thumbnail image from STL for faster catalog browsing
+
+ Add “Request Print” button for public users
+
+4. 📊 Admin Dashboard
+ Dashboard with:
+
+All current orders
+
+Print queue overview
+
+Estimated workload
+
+ Filter by customer, product, status
+
+5. 🗃️ Backend & File Handling
+ Store STL files securely
+
+ Database for:
+
+Orders → Prints
+
+Products → STL metadata
+
+Customers
+
+ Estimate total print time per order
+
+ Optionally allow export of order summary
+
+✅ Tools & Libraries to Use in Replit
+Functionality	Tool / Library
+3D Viewer	Three.js + STLLoader
+Messaging	Twilio WhatsApp API
+Backend DB	Supabase / Firebase / Replit DB
+File Storage	Firebase / Cloudinary / Local
+UI Framework	React + Tailwind (optional)
+STL Previews	Use <canvas> or <model-viewer>
