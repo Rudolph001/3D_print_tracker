@@ -1,13 +1,35 @@
+
 <!DOCTYPE html>
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1" />
     <title>3D Print Shop Manager</title>
-    <!-- Three.js CDN -->
+    <!-- Three.js CDN - Updated to reliable versions -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <script>
+      // Ensure Three.js is available globally
+      if (typeof THREE !== 'undefined') {
+        window.THREE = THREE;
+        console.log('Three.js loaded successfully');
+      } else {
+        console.error('Three.js failed to load');
+      }
+    </script>
     <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/loaders/STLLoader.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
+    <script>
+      // Debug Three.js availability
+      window.addEventListener('load', () => {
+        console.log('Three.js available:', typeof THREE !== 'undefined');
+        console.log('STLLoader available:', typeof THREE !== 'undefined' && typeof THREE.STLLoader !== 'undefined');
+        console.log('OrbitControls available:', typeof THREE !== 'undefined' && typeof THREE.OrbitControls !== 'undefined');
+        
+        if (typeof THREE !== 'undefined') {
+          window.STLLoader = THREE.STLLoader;
+        }
+      });
+    </script>
   </head>
   <body>
     <div id="root"></div>
