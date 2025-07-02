@@ -204,6 +204,46 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  app.patch("/api/orders/:id", async (req, res) => {
+    try {
+      const id = parseInt(req.params.id);
+      const { customer, order, prints } = req.body;
+      
+      // Update customer
+      if (customer) {
+        await storage.updateCustomer(id, customer);
+      }
+
+      // Update order
+      if (order) {
+        await storage.updateOrder(id, order);
+      }
+
+      // Update prints
+      if (prints) {
+        await storage.updateOrderPrints(id, prints);
+      }
+
+      // Return updated order with details
+      const updatedOrder = await storage.getOrderWithDetails(id);
+      res.json(updatedOrder);
+    } catch (error) {
+      console.error("Update order error:", error);
+      res.status(500).json({ error: "Failed to update order" });
+    }
+  });
+
+  app.delete("/api/orders/:id", async (req, res) => {
+    try {
+      const id = parseInt(req.params.id);
+      await storage.deleteOrder(id);
+      res.json({ success: true });
+    } catch (error) {
+      console.error("Delete order error:", error);
+      res.status(500).json({ error: "Failed to delete order" });
+    }
+  });
+
   // Print routes
   app.patch("/api/prints/:id/status", async (req, res) => {
     try {

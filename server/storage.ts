@@ -102,6 +102,57 @@ export class DatabaseStorage implements IStorage {
     return newOrder;
   }
 
+  async updateOrder(id: number, orderData: any): Promise<Order> {
+    const [updatedOrder] = await db.update(orders)
+      .set({
+        ...orderData,
+        updatedAt: new Date(),
+      })
+      .where(eq(orders.id, id))
+      .returning();
+    return updatedOrder;
+  }
+
+  async updateCustomer(orderId: number, customerData: any): Promise<Customer> {
+    // Get the order to find the customer ID
+    const order = await this.getOrder(orderId);
+    if (!order) {
+      throw new Error("Order not found");
+    }
+
+    const [updatedCustomer] = await db.update(customers)
+      .set(customerData)
+      .where(eq(customers.id, order.customerId))
+      .returning();
+    return updatedCustomer;
+  }
+
+  async updateOrderPrints(orderId: number, printsData: any[]): Promise<void> {
+    // Delete existing prints for this order
+    await db.delete(prints).where(eq(prints.orderId, orderId));
+
+    // Insert new prints
+    if (printsData.length > 0) {
+      const newPrints = printsData.map(print => ({
+        ...print,
+        orderId,
+        estimatedTime: print.estimatedTime?.toString() || "0",
+      }));
+      await db.insert(prints).values(newPrints);
+    }
+  }
+
+  async deleteOrder(id: number): Promise<void> {
+    // Delete prints first (foreign key constraint)
+    await db.delete(prints).where(eq(prints.orderId, id));
+    
+    // Delete WhatsApp messages
+    await db.delete(whatsappMessages).where(eq(whatsappMessages.orderId, id));
+    
+    // Delete the order
+    await db.delete(orders).where(eq(orders.id, id));
+  }
+
   async updateOrderStatus(id: number, status: string): Promise<Order> {
     const [updatedOrder] = await db.update(orders)
       .set({ status, updatedAt: new Date() })

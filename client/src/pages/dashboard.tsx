@@ -43,6 +43,17 @@ export default function Dashboard() {
     }
   };
 
+  // Placeholder functions for edit and delete
+  const handleEditOrder = (orderId: number) => {
+    console.log(`Editing order with ID: ${orderId}`);
+    // Implement your edit order logic here
+  };
+
+  const handleDeleteOrder = (orderId: number) => {
+    console.log(`Deleting order with ID: ${orderId}`);
+    // Implement your delete order logic here
+  };
+
   return (
     <div className="min-h-screen bg-gray-50">
       {/* Header */}
@@ -128,9 +139,11 @@ export default function Dashboard() {
               {/* Order Details */}
               <div className="lg:col-span-1">
                 {selectedOrder ? (
-                  <OrderDetails 
-                    order={selectedOrder} 
+                  <OrderDetails
+                    order={selectedOrder}
                     onUpdate={refetchOrders}
+                    onEdit={handleEditOrder}
+                    onDelete={handleDeleteOrder}
                     getStatusColor={getStatusColor}
                     getStatusBgColor={getStatusBgColor}
                   />

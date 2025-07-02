@@ -1,7 +1,7 @@
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
-import { MessageCircle, Edit, Phone, Download, Share } from "lucide-react";
+import { MessageCircle, Edit, Phone, Download, Share, Trash2 } from "lucide-react";
 import { format } from "date-fns";
 import { useMutation } from "@tanstack/react-query";
 import { apiRequest } from "@/lib/queryClient";
@@ -11,11 +11,13 @@ import { openOrderReport } from "@/lib/whatsapp";
 interface OrderDetailsProps {
   order: any;
   onUpdate: () => void;
+  onEdit: () => void;
+  onDelete: () => void;
   getStatusColor: (status: string) => string;
   getStatusBgColor: (status: string) => string;
 }
 
-export function OrderDetails({ order, onUpdate, getStatusColor, getStatusBgColor }: OrderDetailsProps) {
+export function OrderDetails({ order, onUpdate, onEdit, onDelete, getStatusColor, getStatusBgColor }: OrderDetailsProps) {
   const { toast } = useToast();
 
   const sendWhatsAppMutation = useMutation({
@@ -151,10 +153,16 @@ export function OrderDetails({ order, onUpdate, getStatusColor, getStatusBgColor
             <Share className="h-4 w-4 mr-2" />
             {sendWhatsAppMutation.isPending ? "Generating..." : "Get WhatsApp Share Link"}
           </Button>
-          <Button variant="outline" className="w-full">
-            <Edit className="h-4 w-4 mr-2" />
-            Edit Order
-          </Button>
+          <div className="grid grid-cols-2 gap-2">
+            <Button variant="outline" onClick={onEdit} className="w-full">
+              <Edit className="h-4 w-4 mr-2" />
+              Edit Order
+            </Button>
+            <Button variant="destructive" onClick={onDelete} className="w-full">
+              <Trash2 className="h-4 w-4 mr-2" />
+              Delete Order
+            </Button>
+          </div>
         </div>
       </div>
     </div>
