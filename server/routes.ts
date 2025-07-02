@@ -63,7 +63,15 @@ async function parseGCodePrintTime(filePath: string): Promise<number> {
 
 // Configure multer for file uploads
 const upload = multer({
-  dest: 'uploads/',
+  storage: multer.diskStorage({
+    destination: 'uploads/',
+    filename: (req, file, cb) => {
+      // Keep original filename for STL files so 3D viewer can work
+      const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1E9);
+      const ext = path.extname(file.originalname);
+      cb(null, file.fieldname + '-' + uniqueSuffix + ext);
+    }
+  }),
   fileFilter: (req, file, cb) => {
     if (file.mimetype === 'application/octet-stream' || 
         file.originalname.endsWith('.stl') || 
@@ -224,7 +232,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const productData = insertProductSchema.parse({
         ...req.body,
         stlFileName: req.file?.originalname,
-        stlFileUrl: req.file?.path,
+        stlFileUrl: req.file ? `/api/files/${path.basename(req.file.path)}` : null,
       });
       const product = await storage.createProduct(productData);
       res.status(201).json(product);

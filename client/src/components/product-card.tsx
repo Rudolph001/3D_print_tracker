@@ -28,7 +28,7 @@ export function ProductCard({ product }: ProductCardProps) {
           </div>
           <div className="text-right">
             <p className="font-semibold text-gray-800">
-              ${product.price || "N/A"}
+              R{product.price || "N/A"}
             </p>
             <Button variant="link" className="text-primary hover:text-blue-700 text-sm mt-1 p-0">
               Add to Order

@@ -129,12 +129,30 @@ export function NewOrderModal({ isOpen, onClose, onSuccess }: NewOrderModalProps
       
       if (response.ok) {
         const result = await response.json();
+        
+        // Auto-fill form information from GCODE filename and data
+        const filename = file.name.replace(/\.(gcode|g)$/i, '');
+        
+        // Extract name from filename (remove common GCODE suffixes)
+        const cleanName = filename
+          .replace(/_\d+h\d+m/i, '') // Remove time patterns like _4h30m
+          .replace(/_\d+mm/gi, '') // Remove size patterns like _100mm
+          .replace(/_v\d+/gi, '') // Remove version patterns like _v2
+          .replace(/[_-]/g, ' ') // Replace underscores and dashes with spaces
+          .trim();
+        
         updatePrint(index, "gcodeFile", file);
         updatePrint(index, "gcodeEstimatedTime", result.estimatedTime);
         updatePrint(index, "estimatedTime", result.estimatedTime);
+        
+        // Auto-fill name if it's empty or default
+        if (!prints[index].name || prints[index].name === `Print ${index + 1}`) {
+          updatePrint(index, "name", cleanName || `Print ${index + 1}`);
+        }
+        
         toast({
-          title: "GCODE uploaded successfully",
-          description: `Estimated print time: ${result.estimatedTime} hours`,
+          title: "GCODE uploaded and form auto-filled",
+          description: `Print time: ${result.estimatedTime}h, Name: "${cleanName}"`,
         });
       } else {
         throw new Error('Upload failed');
@@ -304,7 +322,7 @@ export function NewOrderModal({ isOpen, onClose, onSuccess }: NewOrderModalProps
                   <div className="mt-4 grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div>
                       <Label>Upload STL File</Label>
-                      <div className="border-2 border-dashed border-gray-300 rounded-lg p-4 text-center hover:border-gray-400 transition-colors cursor-pointer">
+                      <div className="border-2 border-dashed border-gray-300 rounded-lg p-4 text-center hover:border-gray-400 transition-colors cursor-pointer relative">
                         <Upload className="h-6 w-6 mx-auto mb-2 text-gray-400" />
                         <p className="text-xs text-gray-600">
                           {print.stlFile ? print.stlFile.name : "Click to upload STL file"}
@@ -312,13 +330,13 @@ export function NewOrderModal({ isOpen, onClose, onSuccess }: NewOrderModalProps
                         <input
                           type="file"
                           accept=".stl"
-                          className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
+                          className="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-10"
                           onChange={(e) => handleFileUpload(index, e.target.files?.[0] || null)}
                         />
                       </div>
                     </div>
                     <div>
-                      <Label>Upload GCODE File (Auto-calculates time)</Label>
+                      <Label>Upload GCODE File (Auto-fills form)</Label>
                       <div className="border-2 border-dashed border-green-300 rounded-lg p-4 text-center hover:border-green-400 transition-colors cursor-pointer relative">
                         <Upload className="h-6 w-6 mx-auto mb-2 text-green-500" />
                         <p className="text-xs text-gray-600">
@@ -332,7 +350,7 @@ export function NewOrderModal({ isOpen, onClose, onSuccess }: NewOrderModalProps
                         <input
                           type="file"
                           accept=".gcode,.g"
-                          className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
+                          className="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-10"
                           onChange={(e) => handleGcodeUpload(index, e.target.files?.[0] || null)}
                         />
                       </div>

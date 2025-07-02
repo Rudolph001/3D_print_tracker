@@ -169,7 +169,7 @@ export function AddProductModal({ isOpen, onClose, onSuccess }: AddProductModalP
               )}
             </div>
             <div>
-              <Label htmlFor="price">Price ($)</Label>
+              <Label htmlFor="price">Price (ZAR)</Label>
               <Input
                 id="price"
                 type="number"
