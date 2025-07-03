@@ -491,304 +491,405 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(404).json({ error: "Order not found" });
       }
 
+      // Calculate estimated completion date
+      const now = new Date();
+      const remainingHours = order.prints
+        .filter((print: any) => print.status !== 'completed')
+        .reduce((sum: number, print: any) => sum + (parseFloat(print.estimatedTime) * print.quantity), 0);
+      
+      const estimatedCompletion = new Date(now.getTime() + (remainingHours * 60 * 60 * 1000));
+      const isCompleted = order.status === 'completed';
+
       const html = `
         <!DOCTYPE html>
         <html>
         <head>
           <meta charset="utf-8">
-          <title>Order ${order.orderNumber} - 3D Print Shop</title>
+          <title>Order ${order.orderNumber} - Professional 3D Printing Services</title>
           <style>
+            * {
+              box-sizing: border-box;
+            }
+            
             body {
-              font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', sans-serif;
+              font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
               margin: 0;
-              padding: 40px;
-              color: #333;
+              padding: 0;
+              color: #2c3e50;
               line-height: 1.6;
+              background: #ffffff;
+            }
+            
+            .document {
+              max-width: 800px;
+              margin: 0 auto;
               background: white;
+              box-shadow: 0 0 20px rgba(0,0,0,0.1);
             }
+            
             .header {
-              display: flex;
-              justify-content: space-between;
-              align-items: center;
-              border-bottom: 3px solid #2563eb;
-              padding-bottom: 20px;
-              margin-bottom: 30px;
+              background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+              color: white;
+              padding: 40px;
+              text-align: center;
             }
-            .logo {
-              font-size: 28px;
-              font-weight: bold;
-              color: #2563eb;
+            
+            .company-name {
+              font-size: 32px;
+              font-weight: 300;
+              margin-bottom: 8px;
+              letter-spacing: 2px;
             }
-            .order-info {
-              text-align: right;
-              color: #666;
+            
+            .company-tagline {
+              font-size: 14px;
+              opacity: 0.9;
+              text-transform: uppercase;
+              letter-spacing: 1px;
             }
-            .order-number {
-              font-size: 24px;
-              font-weight: bold;
-              color: #333;
-              margin-bottom: 5px;
+            
+            .order-badge {
+              display: inline-block;
+              background: rgba(255,255,255,0.2);
+              padding: 12px 24px;
+              border-radius: 25px;
+              margin-top: 20px;
+              font-size: 18px;
+              font-weight: 500;
             }
+            
+            .content {
+              padding: 40px;
+            }
+            
+            .status-section {
+              text-align: center;
+              margin-bottom: 40px;
+              padding: 30px;
+              background: #f8fafc;
+              border-radius: 12px;
+              border: 1px solid #e2e8f0;
+            }
+            
             .status-badge {
               display: inline-block;
-              padding: 8px 16px;
-              border-radius: 20px;
-              font-size: 12px;
-              font-weight: bold;
+              padding: 12px 30px;
+              border-radius: 30px;
+              font-size: 16px;
+              font-weight: 600;
               text-transform: uppercase;
-              letter-spacing: 0.5px;
+              letter-spacing: 1px;
+              margin-bottom: 15px;
             }
-            .status-queued { background: #fef3c7; color: #92400e; }
-            .status-in_progress { background: #dbeafe; color: #1e40af; }
-            .status-completed { background: #d1fae5; color: #065f46; }
-            .customer-section, .prints-section {
-              margin: 30px 0;
+            
+            .status-queued { 
+              background: #fff3cd; 
+              color: #856404; 
+              border: 2px solid #ffeaa7;
             }
-            .section-title {
+            
+            .status-in_progress { 
+              background: #d1ecf1; 
+              color: #0c5460; 
+              border: 2px solid #74b9ff;
+            }
+            
+            .status-completed { 
+              background: #d4edda; 
+              color: #155724; 
+              border: 2px solid #00b894;
+            }
+            
+            .completion-date {
               font-size: 18px;
-              font-weight: bold;
-              color: #374151;
-              margin-bottom: 15px;
-              border-left: 4px solid #2563eb;
-              padding-left: 12px;
-            }
-            .customer-card, .print-card {
-              background: #f9fafb;
-              border: 1px solid #e5e7eb;
-              border-radius: 8px;
-              padding: 20px;
-              margin-bottom: 15px;
-            }
-            .customer-details {
-              display: grid;
-              grid-template-columns: 1fr 1fr;
-              gap: 15px;
-            }
-            .detail-item {
-              display: flex;
-              flex-direction: column;
-            }
-            .detail-label {
-              font-size: 12px;
-              color: #6b7280;
-              text-transform: uppercase;
-              letter-spacing: 0.5px;
-              margin-bottom: 4px;
-            }
-            .detail-value {
-              font-size: 16px;
-              font-weight: 500;
-              color: #374151;
-            }
-            .prints-grid {
-              display: grid;
-              gap: 15px;
-            }
-            .print-header {
-              display: flex;
-              justify-content: space-between;
-              align-items: center;
-              margin-bottom: 12px;
-            }
-            .print-name {
-              font-size: 16px;
-              font-weight: bold;
-              color: #374151;
-            }
-            .print-status {
-              padding: 4px 12px;
-              border-radius: 12px;
-              font-size: 11px;
-              font-weight: bold;
-              text-transform: uppercase;
-            }
-            .print-details {
-              display: grid;
-              grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
-              gap: 12px;
-              margin-top: 12px;
-            }
-            .summary-section {
-              margin-top: 40px;
-              padding-top: 20px;
-              border-top: 2px solid #e5e7eb;
-            }
-            .summary-grid {
-              display: grid;
-              grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
-              gap: 20px;
-            }
-            .summary-item {
-              text-align: center;
-              padding: 15px;
-              background: #f8fafc;
-              border-radius: 8px;
-            }
-            .summary-value {
-              font-size: 24px;
-              font-weight: bold;
-              color: #2563eb;
-              margin-bottom: 5px;
-            }
-            .summary-label {
-              font-size: 12px;
-              color: #6b7280;
-              text-transform: uppercase;
-              letter-spacing: 0.5px;
-            }
-            .footer {
-              margin-top: 50px;
-              padding-top: 20px;
-              border-top: 1px solid #e5e7eb;
-              text-align: center;
-              color: #6b7280;
-              font-size: 12px;
-            }
-            .notes-section {
-              margin: 30px 0;
-              padding: 20px;
-              background: #fffbeb;
-              border-left: 4px solid #f59e0b;
-              border-radius: 0 8px 8px 0;
-            }
-            .contact-info {
-              background: #f0f9ff;
-              border: 1px solid #0ea5e9;
-              border-radius: 8px;
-              padding: 20px;
-              margin: 30px 0;
-              text-align: center;
-            }
-            .whatsapp-link {
-              display: inline-block;
-              background: #25d366;
-              color: white;
-              padding: 12px 24px;
-              text-decoration: none;
-              border-radius: 25px;
-              font-weight: bold;
+              color: #495057;
               margin-top: 10px;
             }
+            
+            .info-grid {
+              display: grid;
+              grid-template-columns: 1fr 1fr;
+              gap: 30px;
+              margin-bottom: 40px;
+            }
+            
+            .info-card {
+              background: #ffffff;
+              border: 1px solid #e9ecef;
+              border-radius: 8px;
+              padding: 24px;
+              box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+            }
+            
+            .info-title {
+              font-size: 14px;
+              font-weight: 600;
+              color: #6c757d;
+              text-transform: uppercase;
+              letter-spacing: 0.5px;
+              margin-bottom: 12px;
+              border-bottom: 2px solid #667eea;
+              padding-bottom: 8px;
+            }
+            
+            .info-content {
+              font-size: 16px;
+              color: #495057;
+              line-height: 1.5;
+            }
+            
+            .prints-summary {
+              background: #ffffff;
+              border: 1px solid #e9ecef;
+              border-radius: 8px;
+              overflow: hidden;
+              margin-bottom: 30px;
+              box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+            }
+            
+            .prints-header {
+              background: #f8f9fa;
+              padding: 20px;
+              border-bottom: 1px solid #e9ecef;
+              font-weight: 600;
+              color: #495057;
+              font-size: 18px;
+            }
+            
+            .prints-table {
+              width: 100%;
+              border-collapse: collapse;
+            }
+            
+            .prints-table th {
+              background: #f8f9fa;
+              padding: 15px;
+              text-align: left;
+              font-weight: 600;
+              color: #495057;
+              border-bottom: 1px solid #e9ecef;
+              font-size: 14px;
+              text-transform: uppercase;
+              letter-spacing: 0.5px;
+            }
+            
+            .prints-table td {
+              padding: 15px;
+              border-bottom: 1px solid #f1f3f4;
+              color: #495057;
+            }
+            
+            .prints-table tr:last-child td {
+              border-bottom: none;
+            }
+            
+            .print-status-badge {
+              display: inline-block;
+              padding: 4px 12px;
+              border-radius: 15px;
+              font-size: 11px;
+              font-weight: 600;
+              text-transform: uppercase;
+              letter-spacing: 0.5px;
+            }
+            
+            .totals-section {
+              background: #f8f9fa;
+              border-radius: 8px;
+              padding: 25px;
+              margin: 30px 0;
+              border-left: 4px solid #667eea;
+            }
+            
+            .totals-grid {
+              display: grid;
+              grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+              gap: 20px;
+            }
+            
+            .total-item {
+              text-align: center;
+            }
+            
+            .total-value {
+              font-size: 24px;
+              font-weight: 700;
+              color: #667eea;
+              margin-bottom: 5px;
+            }
+            
+            .total-label {
+              font-size: 12px;
+              color: #6c757d;
+              text-transform: uppercase;
+              letter-spacing: 0.5px;
+              font-weight: 600;
+            }
+            
+            .notes-section {
+              background: #fff8e1;
+              border-left: 4px solid #ffb300;
+              border-radius: 0 8px 8px 0;
+              padding: 20px;
+              margin: 30px 0;
+            }
+            
+            .footer {
+              background: #2c3e50;
+              color: white;
+              padding: 30px;
+              text-align: center;
+              font-size: 12px;
+              line-height: 1.8;
+            }
+            
+            .footer strong {
+              font-size: 16px;
+              display: block;
+              margin-bottom: 10px;
+            }
+            
+            .contact-info {
+              background: #e3f2fd;
+              border: 1px solid #2196f3;
+              border-radius: 8px;
+              padding: 20px;
+              margin: 20px 0;
+              text-align: center;
+            }
+            
             @media print {
-              body { margin: 0; padding: 20px; }
+              .document { box-shadow: none; }
               .contact-info { display: none; }
+              body { margin: 0; }
+            }
+            
+            @media (max-width: 600px) {
+              .info-grid { grid-template-columns: 1fr; }
+              .totals-grid { grid-template-columns: 1fr 1fr; }
+              .prints-table { font-size: 14px; }
+              .content { padding: 20px; }
             }
           </style>
         </head>
         <body>
-          <div class="header">
-            <div class="logo">🏭 3D Print Shop</div>
-            <div class="order-info">
-              <div class="order-number">Order ${order.orderNumber}</div>
-              <div>Generated: ${new Date().toLocaleDateString('en-ZA', { 
-                year: 'numeric', 
-                month: 'long', 
-                day: 'numeric',
-                hour: '2-digit',
-                minute: '2-digit'
-              })}</div>
+          <div class="document">
+            <div class="header">
+              <div class="company-name">PRECISION 3D PRINTING</div>
+              <div class="company-tagline">Professional Manufacturing Solutions</div>
+              <div class="order-badge">Order #${order.orderNumber}</div>
             </div>
-          </div>
 
-          <div class="customer-section">
-            <div class="section-title">Customer Information</div>
-            <div class="customer-card">
-              <div class="customer-details">
-                <div class="detail-item">
-                  <div class="detail-label">Customer Name</div>
-                  <div class="detail-value">${order.customer.name}</div>
+            <div class="content">
+              <div class="status-section">
+                <div class="status-badge status-${order.status}">
+                  ${order.status.replace('_', ' ').toUpperCase()}
                 </div>
-                <div class="detail-item">
-                  <div class="detail-label">WhatsApp Number</div>
-                  <div class="detail-value">${order.customer.whatsappNumber}</div>
+                <div class="completion-date">
+                  ${isCompleted 
+                    ? '✅ Order Completed Successfully' 
+                    : `📅 Estimated Completion: ${estimatedCompletion.toLocaleDateString('en-ZA', { 
+                        weekday: 'long', 
+                        year: 'numeric', 
+                        month: 'long', 
+                        day: 'numeric' 
+                      })}`
+                  }
                 </div>
-                <div class="detail-item">
-                  <div class="detail-label">Order Date</div>
-                  <div class="detail-value">${new Date(order.createdAt).toLocaleDateString('en-ZA')}</div>
+              </div>
+
+              <div class="info-grid">
+                <div class="info-card">
+                  <div class="info-title">Customer Details</div>
+                  <div class="info-content">
+                    <strong>${order.customer.name}</strong><br>
+                    📱 ${order.customer.whatsappNumber}<br>
+                    📅 Ordered: ${new Date(order.createdAt).toLocaleDateString('en-ZA', { 
+                      year: 'numeric', 
+                      month: 'long', 
+                      day: 'numeric' 
+                    })}
+                  </div>
                 </div>
-                <div class="detail-item">
-                  <div class="detail-label">Order Status</div>
-                  <div class="detail-value">
-                    <span class="status-badge status-${order.status}">${order.status.replace('_', ' ').toUpperCase()}</span>
+                
+                <div class="info-card">
+                  <div class="info-title">Order Summary</div>
+                  <div class="info-content">
+                    <strong>${order.prints.length}</strong> Print Job${order.prints.length > 1 ? 's' : ''}<br>
+                    <strong>${order.prints.reduce((sum: number, print: any) => sum + print.quantity, 0)}</strong> Total Parts<br>
+                    <strong>${order.totalEstimatedTime || 0}h</strong> Production Time
+                  </div>
+                </div>
+              </div>
+
+              <div class="contact-info">
+                <strong>📱 Customer Communication</strong><br>
+                Save this report as PDF and share via WhatsApp for professional order updates.
+              </div>
+
+              <div class="prints-summary">
+                <div class="prints-header">
+                  Production Schedule
+                </div>
+                <table class="prints-table">
+                  <thead>
+                    <tr>
+                      <th>Item</th>
+                      <th>Qty</th>
+                      <th>Material</th>
+                      <th>Time</th>
+                      <th>Status</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    ${order.prints.map((print: any) => `
+                      <tr>
+                        <td><strong>${print.name}</strong></td>
+                        <td>${print.quantity}x</td>
+                        <td>${print.material}</td>
+                        <td>${print.estimatedTime}h</td>
+                        <td>
+                          <span class="print-status-badge status-${print.status}">
+                            ${print.status.replace('_', ' ')}
+                          </span>
+                        </td>
+                      </tr>
+                    `).join('')}
+                  </tbody>
+                </table>
+              </div>
+
+              ${order.notes ? `
+              <div class="notes-section">
+                <strong>📝 Special Instructions</strong><br>
+                ${order.notes}
+              </div>
+              ` : ''}
+
+              <div class="totals-section">
+                <div class="totals-grid">
+                  <div class="total-item">
+                    <div class="total-value">${order.prints.filter((p: any) => p.status === 'completed').length}/${order.prints.length}</div>
+                    <div class="total-label">Completed</div>
+                  </div>
+                  <div class="total-item">
+                    <div class="total-value">${Math.round((order.prints.filter((p: any) => p.status === 'completed').length / order.prints.length) * 100)}%</div>
+                    <div class="total-label">Progress</div>
+                  </div>
+                  <div class="total-item">
+                    <div class="total-value">${remainingHours.toFixed(1)}h</div>
+                    <div class="total-label">Remaining</div>
                   </div>
                 </div>
               </div>
             </div>
-          </div>
 
-          <div class="contact-info">
-            <strong>📱 Share this report:</strong> Save as PDF (Ctrl/Cmd + P) and send via WhatsApp<br>
-            <a href="https://wa.me/${order.customer.whatsappNumber.replace('+', '')}?text=${encodeURIComponent(`Hello ${order.customer.name}, here is your order update for ${order.orderNumber}`)}" 
-               class="whatsapp-link" target="_blank">💬 Open WhatsApp Chat</a>
-          </div>
-
-          <div class="prints-section">
-            <div class="section-title">Print Jobs (${order.prints.length})</div>
-            <div class="prints-grid">
-              ${order.prints.map((print: any, index: number) => `
-                <div class="print-card">
-                  <div class="print-header">
-                    <div class="print-name">${index + 1}. ${print.name}</div>
-                    <span class="print-status status-badge status-${print.status}">${print.status}</span>
-                  </div>
-                  <div class="print-details">
-                    <div class="detail-item">
-                      <div class="detail-label">Quantity</div>
-                      <div class="detail-value">${print.quantity}x</div>
-                    </div>
-                    <div class="detail-item">
-                      <div class="detail-label">Material</div>
-                      <div class="detail-value">${print.material}</div>
-                    </div>
-                    <div class="detail-item">
-                      <div class="detail-label">Print Time</div>
-                      <div class="detail-value">${print.estimatedTime}h</div>
-                    </div>
-                    ${print.gcodeEstimatedTime ? `
-                    <div class="detail-item">
-                      <div class="detail-label">GCODE Time</div>
-                      <div class="detail-value">${print.gcodeEstimatedTime}h</div>
-                    </div>
-                    ` : ''}
-                  </div>
-                </div>
-              `).join('')}
+            <div class="footer">
+              <strong>Precision 3D Printing Services</strong>
+              Professional manufacturing with quality assurance<br>
+              📧 orders@precision3d.co.za | 📞 +27 123 456 7890<br>
+              Generated: ${new Date().toLocaleString('en-ZA')}
             </div>
-          </div>
-
-          ${order.notes ? `
-          <div class="notes-section">
-            <div class="section-title">📝 Order Notes</div>
-            <p>${order.notes}</p>
-          </div>
-          ` : ''}
-
-          <div class="summary-section">
-            <div class="section-title">Order Summary</div>
-            <div class="summary-grid">
-              <div class="summary-item">
-                <div class="summary-value">${order.prints.length}</div>
-                <div class="summary-label">Total Items</div>
-              </div>
-              <div class="summary-item">
-                <div class="summary-value">${order.prints.reduce((sum: number, print: any) => sum + print.quantity, 0)}</div>
-                <div class="summary-label">Total Quantity</div>
-              </div>
-              <div class="summary-item">
-                <div class="summary-value">${order.totalEstimatedTime}h</div>
-                <div class="summary-label">Total Print Time</div>
-              </div>
-              <div class="summary-item">
-                <div class="summary-value">R ${order.prints.reduce((sum: number, print: any) => sum + (parseFloat(print.estimatedTime) * 50 * print.quantity), 0).toFixed(2)}</div>
-                <div class="summary-label">Estimated Cost</div>
-              </div>
-            </div>
-          </div>
-
-          <div class="footer">
-            <p><strong>3D Print Shop Management System</strong></p>
-            <p>Generated on ${new Date().toLocaleString('en-ZA')} | Order ${order.orderNumber}</p>
-            <p>📧 Contact: info@3dprintshop.co.za | 📞 Phone: +27 123 456 7890</p>
           </div>
         </body>
         </html>
