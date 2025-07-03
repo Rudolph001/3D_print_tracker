@@ -3,6 +3,8 @@ import { createServer, type Server } from "http";
 import multer from "multer";
 import path from "path";
 import fs from "fs";
+import * as pdf from "html-pdf-node";
+import puppeteer from "puppeteer";
 
 import { storage } from "./storage";
 import { 
@@ -208,6 +210,8 @@ const upload = multer({
 });
 
 export async function registerRoutes(app: Express): Promise<Server> {
+
+
   // Dashboard stats
   app.get("/api/dashboard/stats", async (req, res) => {
     try {
@@ -480,27 +484,24 @@ export async function registerRoutes(app: Express): Promise<Server> {
     res.sendFile(filePath);
   });
 
-  // WhatsApp routes
-  // Professional HTML Report for printing
-  app.get("/api/orders/:id/report", async (req, res) => {
-    try {
-      const id = parseInt(req.params.id);
-      const order = await storage.getOrderWithDetails(id);
-      
-      if (!order) {
-        return res.status(404).json({ error: "Order not found" });
-      }
+  // Helper function to generate report HTML
+  const generateReportHTML = async (orderId: number) => {
+    const order = await storage.getOrderWithDetails(orderId);
+    
+    if (!order) {
+      throw new Error("Order not found");
+    }
 
-      // Calculate estimated completion date
-      const now = new Date();
-      const remainingHours = order.prints
-        .filter((print: any) => print.status !== 'completed')
-        .reduce((sum: number, print: any) => sum + (parseFloat(print.estimatedTime) * print.quantity), 0);
-      
-      const estimatedCompletion = new Date(now.getTime() + (remainingHours * 60 * 60 * 1000));
-      const isCompleted = order.status === 'completed';
+    // Calculate estimated completion date
+    const now = new Date();
+    const remainingHours = order.prints
+      .filter((print: any) => print.status !== 'completed')
+      .reduce((sum: number, print: any) => sum + (parseFloat(print.estimatedTime) * print.quantity), 0);
+    
+    const estimatedCompletion = new Date(now.getTime() + (remainingHours * 60 * 60 * 1000));
+    const isCompleted = order.status === 'completed';
 
-      const html = `
+    return `
         <!DOCTYPE html>
         <html>
         <head>
@@ -818,13 +819,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
                     <strong>${order.prints.length}</strong> Print Job${order.prints.length > 1 ? 's' : ''}<br>
                     <strong>${order.prints.reduce((sum: number, print: any) => sum + print.quantity, 0)}</strong> Total Parts<br>
                     <strong>${order.totalEstimatedTime || 0}h</strong> Production Time
+                    ${order.invoiceNumber ? `<br><strong>Invoice:</strong> ${order.invoiceNumber}` : ''}
+                    ${order.referenceNumber ? `<br><strong>Reference:</strong> ${order.referenceNumber}` : ''}
                   </div>
                 </div>
-              </div>
-
-              <div class="contact-info">
-                <strong>📱 Customer Communication</strong><br>
-                Save this report as PDF and share via WhatsApp for professional order updates.
               </div>
 
               <div class="prints-summary">
@@ -894,12 +892,84 @@ export async function registerRoutes(app: Express): Promise<Server> {
         </body>
         </html>
       `;
+  };
 
+  // WhatsApp routes
+  // Professional HTML Report for printing
+  app.get("/api/orders/:id/report", async (req, res) => {
+    try {
+      const id = parseInt(req.params.id);
+      const html = await generateReportHTML(id);
       res.setHeader('Content-Type', 'text/html');
       res.send(html);
     } catch (error) {
       console.error("Report generation error:", error);
       res.status(500).json({ error: "Failed to generate report" });
+    }
+  });
+
+  // PDF Export Route
+  app.get("/api/orders/:id/pdf", async (req, res) => {
+    try {
+      const id = parseInt(req.params.id);
+      const html = await generateReportHTML(id);
+      
+      const options = {
+        format: 'A4',
+        margin: {
+          top: '20mm',
+          bottom: '20mm',
+          left: '15mm',
+          right: '15mm'
+        },
+        printBackground: true
+      };
+
+      const pdfBuffer = await pdf.generatePdf({ content: html }, options);
+      
+      res.setHeader('Content-Type', 'application/pdf');
+      res.setHeader('Content-Disposition', `attachment; filename="Order-${id}-Report.pdf"`);
+      res.send(pdfBuffer);
+    } catch (error) {
+      console.error("PDF generation error:", error);
+      res.status(500).json({ error: "Failed to generate PDF" });
+    }
+  });
+
+  // SVG Export Route
+  app.get("/api/orders/:id/svg", async (req, res) => {
+    try {
+      const id = parseInt(req.params.id);
+      const html = await generateReportHTML(id);
+      
+      const browser = await puppeteer.launch({ headless: true });
+      const page = await browser.newPage();
+      
+      await page.setContent(html);
+      await page.setViewport({ width: 800, height: 1200 });
+      
+      const svgContent = await page.evaluate(() => {
+        const element = document.querySelector('.document');
+        if (element) {
+          const rect = element.getBoundingClientRect();
+          const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="${rect.width}" height="${rect.height}" viewBox="0 0 ${rect.width} ${rect.height}">
+            <foreignObject width="100%" height="100%">
+              <div xmlns="http://www.w3.org/1999/xhtml">${element.outerHTML}</div>
+            </foreignObject>
+          </svg>`;
+          return svg;
+        }
+        return '';
+      });
+      
+      await browser.close();
+      
+      res.setHeader('Content-Type', 'image/svg+xml');
+      res.setHeader('Content-Disposition', `attachment; filename="Order-${id}-Report.svg"`);
+      res.send(svgContent);
+    } catch (error) {
+      console.error("SVG generation error:", error);
+      res.status(500).json({ error: "Failed to generate SVG" });
     }
   });
 
