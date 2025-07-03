@@ -31,6 +31,8 @@ export const products = pgTable("products", {
   category: text("category"),
   stlFileName: text("stl_file_name"),
   stlFileUrl: text("stl_file_url"),
+  drawingFileName: text("drawing_file_name"),
+  drawingFileUrl: text("drawing_file_url"),
   estimatedPrintTime: decimal("estimated_print_time", { precision: 10, scale: 2 }).notNull(),
   material: text("material").notNull(),
   price: decimal("price", { precision: 10, scale: 2 }),

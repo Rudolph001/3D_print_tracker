@@ -108,6 +108,8 @@ Changelog:
 - July 03, 2025. Successfully migrated from Replit Agent to Replit environment
   * Fixed PDF generation by replacing Puppeteer with browser-native printing
   * Created professional print-ready catalog and order reports
+  * Added part drawing upload functionality for products
+  * Technical drawings now display in product catalog
   * All database connections and workflows now working properly
 - July 02, 2025. Initial setup
 ```

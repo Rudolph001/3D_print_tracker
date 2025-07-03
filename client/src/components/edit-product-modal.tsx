@@ -35,6 +35,7 @@ interface EditProductModalProps {
 export function EditProductModal({ isOpen, onClose, onSuccess, product }: EditProductModalProps) {
   const { toast } = useToast();
   const [stlFile, setStlFile] = useState<File | null>(null);
+  const [drawingFile, setDrawingFile] = useState<File | null>(null);
 
   const form = useForm({
     resolver: zodResolver(productSchema),
@@ -75,6 +76,11 @@ export function EditProductModal({ isOpen, onClose, onSuccess, product }: EditPr
         formData.append('stlFile', stlFile);
       }
 
+      // Add drawing file if present
+      if (drawingFile) {
+        formData.append('drawingFile', drawingFile);
+      }
+
       const response = await fetch(`/api/products/${product.id}`, {
         method: 'PATCH',
         body: formData,
@@ -109,6 +115,10 @@ export function EditProductModal({ isOpen, onClose, onSuccess, product }: EditPr
 
   const handleFileUpload = (file: File | null) => {
     setStlFile(file);
+  };
+
+  const handleDrawingUpload = (file: File | null) => {
+    setDrawingFile(file);
   };
 
   return (

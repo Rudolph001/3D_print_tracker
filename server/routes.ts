@@ -194,12 +194,21 @@ const upload = multer({
     }
   }),
   fileFilter: (req, file, cb) => {
+    // Allow STL and GCODE files
     if (file.mimetype === 'application/octet-stream' || 
         file.originalname.endsWith('.stl') || 
         file.originalname.endsWith('.gcode')) {
       cb(null, true);
+    }
+    // Allow common image formats for drawings
+    else if (file.mimetype.startsWith('image/')) {
+      cb(null, true);
+    }
+    // Allow PDF files for technical drawings
+    else if (file.mimetype === 'application/pdf') {
+      cb(null, true);
     } else {
-      const error = new Error('Only STL and GCODE files are allowed') as any;
+      const error = new Error('Only STL, GCODE, image, and PDF files are allowed') as any;
       cb(error, false);
     }
   },
@@ -390,12 +399,21 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.post("/api/products", upload.single('stlFile'), async (req, res) => {
+  app.post("/api/products", upload.fields([
+    { name: 'stlFile', maxCount: 1 },
+    { name: 'drawingFile', maxCount: 1 }
+  ]), async (req, res) => {
     try {
+      const files = req.files as { [fieldname: string]: Express.Multer.File[] };
+      const stlFile = files?.stlFile?.[0];
+      const drawingFile = files?.drawingFile?.[0];
+
       const productData = insertProductSchema.parse({
         ...req.body,
-        stlFileName: req.file?.originalname,
-        stlFileUrl: req.file ? `/api/files/${path.basename(req.file.path)}` : null,
+        stlFileName: stlFile?.originalname,
+        stlFileUrl: stlFile ? `/api/files/${path.basename(stlFile.path)}` : null,
+        drawingFileName: drawingFile?.originalname,
+        drawingFileUrl: drawingFile ? `/api/files/${path.basename(drawingFile.path)}` : null,
       });
       const product = await storage.createProduct(productData);
       res.status(201).json(product);
@@ -408,15 +426,26 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.patch("/api/products/:id", upload.single('stlFile'), async (req, res) => {
+  app.patch("/api/products/:id", upload.fields([
+    { name: 'stlFile', maxCount: 1 },
+    { name: 'drawingFile', maxCount: 1 }
+  ]), async (req, res) => {
     try {
       const id = parseInt(req.params.id);
       const updateData: any = { ...req.body };
+      const files = req.files as { [fieldname: string]: Express.Multer.File[] };
+      const stlFile = files?.stlFile?.[0];
+      const drawingFile = files?.drawingFile?.[0];
 
       // Add new file info if uploaded
-      if (req.file) {
-        updateData.stlFileName = req.file.originalname;
-        updateData.stlFileUrl = `/api/files/${path.basename(req.file.path)}`;
+      if (stlFile) {
+        updateData.stlFileName = stlFile.originalname;
+        updateData.stlFileUrl = `/api/files/${path.basename(stlFile.path)}`;
+      }
+
+      if (drawingFile) {
+        updateData.drawingFileName = drawingFile.originalname;
+        updateData.drawingFileUrl = `/api/files/${path.basename(drawingFile.path)}`;
       }
 
       const updatedProduct = await storage.updateProduct(id, updateData);
@@ -1809,6 +1838,40 @@ export async function registerRoutes(app: Express): Promise<Server> {
               background: white;
               box-shadow: 0 4px 12px rgba(0,0,0,0.1);
             }
+
+            .product-image {
+              height: 200px;
+              background: #f8fafc;
+              display: flex;
+              align-items: center;
+              justify-content: center;
+              border-bottom: 1px solid #e9ecef;
+              overflow: hidden;
+            }
+
+            .product-image img {
+              max-width: 100%;
+              max-height: 100%;
+              object-fit: contain;
+            }
+
+            .no-image {
+              color: #94a3b8;
+              font-size: 14px;
+              text-transform: uppercase;
+              letter-spacing: 1px;
+              background: linear-gradient(45deg, #f1f3f4 25%, transparent 25%), 
+                          linear-gradient(-45deg, #f1f3f4 25%, transparent 25%), 
+                          linear-gradient(45deg, transparent 75%, #f1f3f4 75%), 
+                          linear-gradient(-45deg, transparent 75%, #f1f3f4 75%);
+              background-size: 20px 20px;
+              background-position: 0 0, 0 10px, 10px -10px, -10px 0px;
+              width: 100%;
+              height: 100%;
+              display: flex;
+              align-items: center;
+              justify-content: center;
+            }
             
             .product-info {
               padding: 20px;
@@ -1933,6 +1996,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
             <div class="products-grid">
               ${products.map((product: any) => `
                 <div class="product-card">
+                  <div class="product-image">
+                    ${product.drawingFileUrl ? 
+                      `<img src="${product.drawingFileUrl}" alt="${product.name} technical drawing" />` : 
+                      `<div class="no-image">Technical Drawing<br>Not Available</div>`
+                    }
+                  </div>
                   <div class="product-info">
                     <div class="product-name">${product.name}</div>
                     <div class="product-description">${product.description || 'Professional 3D printed item with premium quality finish.'}</div>

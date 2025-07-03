@@ -33,6 +33,7 @@ interface AddProductModalProps {
 export function AddProductModal({ isOpen, onClose, onSuccess }: AddProductModalProps) {
   const { toast } = useToast();
   const [stlFile, setStlFile] = useState<File | null>(null);
+  const [drawingFile, setDrawingFile] = useState<File | null>(null);
 
   const form = useForm({
     resolver: zodResolver(productSchema),
@@ -60,6 +61,11 @@ export function AddProductModal({ isOpen, onClose, onSuccess }: AddProductModalP
         formData.append('stlFile', stlFile);
       }
 
+      // Add drawing file if present
+      if (drawingFile) {
+        formData.append('drawingFile', drawingFile);
+      }
+
       const response = await fetch('/api/products', {
         method: 'POST',
         body: formData,
@@ -79,6 +85,7 @@ export function AddProductModal({ isOpen, onClose, onSuccess }: AddProductModalP
       onSuccess();
       form.reset();
       setStlFile(null);
+      setDrawingFile(null);
     },
     onError: () => {
       toast({
@@ -95,6 +102,10 @@ export function AddProductModal({ isOpen, onClose, onSuccess }: AddProductModalP
 
   const handleFileUpload = (file: File | null) => {
     setStlFile(file);
+  };
+
+  const handleDrawingUpload = (file: File | null) => {
+    setDrawingFile(file);
   };
 
   return (
@@ -184,19 +195,40 @@ export function AddProductModal({ isOpen, onClose, onSuccess }: AddProductModalP
             </div>
           </div>
           
-          <div>
-            <Label>Upload STL File</Label>
-            <div className="border-2 border-dashed border-gray-300 rounded-lg p-6 text-center hover:border-gray-400 transition-colors cursor-pointer relative">
-              <Upload className="h-8 w-8 mx-auto mb-2 text-gray-400" />
-              <p className="text-sm text-gray-600">
-                {stlFile ? stlFile.name : "Click to upload STL file"}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div>
+              <Label>Upload STL File</Label>
+              <div className="border-2 border-dashed border-gray-300 rounded-lg p-6 text-center hover:border-gray-400 transition-colors cursor-pointer relative">
+                <Upload className="h-8 w-8 mx-auto mb-2 text-gray-400" />
+                <p className="text-sm text-gray-600">
+                  {stlFile ? stlFile.name : "Click to upload STL file"}
+                </p>
+                <input
+                  type="file"
+                  accept=".stl"
+                  className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
+                  onChange={(e) => handleFileUpload(e.target.files?.[0] || null)}
+                />
+              </div>
+            </div>
+
+            <div>
+              <Label>Upload Part Drawing</Label>
+              <div className="border-2 border-dashed border-gray-300 rounded-lg p-6 text-center hover:border-gray-400 transition-colors cursor-pointer relative">
+                <Upload className="h-8 w-8 mx-auto mb-2 text-gray-400" />
+                <p className="text-sm text-gray-600">
+                  {drawingFile ? drawingFile.name : "Click to upload technical drawing"}
+                </p>
+                <input
+                  type="file"
+                  accept=".png,.jpg,.jpeg,.pdf,.svg"
+                  className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
+                  onChange={(e) => handleDrawingUpload(e.target.files?.[0] || null)}
+                />
+              </div>
+              <p className="text-xs text-gray-500 mt-2">
+                Supports: PNG, JPG, PDF, SVG files
               </p>
-              <input
-                type="file"
-                accept=".stl"
-                className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
-                onChange={(e) => handleFileUpload(e.target.files?.[0] || null)}
-              />
             </div>
           </div>
 
