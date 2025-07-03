@@ -27,7 +27,7 @@ import type {
   InsertWhatsappMessage
 } from "@shared/schema-sqlite";
 import { db } from "./db";
-import { eq, desc, sql, and, lt } from "drizzle-orm";
+import { eq, desc, asc, sql, and, lt } from "drizzle-orm";
 
 export interface IStorage {
   // Customer operations
