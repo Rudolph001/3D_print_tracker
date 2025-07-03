@@ -12,6 +12,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { apiRequest } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
+import { formatPrintTime } from "@/lib/time-utils";
 
 const productSchema = z.object({
   name: z.string().min(1, "Product name is required"),
@@ -164,6 +165,11 @@ export function AddProductModal({ isOpen, onClose, onSuccess }: AddProductModalP
                 step="0.5"
                 {...form.register("estimatedPrintTime", { valueAsNumber: true })}
               />
+              {form.watch("estimatedPrintTime") && (
+                <p className="text-xs text-gray-500 mt-1">
+                  Display time: {formatPrintTime(form.watch("estimatedPrintTime"))}
+                </p>
+              )}
               {form.formState.errors.estimatedPrintTime && (
                 <p className="text-sm text-red-600">{form.formState.errors.estimatedPrintTime.message}</p>
               )}

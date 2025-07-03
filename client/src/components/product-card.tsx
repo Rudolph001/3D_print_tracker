@@ -1,6 +1,7 @@
 import { Button } from "@/components/ui/button";
 import { STLViewer } from "./stl-viewer";
 import { Expand, Edit, Trash2 } from "lucide-react";
+import { formatPrintTime } from "@/lib/time-utils";
 
 interface ProductCardProps {
   product: any;
@@ -25,7 +26,7 @@ export function ProductCard({ product, onEdit, onDelete }: ProductCardProps) {
         <p className="text-sm text-gray-600 mb-3">{product.description}</p>
         <div className="flex items-center justify-between">
           <div className="text-sm text-gray-600">
-            <p>Print time: {product.estimatedPrintTime}h</p>
+            <p>Print time: {formatPrintTime(parseFloat(product.estimatedPrintTime))}</p>
             <p>Material: {product.material}</p>
           </div>
           <div className="text-right">

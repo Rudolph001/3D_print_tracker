@@ -13,6 +13,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { apiRequest } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
+import { formatPrintTime } from "@/lib/time-utils";
 
 const orderSchema = z.object({
   customerName: z.string().min(1, "Customer name is required"),
@@ -258,7 +259,7 @@ export function EditOrderModal({ isOpen, onClose, onSuccess, order }: EditOrderM
                         <SelectContent>
                           {products.map((product: any) => (
                             <SelectItem key={product.id} value={product.id.toString()}>
-                              {product.name} - {product.material} ({product.estimatedPrintTime}h)
+                              {product.name} - {product.material} ({formatPrintTime(parseFloat(product.estimatedPrintTime))})
                             </SelectItem>
                           ))}
                         </SelectContent>
@@ -296,11 +297,11 @@ export function EditOrderModal({ isOpen, onClose, onSuccess, order }: EditOrderM
                         </div>
                         <div>
                           <span className="text-gray-600">Time per plate:</span>
-                          <div className="font-medium">{getSelectedProduct(print.productId)?.estimatedPrintTime}h</div>
+                          <div className="font-medium">{formatPrintTime(parseFloat(getSelectedProduct(print.productId)?.estimatedPrintTime || "0"))}</div>
                         </div>
                         <div>
                           <span className="text-gray-600">Total print time:</span>
-                          <div className="font-medium">{calculateTotalPrintTime(print.productId, print.quantityNeeded, print.quantityPerPlate)}h</div>
+                          <div className="font-medium">{formatPrintTime(calculateTotalPrintTime(print.productId, print.quantityNeeded, print.quantityPerPlate))}</div>
                         </div>
                         <div>
                           <span className="text-gray-600">Material:</span>
