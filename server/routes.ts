@@ -1984,14 +1984,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
             <div class="catalog-badge">PRODUCT CATALOG ${new Date().getFullYear()}</div>
           </div>
 
-          <div class="intro-section">
-            <div class="intro-title">Premium 3D Printing Services</div>
-            <div class="intro-text">
-              Discover our comprehensive range of professionally designed 3D printable products. 
-              From precision tools to creative designs, each item in our catalog is optimized for 
-              high-quality manufacturing using state-of-the-art 3D printing technology.
-            </div>
-          </div>
+          
 
           ${products.length === 0 ? `
             <div class="no-products">
