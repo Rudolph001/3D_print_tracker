@@ -1,12 +1,13 @@
 import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
-import { MessageCircle, Edit, Phone, Download, Share, Trash2 } from "lucide-react";
 import { format } from "date-fns";
+import { MessageCircle, Edit, Phone, Download, Share, Trash2 } from "lucide-react";
 import { useMutation } from "@tanstack/react-query";
 import { apiRequest } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
 import { openOrderReport } from "@/lib/whatsapp";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { useQueryClient } from "@tanstack/react-query";
 
 interface OrderDetailsProps {
   order: any;
@@ -19,6 +20,7 @@ interface OrderDetailsProps {
 
 export function OrderDetails({ order, onUpdate, onEdit, onDelete, getStatusColor, getStatusBgColor }: OrderDetailsProps) {
   const { toast } = useToast();
+  const queryClient = useQueryClient();
 
   const sendWhatsAppMutation = useMutation({
     mutationFn: async (data: { orderId: number; message: string }) => {
@@ -62,6 +64,31 @@ export function OrderDetails({ order, onUpdate, onEdit, onDelete, getStatusColor
     if (print.status === "completed") return 100;
     if (print.status === "printing") return 50;
     return 0;
+  };
+
+  const updatePrintStatusMutation = useMutation({
+    mutationFn: async ({ printId, status }: { printId: number; status: string }) => {
+      return apiRequest("PATCH", `/api/prints/${printId}/status`, { status });
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["orders"] });
+      toast({
+        title: "Success",
+        description: "Print status updated successfully",
+      });
+      onUpdate();
+    },
+    onError: (error) => {
+      toast({
+        title: "Error",
+        description: "Failed to update print status",
+        variant: "destructive",
+      });
+    },
+  });
+
+  const handlePrintStatusUpdate = (printId: number, newStatus: string) => {
+    updatePrintStatusMutation.mutate({ printId, status: newStatus });
   };
 
   return (
@@ -130,6 +157,16 @@ export function OrderDetails({ order, onUpdate, onEdit, onDelete, getStatusColor
                       <Progress value={getPrintProgress(print)} className="h-1" />
                     </div>
                   )}
+                   <Select onValueChange={(value) => handlePrintStatusUpdate(print.id, value)}>
+                      <SelectTrigger className="w-[180px] mt-2">
+                        <SelectValue placeholder="Update Status" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="queued">Queued</SelectItem>
+                        <SelectItem value="in_progress">In Progress</SelectItem>
+                        <SelectItem value="completed">Completed</SelectItem>
+                      </SelectContent>
+                    </Select>
                 </div>
               ))
             )}
