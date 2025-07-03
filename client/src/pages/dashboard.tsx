@@ -10,6 +10,7 @@ import { ProductCard } from "@/components/product-card";
 import { NewOrderModal } from "@/components/new-order-modal";
 import { AddProductModal } from "@/components/add-product-modal";
 import { EditOrderModal } from "@/components/edit-order-modal";
+import { EditProductModal } from "@/components/edit-product-modal";
 import { apiRequest } from "@/lib/queryClient";
 
 export default function Dashboard() {
@@ -17,7 +18,9 @@ export default function Dashboard() {
   const [isNewOrderModalOpen, setIsNewOrderModalOpen] = useState(false);
   const [isAddProductModalOpen, setIsAddProductModalOpen] = useState(false);
   const [isEditOrderModalOpen, setIsEditOrderModalOpen] = useState(false);
+  const [isEditProductModalOpen, setIsEditProductModalOpen] = useState(false);
   const [editingOrder, setEditingOrder] = useState<any | null>(null);
+  const [editingProduct, setEditingProduct] = useState<any | null>(null);
 
   const { data: orders = [], refetch: refetchOrders } = useQuery({
     queryKey: ["/api/orders"],
@@ -67,6 +70,24 @@ export default function Dashboard() {
         // You might want to add a toast notification here
       } catch (error) {
         console.error('Failed to delete order:', error);
+        // You might want to add an error toast notification here
+      }
+    }
+  };
+
+  const handleEditProduct = (product: any) => {
+    setEditingProduct(product);
+    setIsEditProductModalOpen(true);
+  };
+
+  const handleDeleteProduct = async (productId: number) => {
+    if (window.confirm('Are you sure you want to delete this product? This action cannot be undone.')) {
+      try {
+        await apiRequest("DELETE", `/api/products/${productId}`);
+        refetchProducts();
+        // You might want to add a toast notification here
+      } catch (error) {
+        console.error('Failed to delete product:', error);
         // You might want to add an error toast notification here
       }
     }
@@ -199,7 +220,12 @@ export default function Dashboard() {
                   </div>
                 ) : (
                   products.map((product: any) => (
-                    <ProductCard key={product.id} product={product} />
+                    <ProductCard 
+                      key={product.id} 
+                      product={product} 
+                      onEdit={handleEditProduct}
+                      onDelete={handleDeleteProduct}
+                    />
                   ))
                 )}
               </div>
@@ -248,6 +274,20 @@ export default function Dashboard() {
           setIsAddProductModalOpen(false);
           refetchProducts();
         }}
+      />
+
+      <EditProductModal 
+        isOpen={isEditProductModalOpen}
+        onClose={() => {
+          setIsEditProductModalOpen(false);
+          setEditingProduct(null);
+        }}
+        onSuccess={() => {
+          setIsEditProductModalOpen(false);
+          setEditingProduct(null);
+          refetchProducts();
+        }}
+        product={editingProduct}
       />
     </div>
   );

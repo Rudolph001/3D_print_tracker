@@ -23,29 +23,31 @@ export interface IStorage {
   getCustomer(id: number): Promise<Customer | undefined>;
   getCustomerByWhatsapp(whatsappNumber: string): Promise<Customer | undefined>;
   createCustomer(customer: InsertCustomer): Promise<Customer>;
-  
+
   // Order operations
   getOrder(id: number): Promise<Order | undefined>;
   getOrderWithDetails(id: number): Promise<any>;
   getOrders(): Promise<any[]>;
   createOrder(order: InsertOrder): Promise<Order>;
   updateOrderStatus(id: number, status: string): Promise<Order>;
-  
+
   // Product operations
   getProduct(id: number): Promise<Product | undefined>;
   getProducts(): Promise<Product[]>;
   createProduct(product: InsertProduct): Promise<Product>;
-  
+  updateProduct(id: number, updateData: Partial<InsertProduct>): Promise<Product>;
+  deleteProduct(id: number): Promise<void>;
+
   // Print operations
   getPrint(id: number): Promise<Print | undefined>;
   getPrintsByOrder(orderId: number): Promise<Print[]>;
   createPrint(print: InsertPrint): Promise<Print>;
   updatePrintStatus(id: number, status: string): Promise<Print>;
-  
+
   // WhatsApp operations
   createWhatsappMessage(message: InsertWhatsappMessage): Promise<WhatsappMessage>;
   getWhatsappMessages(orderId: number): Promise<WhatsappMessage[]>;
-  
+
   // Dashboard stats
   getDashboardStats(): Promise<any>;
 }
@@ -145,10 +147,10 @@ export class DatabaseStorage implements IStorage {
   async deleteOrder(id: number): Promise<void> {
     // Delete prints first (foreign key constraint)
     await db.delete(prints).where(eq(prints.orderId, id));
-    
+
     // Delete WhatsApp messages
     await db.delete(whatsappMessages).where(eq(whatsappMessages.orderId, id));
-    
+
     // Delete the order
     await db.delete(orders).where(eq(orders.id, id));
   }
@@ -170,9 +172,22 @@ export class DatabaseStorage implements IStorage {
     return await db.select().from(products).orderBy(asc(products.name));
   }
 
-  async createProduct(product: InsertProduct): Promise<Product> {
-    const [newProduct] = await db.insert(products).values(product).returning();
+  async createProduct(productData: InsertProduct): Promise<Product> {
+    const [newProduct] = await db.insert(products).values(productData).returning();
     return newProduct;
+  }
+
+  async updateProduct(id: number, updateData: Partial<InsertProduct>): Promise<Product> {
+    const [product] = await db
+      .update(products)
+      .set(updateData)
+      .where(eq(products.id, id))
+      .returning();
+    return product;
+  }
+
+  async deleteProduct(id: number): Promise<void> {
+    await db.delete(products).where(eq(products.id, id));
   }
 
   async getPrint(id: number): Promise<Print | undefined> {
@@ -209,7 +224,7 @@ export class DatabaseStorage implements IStorage {
   async getDashboardStats(): Promise<any> {
     const allOrders = await db.select().from(orders);
     const allPrints = await db.select().from(prints);
-    
+
     const activeOrders = allOrders.filter(order => order.status !== 'completed').length;
     const printsInQueue = allPrints.filter(print => print.status === 'queued').length;
     const completedToday = allOrders.filter(order => {
@@ -218,7 +233,7 @@ export class DatabaseStorage implements IStorage {
       return order.status === 'completed' && 
              orderDate.toDateString() === today.toDateString();
     }).length;
-    
+
     const estimatedHours = allPrints
       .filter(print => print.status !== 'completed')
       .reduce((total, print) => total + parseFloat(print.estimatedTime), 0);

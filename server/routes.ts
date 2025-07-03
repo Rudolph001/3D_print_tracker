@@ -405,6 +405,36 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  app.patch("/api/products/:id", upload.single('stlFile'), async (req, res) => {
+    try {
+      const id = parseInt(req.params.id);
+      const updateData: any = { ...req.body };
+      
+      // Add new file info if uploaded
+      if (req.file) {
+        updateData.stlFileName = req.file.originalname;
+        updateData.stlFileUrl = `/api/files/${path.basename(req.file.path)}`;
+      }
+      
+      const updatedProduct = await storage.updateProduct(id, updateData);
+      res.json(updatedProduct);
+    } catch (error) {
+      console.error("Update product error:", error);
+      res.status(500).json({ error: "Failed to update product" });
+    }
+  });
+
+  app.delete("/api/products/:id", async (req, res) => {
+    try {
+      const id = parseInt(req.params.id);
+      await storage.deleteProduct(id);
+      res.json({ success: true });
+    } catch (error) {
+      console.error("Delete product error:", error);
+      res.status(500).json({ error: "Failed to delete product" });
+    }
+  });
+
   // File upload for STL files
   app.post("/api/upload/stl", upload.single('stlFile'), async (req, res) => {
     try {
