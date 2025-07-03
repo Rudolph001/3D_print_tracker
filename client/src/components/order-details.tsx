@@ -195,15 +195,7 @@ export function OrderDetails({ order, onUpdate, onEdit, onDelete, getStatusColor
             View Report
           </Button>
           
-          <Button
-            onClick={handleSendWhatsApp}
-            disabled={sendWhatsAppMutation.isPending}
-            variant="outline"
-            className="w-full"
-          >
-            <Share className="h-4 w-4 mr-2" />
-            {sendWhatsAppMutation.isPending ? "Generating..." : "Get WhatsApp Share Link"}
-          </Button>
+          
           <div className="grid grid-cols-2 gap-2">
             <Button variant="outline" onClick={() => onEdit(order.id)} className="w-full">
               <Edit className="h-4 w-4 mr-2" />
