@@ -3,7 +3,6 @@ import { createServer, type Server } from "http";
 import multer from "multer";
 import path from "path";
 import fs from "fs";
-import * as pdf from "html-pdf-node";
 import puppeteer from "puppeteer";
 
 import { storage } from "./storage";
@@ -914,7 +913,24 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const id = parseInt(req.params.id);
       const html = await generateReportHTML(id);
       
-      const options = {
+      const browser = await puppeteer.launch({ 
+        headless: true,
+        args: [
+          '--no-sandbox',
+          '--disable-setuid-sandbox',
+          '--disable-dev-shm-usage',
+          '--disable-accelerated-2d-canvas',
+          '--no-first-run',
+          '--no-zygote',
+          '--single-process',
+          '--disable-gpu'
+        ]
+      });
+      const page = await browser.newPage();
+      
+      await page.setContent(html, { waitUntil: 'networkidle0' });
+      
+      const pdfBuffer = await page.pdf({
         format: 'A4',
         margin: {
           top: '20mm',
@@ -923,9 +939,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
           right: '15mm'
         },
         printBackground: true
-      };
-
-      const pdfBuffer = await pdf.generatePdf({ content: html }, options);
+      });
+      
+      await browser.close();
       
       res.setHeader('Content-Type', 'application/pdf');
       res.setHeader('Content-Disposition', `attachment; filename="Order-${id}-Report.pdf"`);
@@ -942,7 +958,19 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const id = parseInt(req.params.id);
       const html = await generateReportHTML(id);
       
-      const browser = await puppeteer.launch({ headless: true });
+      const browser = await puppeteer.launch({ 
+        headless: true,
+        args: [
+          '--no-sandbox',
+          '--disable-setuid-sandbox',
+          '--disable-dev-shm-usage',
+          '--disable-accelerated-2d-canvas',
+          '--no-first-run',
+          '--no-zygote',
+          '--single-process',
+          '--disable-gpu'
+        ]
+      });
       const page = await browser.newPage();
       
       await page.setContent(html);
