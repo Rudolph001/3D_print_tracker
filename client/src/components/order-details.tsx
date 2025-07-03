@@ -194,30 +194,7 @@ export function OrderDetails({ order, onUpdate, onEdit, onDelete, getStatusColor
             <Download className="h-4 w-4 mr-2" />
             View Report
           </Button>
-          <div className="grid grid-cols-2 gap-2">
-            <Button
-              onClick={() => {
-                const pdfUrl = `/api/orders/${order.id}/pdf`;
-                window.open(pdfUrl, '_blank');
-              }}
-              variant="outline"
-              className="w-full"
-            >
-              <Download className="h-4 w-4 mr-2" />
-              Save as PDF
-            </Button>
-            <Button
-              onClick={() => {
-                const svgUrl = `/api/orders/${order.id}/svg`;
-                window.open(svgUrl, '_blank');
-              }}
-              variant="outline"
-              className="w-full"
-            >
-              <Download className="h-4 w-4 mr-2" />
-              Save as SVG
-            </Button>
-          </div>
+          
           <Button
             onClick={handleSendWhatsApp}
             disabled={sendWhatsAppMutation.isPending}
