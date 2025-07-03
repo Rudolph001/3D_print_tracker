@@ -1849,18 +1849,40 @@ export async function registerRoutes(app: Express): Promise<Server> {
           <meta charset="utf-8">
           <title>Professional Product Catalog - Precision 3D Printing</title>
           <style>
+            @page {
+              size: A4;
+              margin: 15mm 15mm 20mm 15mm;
+            }
+            
             @media print {
-              body { margin: 0; padding: 0; }
+              body { 
+                margin: 0; 
+                padding: 0; 
+                background: white !important;
+                -webkit-print-color-adjust: exact;
+                print-color-adjust: exact;
+              }
               .no-print { display: none !important; }
+              .page-break { page-break-before: always; }
+              .avoid-break { page-break-inside: avoid; }
+              .product-card { break-inside: avoid; }
+              .products-grid { break-inside: auto; }
+              .header { break-after: avoid; }
+              .footer { break-before: avoid; }
+            }
+            
+            * {
+              box-sizing: border-box;
             }
             
             body {
               font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
               margin: 0;
-              padding: 20px;
+              padding: 15mm;
               color: #2c3e50;
-              line-height: 1.6;
+              line-height: 1.4;
               background: #ffffff;
+              font-size: 11pt;
             }
             
             .print-instructions {
@@ -1889,80 +1911,85 @@ export async function registerRoutes(app: Express): Promise<Server> {
             
             .header {
               text-align: center;
-              padding: 40px 0;
-              border-bottom: 3px solid #667eea;
-              margin-bottom: 40px;
+              padding: 20pt 0;
+              border-bottom: 2pt solid #667eea;
+              margin-bottom: 20pt;
               background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
               color: white;
-              border-radius: 12px;
+              border-radius: 8pt;
+              break-after: avoid;
             }
             
             .company-name {
-              font-size: 42px;
+              font-size: 22pt;
               font-weight: 800;
-              margin-bottom: 10px;
-              letter-spacing: 2px;
+              margin-bottom: 8pt;
+              letter-spacing: 1pt;
             }
             
             .company-tagline {
-              font-size: 16px;
+              font-size: 10pt;
               opacity: 0.9;
-              margin-bottom: 20px;
+              margin-bottom: 12pt;
               font-weight: 300;
             }
             
             .catalog-badge {
               display: inline-block;
               background: rgba(255,255,255,0.2);
-              padding: 8px 20px;
-              border-radius: 20px;
-              font-size: 12px;
+              padding: 6pt 12pt;
+              border-radius: 12pt;
+              font-size: 9pt;
               font-weight: 600;
-              letter-spacing: 1px;
+              letter-spacing: 0.5pt;
             }
             
             .intro-section {
               text-align: center;
-              margin-bottom: 50px;
+              margin-bottom: 25pt;
+              break-after: avoid;
             }
             
             .intro-title {
-              font-size: 32px;
+              font-size: 18pt;
               font-weight: 700;
               color: #2c3e50;
-              margin-bottom: 20px;
+              margin-bottom: 12pt;
             }
             
             .intro-text {
-              font-size: 16px;
+              font-size: 10pt;
               color: #64748b;
-              max-width: 600px;
+              max-width: 400pt;
               margin: 0 auto;
-              line-height: 1.8;
+              line-height: 1.5;
             }
             
             .products-grid {
               display: grid;
-              grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
-              gap: 30px;
-              margin-bottom: 50px;
+              grid-template-columns: repeat(2, 1fr);
+              gap: 15pt;
+              margin-bottom: 30pt;
             }
             
             .product-card {
-              border: 1px solid #e9ecef;
-              border-radius: 12px;
+              border: 1pt solid #e9ecef;
+              border-radius: 6pt;
               overflow: hidden;
               background: white;
-              box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+              box-shadow: 0 1pt 3pt rgba(0,0,0,0.1);
+              break-inside: avoid;
+              margin-bottom: 15pt;
+              min-height: 280pt;
             }
 
             .product-image {
-              height: 200px;
+              height: 120pt;
               background: #f8fafc;
               display: flex;
               align-items: center;
               justify-content: center;
-              border-bottom: 1px solid #e9ecef;
+              border-bottom: 1pt solid #e9ecef;
               overflow: hidden;
             }
 
@@ -1974,45 +2001,57 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
             .no-image {
               color: #94a3b8;
-              font-size: 14px;
+              font-size: 8pt;
               text-transform: uppercase;
-              letter-spacing: 1px;
-              background: linear-gradient(45deg, #f1f3f4 25%, transparent 25%), 
-                          linear-gradient(-45deg, #f1f3f4 25%, transparent 25%), 
-                          linear-gradient(45deg, transparent 75%, #f1f3f4 75%), 
-                          linear-gradient(-45deg, transparent 75%, #f1f3f4 75%);
-              background-size: 20px 20px;
-              background-position: 0 0, 0 10px, 10px -10px, -10px 0px;
+              letter-spacing: 0.5pt;
+              text-align: center;
+              background: repeating-linear-gradient(
+                45deg,
+                #f1f3f4,
+                #f1f3f4 10pt,
+                transparent 10pt,
+                transparent 20pt
+              );
               width: 100%;
               height: 100%;
               display: flex;
               align-items: center;
               justify-content: center;
+              line-height: 1.2;
             }
             
             .product-info {
-              padding: 20px;
+              padding: 12pt;
             }
             
             .product-name {
-              font-size: 18px;
+              font-size: 12pt;
               font-weight: 600;
               color: #2c3e50;
-              margin-bottom: 8px;
+              margin-bottom: 6pt;
+              line-height: 1.2;
             }
             
             .product-description {
               color: #64748b;
-              margin-bottom: 15px;
-              font-size: 13px;
-              line-height: 1.5;
+              margin-bottom: 10pt;
+              font-size: 9pt;
+              line-height: 1.3;
+              height: 40pt;
+              overflow: hidden;
+              display: -webkit-box;
+              -webkit-line-clamp: 3;
+              -webkit-box-orient: vertical;
             }
             
             .product-specs {
               display: grid;
               grid-template-columns: 1fr 1fr;
-              gap: 10px;
-              margin-bottom: 15px;
+              gap: 8pt;
+              margin-bottom: 10pt;
+              background: #f8fafc;
+              padding: 8pt;
+              border-radius: 4pt;
             }
             
             .spec-item {
@@ -2021,96 +2060,194 @@ export async function registerRoutes(app: Express): Promise<Server> {
             }
             
             .spec-label {
-              font-size: 10px;
+              font-size: 7pt;
               font-weight: 600;
               color: #94a3b8;
               text-transform: uppercase;
-              letter-spacing: 0.5px;
-              margin-bottom: 3px;
+              letter-spacing: 0.3pt;
+              margin-bottom: 2pt;
             }
             
             .spec-value {
-              font-size: 12px;
+              font-size: 9pt;
               color: #2c3e50;
-              font-weight: 500;
+              font-weight: 600;
             }
             
-            .product-price {
+            .product-footer {
               text-align: center;
-              padding: 12px;
+              padding: 8pt;
               background: #f8fafc;
-              border-top: 1px solid #e9ecef;
-              font-size: 16px;
-              font-weight: 700;
+              border-top: 1pt solid #e9ecef;
+              font-size: 8pt;
               color: #667eea;
+              font-weight: 600;
             }
             
             .no-products {
               text-align: center;
-              padding: 60px 40px;
+              padding: 40pt;
               color: #94a3b8;
+            }
+            
+            .stats-section {
+              background: #f8fafc;
+              border: 1pt solid #e2e8f0;
+              border-radius: 6pt;
+              padding: 15pt;
+              margin: 20pt 0;
+              text-align: center;
+              break-inside: avoid;
+            }
+            
+            .stats-title {
+              font-size: 12pt;
+              font-weight: 600;
+              color: #2c3e50;
+              margin-bottom: 10pt;
+            }
+            
+            .stats-grid {
+              display: grid;
+              grid-template-columns: repeat(4, 1fr);
+              gap: 10pt;
+            }
+            
+            .stat-item {
+              text-align: center;
+            }
+            
+            .stat-value {
+              font-size: 16pt;
+              font-weight: 700;
+              color: #667eea;
+              margin-bottom: 4pt;
+            }
+            
+            .stat-label {
+              font-size: 7pt;
+              color: #64748b;
+              text-transform: uppercase;
+              letter-spacing: 0.3pt;
+              font-weight: 600;
             }
             
             .footer {
               background: linear-gradient(135deg, #2c3e50 0%, #34495e 100%);
               color: white;
-              padding: 30px;
+              padding: 15pt;
               text-align: center;
-              border-radius: 12px;
-              margin-top: 40px;
+              border-radius: 6pt;
+              margin-top: 25pt;
+              break-before: avoid;
+            }
+            
+            .footer-title {
+              font-size: 12pt;
+              font-weight: 600;
+              margin-bottom: 8pt;
+            }
+            
+            .footer-subtitle {
+              font-size: 8pt;
+              opacity: 0.9;
+              margin-bottom: 12pt;
             }
             
             .footer-grid {
               display: grid;
-              grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-              gap: 20px;
-              margin-top: 20px;
+              grid-template-columns: repeat(3, 1fr);
+              gap: 10pt;
+              margin-top: 12pt;
             }
             
             .footer-item {
-              padding: 15px;
+              padding: 8pt;
               background: rgba(255,255,255,0.1);
-              border-radius: 8px;
+              border-radius: 4pt;
             }
             
             .footer-item strong {
               display: block;
-              margin-bottom: 5px;
+              margin-bottom: 3pt;
               color: #ecf0f1;
+              font-size: 8pt;
+              font-weight: 600;
+            }
+            
+            .footer-item span {
+              font-size: 7pt;
+              opacity: 0.9;
+            }
+            
+            .page-number {
+              position: fixed;
+              bottom: 10mm;
+              right: 15mm;
+              font-size: 8pt;
+              color: #64748b;
             }
           </style>
         </head>
         <body>
           <div class="print-instructions no-print">
             <h3>📄 Ready to Print!</h3>
-            <p>This professional catalog is optimized for printing. Click the button below to print or save as PDF.</p>
+            <p>This professional catalog is optimized for A4 printing with proper page breaks.</p>
             <button class="print-button" onclick="window.print()">🖨️ Print Catalog</button>
             <button class="print-button" onclick="window.close()">❌ Close</button>
           </div>
 
-          <div class="header">
+          <div class="header avoid-break">
             <div class="company-name">PRECISION 3D PRINTING</div>
             <div class="company-tagline">Professional Manufacturing Solutions</div>
             <div class="catalog-badge">PRODUCT CATALOG ${new Date().getFullYear()}</div>
           </div>
 
-          
+          <div class="intro-section avoid-break">
+            <div class="intro-title">Premium 3D Printing Services</div>
+            <div class="intro-text">
+              Discover our comprehensive range of professionally designed 3D printable products. 
+              Each item is optimized for high-quality manufacturing using state-of-the-art technology.
+            </div>
+          </div>
 
           ${
             products.length === 0
               ? `
             <div class="no-products">
-              <div style="font-size: 48px; margin-bottom: 20px;">📦</div>
+              <div style="font-size: 32pt; margin-bottom: 15pt;">📦</div>
               <h3>No Products Available</h3>
               <p>Products will appear here once they are added to the catalog.</p>
             </div>
           `
               : `
+            <div class="stats-section avoid-break">
+              <div class="stats-title">Catalog Overview</div>
+              <div class="stats-grid">
+                <div class="stat-item">
+                  <div class="stat-value">${products.length}</div>
+                  <div class="stat-label">Products</div>
+                </div>
+                <div class="stat-item">
+                  <div class="stat-value">${new Set(products.map((p: any) => p.category)).size || 1}</div>
+                  <div class="stat-label">Categories</div>
+                </div>
+                <div class="stat-item">
+                  <div class="stat-value">${products.reduce((sum: number, p: any) => sum + parseFloat(p.estimatedPrintTime || 0), 0).toFixed(0)}h</div>
+                  <div class="stat-label">Total Print Time</div>
+                </div>
+                <div class="stat-item">
+                  <div class="stat-value">${new Date().getFullYear()}</div>
+                  <div class="stat-label">Catalog Year</div>
+                </div>
+              </div>
+            </div>
+            
             <div class="products-grid">
               ${products
                 .map(
                   (product: any) => `
-                <div class="product-card">
+                <div class="product-card avoid-break">
                   <div class="product-image">
                     ${
                       product.drawingFileUrl
@@ -2120,7 +2257,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
                   </div>
                   <div class="product-info">
                     <div class="product-name">${product.name}</div>
-                    <div class="product-description">${product.description || "Professional 3D printed item with premium quality finish."}</div>
+                    <div class="product-description">${product.description || "Professional 3D printed component with premium quality finish and precision engineering."}</div>
                     <div class="product-specs">
                       <div class="spec-item">
                         <div class="spec-label">Product Code</div>
@@ -2132,6 +2269,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
                       </div>
                     </div>
                   </div>
+                  <div class="product-footer">
+                    Professional Grade Quality
+                  </div>
                 </div>
               `,
                 )
@@ -2140,24 +2280,23 @@ export async function registerRoutes(app: Express): Promise<Server> {
           `
           }
 
-          <div class="footer">
-            <strong>Precision 3D Printing Services</strong>
-            Your trusted partner for professional manufacturing excellence
+          <div class="footer avoid-break">
+            <div class="footer-title">Precision 3D Printing Services</div>
+            <div class="footer-subtitle">Your trusted partner for professional manufacturing excellence</div>
             
             <div class="footer-grid">
               <div class="footer-item">
                 <strong>📧 Email</strong>
-                vanstadenrudolph@gmail.com
+                <span>vanstadenrudolph@gmail.com</span>
               </div>
               <div class="footer-item">
                 <strong>📞 Phone</strong>
-                074 252 7337
+                <span>074 252 7337</span>
               </div>
               <div class="footer-item">
-                <strong>💬 WhatsApp</strong>
-                074 252 7337
+                <strong>📅 Generated</strong>
+                <span>${new Date().toLocaleDateString("en-ZA")}</span>
               </div>
-              
             </div>
           </div>
 
