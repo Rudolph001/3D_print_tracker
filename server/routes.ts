@@ -2150,10 +2150,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
                 <strong>💬 WhatsApp</strong>
                 074 252 7337
               </div>
-              <div class="footer-item">
-                <strong>📅 Generated</strong>
-                ${new Date().toLocaleString("en-ZA")}
-              </div>
+              
             </div>
           </div>
 
