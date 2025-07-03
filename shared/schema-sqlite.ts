@@ -109,11 +109,7 @@ export const insertFilamentUsageSchema = createInsertSchema(filamentUsage).omit(
   createdAt: true,
 });
 
-// Update product schema to include filament info
-export const insertProductSchema = createInsertSchema(products).omit({
-  id: true,
-  createdAt: true,
-});
+// Product schema already defined above with filament info included
 
 export const whatsappMessages = sqliteTable("whatsapp_messages", {
   id: integer("id").primaryKey({ autoIncrement: true }),
