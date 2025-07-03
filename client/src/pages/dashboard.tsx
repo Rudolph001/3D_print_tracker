@@ -9,11 +9,14 @@ import { OrderDetails } from "@/components/order-details";
 import { ProductCard } from "@/components/product-card";
 import { NewOrderModal } from "@/components/new-order-modal";
 import { AddProductModal } from "@/components/add-product-modal";
+import { EditOrderModal } from "@/components/edit-order-modal";
 
 export default function Dashboard() {
   const [selectedOrderId, setSelectedOrderId] = useState<number | null>(null);
   const [isNewOrderModalOpen, setIsNewOrderModalOpen] = useState(false);
   const [isAddProductModalOpen, setIsAddProductModalOpen] = useState(false);
+  const [isEditOrderModalOpen, setIsEditOrderModalOpen] = useState(false);
+  const [editingOrder, setEditingOrder] = useState<any | null>(null);
 
   const { data: orders = [], refetch: refetchOrders } = useQuery({
     queryKey: ["/api/orders"],
@@ -45,8 +48,13 @@ export default function Dashboard() {
 
   // Placeholder functions for edit and delete
   const handleEditOrder = (orderId: number) => {
-    console.log(`Editing order with ID: ${orderId}`);
-    // Implement your edit order logic here
+    const orderToEdit = orders.find((order: any) => order.id === orderId);
+    if (orderToEdit) {
+      setEditingOrder(orderToEdit);
+      setIsEditOrderModalOpen(true);
+    } else {
+      console.log(`Order with ID: ${orderId} not found`);
+    }
   };
 
   const handleDeleteOrder = (orderId: number) => {
@@ -200,7 +208,7 @@ export default function Dashboard() {
       </main>
 
       {/* New Order Modal */}
-      <NewOrderModal
+      <NewOrderModal 
         isOpen={isNewOrderModalOpen}
         onClose={() => setIsNewOrderModalOpen(false)}
         onSuccess={() => {
@@ -209,8 +217,21 @@ export default function Dashboard() {
         }}
       />
 
-      {/* Add Product Modal */}
-      <AddProductModal
+      <EditOrderModal 
+        isOpen={isEditOrderModalOpen}
+        onClose={() => {
+          setIsEditOrderModalOpen(false);
+          setEditingOrder(null);
+        }}
+        onSuccess={() => {
+          setIsEditOrderModalOpen(false);
+          setEditingOrder(null);
+          refetchOrders();
+        }}
+        order={editingOrder}
+      />
+
+      <AddProductModal 
         isOpen={isAddProductModalOpen}
         onClose={() => setIsAddProductModalOpen(false)}
         onSuccess={() => {
