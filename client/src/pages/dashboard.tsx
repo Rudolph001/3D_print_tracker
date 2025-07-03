@@ -10,6 +10,7 @@ import { ProductCard } from "@/components/product-card";
 import { NewOrderModal } from "@/components/new-order-modal";
 import { AddProductModal } from "@/components/add-product-modal";
 import { EditOrderModal } from "@/components/edit-order-modal";
+import { apiRequest } from "@/lib/queryClient";
 
 export default function Dashboard() {
   const [selectedOrderId, setSelectedOrderId] = useState<number | null>(null);
@@ -57,9 +58,18 @@ export default function Dashboard() {
     }
   };
 
-  const handleDeleteOrder = (orderId: number) => {
-    console.log(`Deleting order with ID: ${orderId}`);
-    // Implement your delete order logic here
+  const handleDeleteOrder = async (orderId: number) => {
+    if (window.confirm('Are you sure you want to delete this order? This action cannot be undone.')) {
+      try {
+        await apiRequest("DELETE", `/api/orders/${orderId}`);
+        refetchOrders();
+        setSelectedOrderId(null);
+        // You might want to add a toast notification here
+      } catch (error) {
+        console.error('Failed to delete order:', error);
+        // You might want to add an error toast notification here
+      }
+    }
   };
 
   return (

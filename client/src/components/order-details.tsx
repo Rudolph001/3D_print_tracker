@@ -11,8 +11,8 @@ import { openOrderReport } from "@/lib/whatsapp";
 interface OrderDetailsProps {
   order: any;
   onUpdate: () => void;
-  onEdit: () => void;
-  onDelete: () => void;
+  onEdit: (orderId: number) => void;
+  onDelete: (orderId: number) => void;
   getStatusColor: (status: string) => string;
   getStatusBgColor: (status: string) => string;
 }
@@ -154,11 +154,11 @@ export function OrderDetails({ order, onUpdate, onEdit, onDelete, getStatusColor
             {sendWhatsAppMutation.isPending ? "Generating..." : "Get WhatsApp Share Link"}
           </Button>
           <div className="grid grid-cols-2 gap-2">
-            <Button variant="outline" onClick={onEdit} className="w-full">
+            <Button variant="outline" onClick={() => onEdit(order.id)} className="w-full">
               <Edit className="h-4 w-4 mr-2" />
               Edit Order
             </Button>
-            <Button variant="destructive" onClick={onDelete} className="w-full">
+            <Button variant="destructive" onClick={() => onDelete(order.id)} className="w-full">
               <Trash2 className="h-4 w-4 mr-2" />
               Delete Order
             </Button>
