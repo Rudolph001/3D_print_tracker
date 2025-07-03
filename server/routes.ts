@@ -6,18 +6,16 @@ import fs from "fs";
 // Removed puppeteer - using browser-native printing instead
 
 import { storage } from "./storage";
-import { 
-  insertCustomerSchema, 
-  insertOrderSchema, 
-  insertProductSchema, 
+import {
+  insertCustomerSchema,
+  insertOrderSchema,
+  insertProductSchema,
   insertPrintSchema,
   updateOrderStatusSchema,
   updatePrintStatusSchema,
-  sendWhatsappMessageSchema
+  sendWhatsappMessageSchema,
 } from "@shared/schema-sqlite";
 import { z } from "zod";
-
-
 
 // Function to parse GCODE file and extract comprehensive print data
 async function parseGCodeData(filePath: string): Promise<{
@@ -33,8 +31,8 @@ async function parseGCodeData(filePath: string): Promise<{
   objectDimensions?: { x: number; y: number; z: number };
 }> {
   try {
-    const content = fs.readFileSync(filePath, 'utf8');
-    const lines = content.split('\n');
+    const content = fs.readFileSync(filePath, "utf8");
+    const lines = content.split("\n");
 
     let estimatedTime = 4; // Default fallback
     let nozzleTemp: number | undefined;
@@ -45,78 +43,98 @@ async function parseGCodeData(filePath: string): Promise<{
     let layerCount = 0;
     let filamentLength: number | undefined;
     let supportMaterial = false;
-    let minX = Infinity, maxX = -Infinity;
-    let minY = Infinity, maxY = -Infinity;
-    let minZ = Infinity, maxZ = -Infinity;
+    let minX = Infinity,
+      maxX = -Infinity;
+    let minY = Infinity,
+      maxY = -Infinity;
+    let minZ = Infinity,
+      maxZ = -Infinity;
     let currentZ = 0;
 
     for (let i = 0; i < lines.length; i++) {
       const line = lines[i].trim();
 
       // Extract print time
-      if (line.includes(';TIME:') || line.includes('; estimated printing time')) {
-        const timeMatch = line.match(/(\d+(?:\.\d+)?)\s*(?:h|hours|minutes|m|s|seconds)/i);
+      if (
+        line.includes(";TIME:") ||
+        line.includes("; estimated printing time")
+      ) {
+        const timeMatch = line.match(
+          /(\d+(?:\.\d+)?)\s*(?:h|hours|minutes|m|s|seconds)/i,
+        );
         if (timeMatch) {
           const value = parseFloat(timeMatch[1]);
-          if (line.toLowerCase().includes('h') || line.toLowerCase().includes('hour')) {
+          if (
+            line.toLowerCase().includes("h") ||
+            line.toLowerCase().includes("hour")
+          ) {
             estimatedTime = value;
-          } else if (line.toLowerCase().includes('m') || line.toLowerCase().includes('minute')) {
+          } else if (
+            line.toLowerCase().includes("m") ||
+            line.toLowerCase().includes("minute")
+          ) {
             estimatedTime = value / 60;
-          } else if (line.toLowerCase().includes('s') || line.toLowerCase().includes('second')) {
+          } else if (
+            line.toLowerCase().includes("s") ||
+            line.toLowerCase().includes("second")
+          ) {
             estimatedTime = value / 3600;
           }
         }
       }
 
       // PrusaSlicer time format
-      if (line.includes('; estimated printing time (normal mode)')) {
+      if (line.includes("; estimated printing time (normal mode)")) {
         const nextLine = lines[i + 1];
         if (nextLine) {
           const timeMatch = nextLine.match(/;\s*(\d+)h\s*(\d+)m/);
           if (timeMatch) {
             const hours = parseInt(timeMatch[1]) || 0;
             const minutes = parseInt(timeMatch[2]) || 0;
-            estimatedTime = hours + (minutes / 60);
+            estimatedTime = hours + minutes / 60;
           }
         }
       }
 
       // Extract temperatures
-      if (line.startsWith('M104') || line.startsWith('M109')) {
+      if (line.startsWith("M104") || line.startsWith("M109")) {
         const tempMatch = line.match(/S(\d+)/);
         if (tempMatch) nozzleTemp = parseInt(tempMatch[1]);
       }
 
-      if (line.startsWith('M140') || line.startsWith('M190')) {
+      if (line.startsWith("M140") || line.startsWith("M190")) {
         const tempMatch = line.match(/S(\d+)/);
         if (tempMatch) bedTemp = parseInt(tempMatch[1]);
       }
 
       // Extract layer height from comments
-      if (line.includes('layer_height') || line.includes('Layer height')) {
+      if (line.includes("layer_height") || line.includes("Layer height")) {
         const heightMatch = line.match(/(\d+\.?\d*)\s*mm/);
         if (heightMatch) layerHeight = parseFloat(heightMatch[1]);
       }
 
       // Extract infill percentage
-      if (line.includes('fill_density') || line.includes('infill')) {
+      if (line.includes("fill_density") || line.includes("infill")) {
         const infillMatch = line.match(/(\d+)%/);
         if (infillMatch) infillPercentage = parseInt(infillMatch[1]);
       }
 
       // Extract filament length
-      if (line.includes('filament used') || line.includes('Filament used')) {
+      if (line.includes("filament used") || line.includes("Filament used")) {
         const lengthMatch = line.match(/(\d+\.?\d*)\s*m/);
         if (lengthMatch) filamentLength = parseFloat(lengthMatch[1]);
       }
 
       // Detect support material
-      if (line.includes('support') && (line.includes('TYPE:') || line.includes('SUPPORT'))) {
+      if (
+        line.includes("support") &&
+        (line.includes("TYPE:") || line.includes("SUPPORT"))
+      ) {
         supportMaterial = true;
       }
 
       // Extract movement commands to determine dimensions and speed
-      if (line.startsWith('G1') || line.startsWith('G0')) {
+      if (line.startsWith("G1") || line.startsWith("G0")) {
         // Extract coordinates
         const xMatch = line.match(/X([-\d.]+)/);
         const yMatch = line.match(/Y([-\d.]+)/);
@@ -152,11 +170,14 @@ async function parseGCodeData(filePath: string): Promise<{
     }
 
     // Calculate object dimensions
-    const objectDimensions = (minX !== Infinity && maxX !== -Infinity) ? {
-      x: Math.round((maxX - minX) * 10) / 10,
-      y: Math.round((maxY - minY) * 10) / 10,
-      z: Math.round((maxZ - minZ) * 10) / 10
-    } : undefined;
+    const objectDimensions =
+      minX !== Infinity && maxX !== -Infinity
+        ? {
+            x: Math.round((maxX - minX) * 10) / 10,
+            y: Math.round((maxY - minY) * 10) / 10,
+            z: Math.round((maxZ - minZ) * 10) / 10,
+          }
+        : undefined;
 
     // If no time found, estimate based on file size
     if (estimatedTime === 4) {
@@ -174,10 +195,10 @@ async function parseGCodeData(filePath: string): Promise<{
       layerCount: layerCount > 0 ? layerCount : undefined,
       filamentLength,
       supportMaterial: supportMaterial || undefined,
-      objectDimensions
+      objectDimensions,
     };
   } catch (error) {
-    console.error('Error parsing GCODE:', error);
+    console.error("Error parsing GCODE:", error);
     return { estimatedTime: 4 };
   }
 }
@@ -185,30 +206,34 @@ async function parseGCodeData(filePath: string): Promise<{
 // Configure multer for file uploads
 const upload = multer({
   storage: multer.diskStorage({
-    destination: 'uploads/',
+    destination: "uploads/",
     filename: (req, file, cb) => {
       // Keep original filename for STL files so 3D viewer can work
-      const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1E9);
+      const uniqueSuffix = Date.now() + "-" + Math.round(Math.random() * 1e9);
       const ext = path.extname(file.originalname);
-      cb(null, file.fieldname + '-' + uniqueSuffix + ext);
-    }
+      cb(null, file.fieldname + "-" + uniqueSuffix + ext);
+    },
   }),
   fileFilter: (req, file, cb) => {
     // Allow STL and GCODE files
-    if (file.mimetype === 'application/octet-stream' || 
-        file.originalname.endsWith('.stl') || 
-        file.originalname.endsWith('.gcode')) {
+    if (
+      file.mimetype === "application/octet-stream" ||
+      file.originalname.endsWith(".stl") ||
+      file.originalname.endsWith(".gcode")
+    ) {
       cb(null, true);
     }
     // Allow common image formats for drawings
-    else if (file.mimetype.startsWith('image/')) {
+    else if (file.mimetype.startsWith("image/")) {
       cb(null, true);
     }
     // Allow PDF files for technical drawings
-    else if (file.mimetype === 'application/pdf') {
+    else if (file.mimetype === "application/pdf") {
       cb(null, true);
     } else {
-      const error = new Error('Only STL, GCODE, image, and PDF files are allowed') as any;
+      const error = new Error(
+        "Only STL, GCODE, image, and PDF files are allowed",
+      ) as any;
       cb(error, false);
     }
   },
@@ -218,8 +243,6 @@ const upload = multer({
 });
 
 export async function registerRoutes(app: Express): Promise<Server> {
-
-
   // Dashboard stats
   app.get("/api/dashboard/stats", async (req, res) => {
     try {
@@ -247,7 +270,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.status(201).json(customer);
     } catch (error) {
       if (error instanceof z.ZodError) {
-        res.status(400).json({ error: "Invalid customer data", details: error.errors });
+        res
+          .status(400)
+          .json({ error: "Invalid customer data", details: error.errors });
       } else {
         res.status(500).json({ error: "Failed to create customer" });
       }
@@ -282,7 +307,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const { customer, order, prints } = req.body;
 
       // Create or find customer
-      let customerRecord = await storage.getCustomerByWhatsapp(customer.whatsappNumber);
+      let customerRecord = await storage.getCustomerByWhatsapp(
+        customer.whatsappNumber,
+      );
       if (!customerRecord) {
         const customerData = insertCustomerSchema.parse(customer);
         customerRecord = await storage.createCustomer(customerData);
@@ -311,7 +338,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.status(201).json(orderWithDetails);
     } catch (error) {
       if (error instanceof z.ZodError) {
-        res.status(400).json({ error: "Invalid order data", details: error.errors });
+        res
+          .status(400)
+          .json({ error: "Invalid order data", details: error.errors });
       } else {
         res.status(500).json({ error: "Failed to create order" });
       }
@@ -326,7 +355,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.json(updatedOrder);
     } catch (error) {
       if (error instanceof z.ZodError) {
-        res.status(400).json({ error: "Invalid status", details: error.errors });
+        res
+          .status(400)
+          .json({ error: "Invalid status", details: error.errors });
       } else {
         res.status(500).json({ error: "Failed to update order status" });
       }
@@ -382,7 +413,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.json(updatedPrint);
     } catch (error) {
       if (error instanceof z.ZodError) {
-        res.status(400).json({ error: "Invalid status", details: error.errors });
+        res
+          .status(400)
+          .json({ error: "Invalid status", details: error.errors });
       } else {
         res.status(500).json({ error: "Failed to update print status" });
       }
@@ -399,68 +432,88 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.post("/api/products", upload.fields([
-    { name: 'stlFile', maxCount: 1 },
-    { name: 'drawingFile', maxCount: 1 }
-  ]), async (req, res) => {
-    try {
-      const files = req.files as { [fieldname: string]: Express.Multer.File[] };
-      const stlFile = files?.stlFile?.[0];
-      const drawingFile = files?.drawingFile?.[0];
+  app.post(
+    "/api/products",
+    upload.fields([
+      { name: "stlFile", maxCount: 1 },
+      { name: "drawingFile", maxCount: 1 },
+    ]),
+    async (req, res) => {
+      try {
+        const files = req.files as {
+          [fieldname: string]: Express.Multer.File[];
+        };
+        const stlFile = files?.stlFile?.[0];
+        const drawingFile = files?.drawingFile?.[0];
 
-      // Parse form data properly, converting strings to appropriate types
-      const formData = {
-        ...req.body,
-        estimatedPrintTime: req.body.estimatedPrintTime ? parseFloat(req.body.estimatedPrintTime) : undefined,
-        price: req.body.price ? parseFloat(req.body.price) : undefined,
-        stlFileName: stlFile?.originalname || undefined,
-        stlFileUrl: stlFile ? `/api/files/${path.basename(stlFile.path)}` : undefined,
-        drawingFileName: drawingFile?.originalname || undefined,
-        drawingFileUrl: drawingFile ? `/api/files/${path.basename(drawingFile.path)}` : undefined,
-      };
+        // Parse form data properly, converting strings to appropriate types
+        const formData = {
+          ...req.body,
+          estimatedPrintTime: req.body.estimatedPrintTime
+            ? parseFloat(req.body.estimatedPrintTime)
+            : undefined,
+          price: req.body.price ? parseFloat(req.body.price) : undefined,
+          stlFileName: stlFile?.originalname || undefined,
+          stlFileUrl: stlFile
+            ? `/api/files/${path.basename(stlFile.path)}`
+            : undefined,
+          drawingFileName: drawingFile?.originalname || undefined,
+          drawingFileUrl: drawingFile
+            ? `/api/files/${path.basename(drawingFile.path)}`
+            : undefined,
+        };
 
-      const productData = insertProductSchema.parse(formData);
-      const product = await storage.createProduct(productData);
-      res.status(201).json(product);
-    } catch (error) {
-      console.error("Product creation error:", error);
-      if (error instanceof z.ZodError) {
-        res.status(400).json({ error: "Invalid product data", details: error.errors });
-      } else {
-        res.status(500).json({ error: "Failed to create product" });
+        const productData = insertProductSchema.parse(formData);
+        const product = await storage.createProduct(productData);
+        res.status(201).json(product);
+      } catch (error) {
+        console.error("Product creation error:", error);
+        if (error instanceof z.ZodError) {
+          res
+            .status(400)
+            .json({ error: "Invalid product data", details: error.errors });
+        } else {
+          res.status(500).json({ error: "Failed to create product" });
+        }
       }
-    }
-  });
+    },
+  );
 
-  app.patch("/api/products/:id", upload.fields([
-    { name: 'stlFile', maxCount: 1 },
-    { name: 'drawingFile', maxCount: 1 }
-  ]), async (req, res) => {
-    try {
-      const id = parseInt(req.params.id);
-      const updateData: any = { ...req.body };
-      const files = req.files as { [fieldname: string]: Express.Multer.File[] };
-      const stlFile = files?.stlFile?.[0];
-      const drawingFile = files?.drawingFile?.[0];
+  app.patch(
+    "/api/products/:id",
+    upload.fields([
+      { name: "stlFile", maxCount: 1 },
+      { name: "drawingFile", maxCount: 1 },
+    ]),
+    async (req, res) => {
+      try {
+        const id = parseInt(req.params.id);
+        const updateData: any = { ...req.body };
+        const files = req.files as {
+          [fieldname: string]: Express.Multer.File[];
+        };
+        const stlFile = files?.stlFile?.[0];
+        const drawingFile = files?.drawingFile?.[0];
 
-      // Add new file info if uploaded
-      if (stlFile) {
-        updateData.stlFileName = stlFile.originalname;
-        updateData.stlFileUrl = `/api/files/${path.basename(stlFile.path)}`;
+        // Add new file info if uploaded
+        if (stlFile) {
+          updateData.stlFileName = stlFile.originalname;
+          updateData.stlFileUrl = `/api/files/${path.basename(stlFile.path)}`;
+        }
+
+        if (drawingFile) {
+          updateData.drawingFileName = drawingFile.originalname;
+          updateData.drawingFileUrl = `/api/files/${path.basename(drawingFile.path)}`;
+        }
+
+        const updatedProduct = await storage.updateProduct(id, updateData);
+        res.json(updatedProduct);
+      } catch (error) {
+        console.error("Update product error:", error);
+        res.status(500).json({ error: "Failed to update product" });
       }
-
-      if (drawingFile) {
-        updateData.drawingFileName = drawingFile.originalname;
-        updateData.drawingFileUrl = `/api/files/${path.basename(drawingFile.path)}`;
-      }
-
-      const updatedProduct = await storage.updateProduct(id, updateData);
-      res.json(updatedProduct);
-    } catch (error) {
-      console.error("Update product error:", error);
-      res.status(500).json({ error: "Failed to update product" });
-    }
-  });
+    },
+  );
 
   app.delete("/api/products/:id", async (req, res) => {
     try {
@@ -469,13 +522,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.json({ success: true });
     } catch (error) {
       console.error("Delete product error:", error);
-      const errorMessage = error instanceof Error ? error.message : "Failed to delete product";
+      const errorMessage =
+        error instanceof Error ? error.message : "Failed to delete product";
       res.status(400).json({ error: errorMessage });
     }
   });
 
   // File upload for STL files
-  app.post("/api/upload/stl", upload.single('stlFile'), async (req, res) => {
+  app.post("/api/upload/stl", upload.single("stlFile"), async (req, res) => {
     try {
       if (!req.file) {
         return res.status(400).json({ error: "No file uploaded" });
@@ -492,30 +546,34 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // File upload for GCODE files
-  app.post("/api/upload/gcode", upload.single('gcodeFile'), async (req, res) => {
-    try {
-      if (!req.file) {
-        return res.status(400).json({ error: "No file uploaded" });
+  app.post(
+    "/api/upload/gcode",
+    upload.single("gcodeFile"),
+    async (req, res) => {
+      try {
+        if (!req.file) {
+          return res.status(400).json({ error: "No file uploaded" });
+        }
+
+        // Parse GCODE file to extract comprehensive print data
+        const gcodeData = await parseGCodeData(req.file.path);
+
+        res.json({
+          filename: req.file.originalname,
+          path: req.file.path,
+          size: req.file.size,
+          ...gcodeData,
+        });
+      } catch (error) {
+        res.status(500).json({ error: "Failed to upload file" });
       }
-
-      // Parse GCODE file to extract comprehensive print data
-      const gcodeData = await parseGCodeData(req.file.path);
-
-      res.json({
-        filename: req.file.originalname,
-        path: req.file.path,
-        size: req.file.size,
-        ...gcodeData,
-      });
-    } catch (error) {
-      res.status(500).json({ error: "Failed to upload file" });
-    }
-  });
+    },
+  );
 
   // Serve uploaded STL files
   app.get("/api/files/:filename", (req, res) => {
     const filename = req.params.filename;
-    const filePath = path.join(process.cwd(), 'uploads', filename);
+    const filePath = path.join(process.cwd(), "uploads", filename);
     res.sendFile(filePath);
   });
 
@@ -528,18 +586,36 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
 
     // Calculate totals
-    const totalParts = order.prints.reduce((sum: number, print: any) => sum + print.quantity, 0);
-    const totalTime = order.prints.reduce((sum: number, print: any) => sum + (parseFloat(print.estimatedTime) * print.quantity), 0);
-    const completedPrints = order.prints.filter((print: any) => print.status === 'completed').length;
-    const progressPercentage = order.prints.length > 0 ? Math.round((completedPrints / order.prints.length) * 100) : 0;
+    const totalParts = order.prints.reduce(
+      (sum: number, print: any) => sum + print.quantity,
+      0,
+    );
+    const totalTime = order.prints.reduce(
+      (sum: number, print: any) =>
+        sum + parseFloat(print.estimatedTime) * print.quantity,
+      0,
+    );
+    const completedPrints = order.prints.filter(
+      (print: any) => print.status === "completed",
+    ).length;
+    const progressPercentage =
+      order.prints.length > 0
+        ? Math.round((completedPrints / order.prints.length) * 100)
+        : 0;
     const remainingTime = order.prints
-      .filter((print: any) => print.status !== 'completed')
-      .reduce((sum: number, print: any) => sum + (parseFloat(print.estimatedTime) * print.quantity), 0);
+      .filter((print: any) => print.status !== "completed")
+      .reduce(
+        (sum: number, print: any) =>
+          sum + parseFloat(print.estimatedTime) * print.quantity,
+        0,
+      );
 
     // Calculate estimated completion date
     const now = new Date();
-    const estimatedCompletion = new Date(now.getTime() + (remainingTime * 60 * 60 * 1000));
-    const isCompleted = order.status === 'completed';
+    const estimatedCompletion = new Date(
+      now.getTime() + remainingTime * 60 * 60 * 1000,
+    );
+    const isCompleted = order.status === "completed";
 
     return `
 <!DOCTYPE html>
@@ -994,17 +1070,21 @@ export async function registerRoutes(app: Express): Promise<Server> {
             <div class="content">
               <div class="status-section">
                 <div class="status-badge status-${order.status}">
-                  ${order.status.replace('_', ' ').toUpperCase()}
+                  ${order.status.replace("_", " ").toUpperCase()}
                 </div>
                 <div class="completion-date">
-                  ${isCompleted 
-                    ? '✅ Order Completed Successfully' 
-                    : `📅 Estimated Completion: ${estimatedCompletion.toLocaleDateString('en-ZA', { 
-                        weekday: 'long', 
-                        year: 'numeric', 
-                        month: 'long', 
-                        day: 'numeric' 
-                      })}`
+                  ${
+                    isCompleted
+                      ? "✅ Order Completed Successfully"
+                      : `📅 Estimated Completion: ${estimatedCompletion.toLocaleDateString(
+                          "en-ZA",
+                          {
+                            weekday: "long",
+                            year: "numeric",
+                            month: "long",
+                            day: "numeric",
+                          },
+                        )}`
                   }
                 </div>
               </div>
@@ -1015,21 +1095,24 @@ export async function registerRoutes(app: Express): Promise<Server> {
                   <div class="info-content">
                     <strong>${order.customer.name}</strong><br>
                     📱 ${order.customer.whatsappNumber}<br>
-                    📅 Ordered: ${new Date(order.createdAt).toLocaleDateString('en-ZA', { 
-                      day: 'numeric', 
-                      month: 'long', 
-                      year: 'numeric' 
-                    })}
+                    📅 Ordered: ${new Date(order.createdAt).toLocaleDateString(
+                      "en-ZA",
+                      {
+                        day: "numeric",
+                        month: "long",
+                        year: "numeric",
+                      },
+                    )}
                   </div>
                 </div>
 
                 <div class="info-card">
                   <div class="info-title">📊 Order Summary</div>
                   <div class="info-content">
-                    <strong>${order.prints.length}</strong> Print Job${order.prints.length > 1 ? 's' : ''}<br>
+                    <strong>${order.prints.length}</strong> Print Job${order.prints.length > 1 ? "s" : ""}<br>
                     <strong>${totalParts}</strong> Total Parts<br>
                     <strong>${totalTime.toFixed(2)}h</strong> Production Time<br>
-                    <strong>Invoice:</strong> INV ${order.id.toString().padStart(6, '0')}<br>
+                    <strong>Invoice:</strong> INV ${order.id.toString().padStart(6, "0")}<br>
                     <strong>Reference:</strong> ERF ${Math.floor(Math.random() * 9000) + 1000}
                   </div>
                 </div>
@@ -1050,7 +1133,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
                     </tr>
                   </thead>
                   <tbody>
-                    ${order.prints.map((print: any) => `
+                    ${order.prints
+                      .map(
+                        (print: any) => `
                       <tr>
                         <td><strong>${print.name}</strong></td>
                         <td>${print.quantity}x</td>
@@ -1058,30 +1143,36 @@ export async function registerRoutes(app: Express): Promise<Server> {
                         <td>${(parseFloat(print.estimatedTime) * print.quantity).toFixed(1)}h</td>
                         <td>
                           <span class="print-status-badge status-${print.status}">
-                            ${print.status.replace('_', ' ')}
+                            ${print.status.replace("_", " ")}
                           </span>
                         </td>
                       </tr>
-                    `).join('')}
+                    `,
+                      )
+                      .join("")}
                   </tbody>
                 </table>
               </div>
 
-              ${order.notes ? `
+              ${
+                order.notes
+                  ? `
               <div class="notes-section">
                 <strong>📝 Special Instructions</strong><br>
                 ${order.notes}
               </div>
-              ` : ''}
+              `
+                  : ""
+              }
 
               <div class="totals-section">
                 <div class="totals-grid">
                   <div class="total-item">
-                    <div class="total-value">${order.prints.filter((p: any) => p.status === 'completed').length}/${order.prints.length}</div>
+                    <div class="total-value">${order.prints.filter((p: any) => p.status === "completed").length}/${order.prints.length}</div>
                     <div class="total-label">Completed</div>
                   </div>
                   <div class="total-item">
-                    <div class="total-value">${Math.round((order.prints.filter((p: any) => p.status === 'completed').length / order.prints.length) * 100)}%</div>
+                    <div class="total-value">${Math.round((order.prints.filter((p: any) => p.status === "completed").length / order.prints.length) * 100)}%</div>
                     <div class="total-label">Progress</div>
                   </div>
                   <div class="total-item">
@@ -1112,7 +1203,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
                 </div>
                 <div class="footer-item">
                   <strong>📅 Generated</strong><br>
-                  ${new Date().toLocaleString('en-ZA')}
+                  ${new Date().toLocaleString("en-ZA")}
                 </div>
               </div>
             </div>
@@ -1128,7 +1219,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const id = parseInt(req.params.id);
       const html = await generateReportHTML(id);
-      res.setHeader('Content-Type', 'text/html');
+      res.setHeader("Content-Type", "text/html");
       res.send(html);
     } catch (error) {
       console.error("Report generation error:", error);
@@ -1282,9 +1373,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
           <div class="order-info">
             <div class="info-card">
               <div class="info-title">Customer Information</div>
-              <strong>Name:</strong> ${order.customer?.name || 'N/A'}<br>
-              <strong>Email:</strong> ${order.customer?.email || 'N/A'}<br>
-              <strong>Phone:</strong> ${order.customer?.whatsappNumber || 'N/A'}
+              <strong>Name:</strong> ${order.customer?.name || "N/A"}<br>
+              <strong>Email:</strong> ${order.customer?.email || "N/A"}<br>
+              <strong>Phone:</strong> ${order.customer?.whatsappNumber || "N/A"}
             </div>
             <div class="info-card">
               <div class="info-title">Order Details</div>
@@ -1305,21 +1396,27 @@ export async function registerRoutes(app: Express): Promise<Server> {
               </tr>
             </thead>
             <tbody>
-              ${order.prints?.map((print: any) => `
+              ${
+                order.prints
+                  ?.map(
+                    (print: any) => `
                 <tr>
                   <td>${print.name}</td>
                   <td>${print.quantity}</td>
                   <td><span class="status-badge status-${print.status}">${print.status}</span></td>
                   <td>${print.estimatedTime}</td>
-                  <td>${print.material || 'PLA'}</td>
+                  <td>${print.material || "PLA"}</td>
                 </tr>
-              `).join('') || '<tr><td colspan="5">No prints found</td></tr>'}
+              `,
+                  )
+                  .join("") || '<tr><td colspan="5">No prints found</td></tr>'
+              }
             </tbody>
           </table>
 
           <div class="totals">
             <h3>Order Summary</h3>
-            <strong>Total Print Time:</strong> ${order.prints?.reduce((sum: number, print: any) => sum + (parseFloat(print.estimatedTime || 0) * print.quantity), 0).toFixed(2)} hours<br>
+            <strong>Total Print Time:</strong> ${order.prints?.reduce((sum: number, print: any) => sum + parseFloat(print.estimatedTime || 0) * print.quantity, 0).toFixed(2)} hours<br>
             <strong>Generated:</strong> ${new Date().toLocaleString()}
           </div>
 
@@ -1332,7 +1429,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         </html>
       `;
 
-      res.setHeader('Content-Type', 'text/html');
+      res.setHeader("Content-Type", "text/html");
       res.send(html);
     } catch (error) {
       console.error("Order report generation error:", error);
@@ -1628,28 +1725,33 @@ export async function registerRoutes(app: Express): Promise<Server> {
                 </div>
               </div>
 
-              ${products.length === 0 ? `
+              ${
+                products.length === 0
+                  ? `
               <div class="no-products">
                 <div class="no-products-icon">📦</div>
                 <h3>No Products Available</h3>
                 <p>Our catalog is currently being updated. Please check back soon for new products.</p>
               </div>
-              ` : `
+              `
+                  : `
               <div class="products-grid">
-                ${products.map((product: any) => `
+                ${products
+                  .map(
+                    (product: any) => `
                   <div class="product-card">
                     <div class="product-image">
-                      ${product.stlFileName ? `3D Model: ${product.stlFileName}` : '3D Model Available'}
+                      ${product.stlFileName ? `3D Model: ${product.stlFileName}` : "3D Model Available"}
                     </div>
                     <div class="product-info">
                       <div class="product-name">${product.name}</div>
                       <div class="product-description">
-                        ${product.description || 'Professional quality 3D printed product designed for optimal performance and durability.'}
+                        ${product.description || "Professional quality 3D printed product designed for optimal performance and durability."}
                       </div>
                       <div class="product-specs">
                         <div class="spec-item">
                           <div class="spec-label">Product Code</div>
-                          <div class="spec-value">${product.productCode || `P${product.id.toString().padStart(3, '0')}`}</div>
+                          <div class="spec-value">${product.productCode || `P${product.id.toString().padStart(3, "0")}`}</div>
                         </div>
                         <div class="spec-item">
                           <div class="spec-label">Print Time</div>
@@ -1658,9 +1760,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
                       </div>
                     </div>
                   </div>
-                `).join('')}
+                `,
+                  )
+                  .join("")}
               </div>
-              `}
+              `
+              }
 
               <div class="stats-section">
                 <div class="stats-grid">
@@ -1703,7 +1808,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
                 </div>
                 <div class="contact-item">
                   <strong>Generated</strong><br>
-                  ${new Date().toLocaleDateString('en-ZA')}
+                  ${new Date().toLocaleDateString("en-ZA")}
                 </div>
               </div>
             </div>
@@ -1713,13 +1818,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
       `;
   };
 
-
-
   // Product Catalog HTML Route
   app.get("/api/products/catalog", async (req, res) => {
     try {
       const html = await generateProductCatalogHTML();
-      res.setHeader('Content-Type', 'text/html');
+      res.setHeader("Content-Type", "text/html");
       res.send(html);
     } catch (error) {
       console.error("Product catalog generation error:", error);
@@ -1731,7 +1834,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.get("/api/products/catalog/pdf", async (req, res) => {
     try {
       const products = await storage.getProducts();
-      
+
       const html = `
         <!DOCTYPE html>
         <html>
@@ -1986,29 +2089,35 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
           
 
-          ${products.length === 0 ? `
+          ${
+            products.length === 0
+              ? `
             <div class="no-products">
               <div style="font-size: 48px; margin-bottom: 20px;">📦</div>
               <h3>No Products Available</h3>
               <p>Products will appear here once they are added to the catalog.</p>
             </div>
-          ` : `
+          `
+              : `
             <div class="products-grid">
-              ${products.map((product: any) => `
+              ${products
+                .map(
+                  (product: any) => `
                 <div class="product-card">
                   <div class="product-image">
-                    ${product.drawingFileUrl ? 
-                      `<img src="${product.drawingFileUrl}" alt="${product.name} technical drawing" />` : 
-                      `<div class="no-image">Technical Drawing<br>Not Available</div>`
+                    ${
+                      product.drawingFileUrl
+                        ? `<img src="${product.drawingFileUrl}" alt="${product.name} technical drawing" />`
+                        : `<div class="no-image">Technical Drawing<br>Not Available</div>`
                     }
                   </div>
                   <div class="product-info">
                     <div class="product-name">${product.name}</div>
-                    <div class="product-description">${product.description || 'Professional 3D printed item with premium quality finish.'}</div>
+                    <div class="product-description">${product.description || "Professional 3D printed item with premium quality finish."}</div>
                     <div class="product-specs">
                       <div class="spec-item">
                         <div class="spec-label">Product Code</div>
-                        <div class="spec-value">${product.productCode || `P${product.id.toString().padStart(3, '0')}`}</div>
+                        <div class="spec-value">${product.productCode || `P${product.id.toString().padStart(3, "0")}`}</div>
                       </div>
                       <div class="spec-item">
                         <div class="spec-label">Print Time</div>
@@ -2017,9 +2126,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
                     </div>
                   </div>
                 </div>
-              `).join('')}
+              `,
+                )
+                .join("")}
             </div>
-          `}
+          `
+          }
 
           <div class="footer">
             <strong>Precision 3D Printing Services</strong>
@@ -2028,19 +2140,19 @@ export async function registerRoutes(app: Express): Promise<Server> {
             <div class="footer-grid">
               <div class="footer-item">
                 <strong>📧 Email</strong>
-                orders@precision3d.co.za
+                vanstadenrudolph@gmail.com
               </div>
               <div class="footer-item">
                 <strong>📞 Phone</strong>
-                +27 123 456 7890
+                074 252 7337
               </div>
               <div class="footer-item">
                 <strong>💬 WhatsApp</strong>
-                Available for quotes
+                074 252 7337
               </div>
               <div class="footer-item">
                 <strong>📅 Generated</strong>
-                ${new Date().toLocaleString('en-ZA')}
+                ${new Date().toLocaleString("en-ZA")}
               </div>
             </div>
           </div>
@@ -2053,8 +2165,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
         </body>
         </html>
       `;
-      
-      res.setHeader('Content-Type', 'text/html');
+
+      res.setHeader("Content-Type", "text/html");
       res.send(html);
     } catch (error) {
       console.error("Product catalog generation error:", error);
@@ -2081,18 +2193,20 @@ export async function registerRoutes(app: Express): Promise<Server> {
       });
 
       // Return download link and WhatsApp link for manual sending
-      const downloadUrl = `${req.protocol}://${req.get('host')}/api/orders/${orderId}/pdf`;
-      const whatsappLink = `https://wa.me/${order.customer.whatsappNumber.replace('+', '')}?text=${encodeURIComponent(`Hello ${order.customer.name}, here is your order update for ${order.orderNumber}. Download your order report: ${downloadUrl}`)}`;
+      const downloadUrl = `${req.protocol}://${req.get("host")}/api/orders/${orderId}/pdf`;
+      const whatsappLink = `https://wa.me/${order.customer.whatsappNumber.replace("+", "")}?text=${encodeURIComponent(`Hello ${order.customer.name}, here is your order update for ${order.orderNumber}. Download your order report: ${downloadUrl}`)}`;
 
-      res.json({ 
-        success: true, 
+      res.json({
+        success: true,
         messageId: whatsappMessage.id,
         downloadUrl,
-        whatsappLink
+        whatsappLink,
       });
     } catch (error) {
       if (error instanceof z.ZodError) {
-        res.status(400).json({ error: "Invalid message data", details: error.errors });
+        res
+          .status(400)
+          .json({ error: "Invalid message data", details: error.errors });
       } else {
         res.status(500).json({ error: "Failed to generate download link" });
       }
