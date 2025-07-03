@@ -1191,15 +1191,15 @@ export async function registerRoutes(app: Express): Promise<Server> {
               <div class="footer-grid">
                 <div class="footer-item">
                   <strong>📧 Email</strong><br>
-                  orders@precision3d.co.za
+                  vanstadenrudolph@gmail.com
                 </div>
                 <div class="footer-item">
                   <strong>📞 Phone</strong><br>
-                  +27 123 456 7890
+                  074 252 7337
                 </div>
                 <div class="footer-item">
                   <strong>💬 WhatsApp</strong><br>
-                  Available for quotes
+                  074 252 7337
                 </div>
                 <div class="footer-item">
                   <strong>📅 Generated</strong><br>
@@ -1796,15 +1796,15 @@ export async function registerRoutes(app: Express): Promise<Server> {
               <div class="contact-grid">
                 <div class="contact-item">
                   <strong>Email</strong><br>
-                  orders@precision3d.co.za
+                  vanstadenrudolph@gmail.com
                 </div>
                 <div class="contact-item">
                   <strong>Phone</strong><br>
-                  +27 123 456 7890
+                  074 252 7337
                 </div>
                 <div class="contact-item">
                   <strong>WhatsApp</strong><br>
-                  Available for quotes
+                  074 252 7337
                 </div>
                 <div class="contact-item">
                   <strong>Generated</strong><br>
