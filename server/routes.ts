@@ -408,16 +408,22 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const stlFile = files?.stlFile?.[0];
       const drawingFile = files?.drawingFile?.[0];
 
-      const productData = insertProductSchema.parse({
+      // Parse form data properly, converting strings to appropriate types
+      const formData = {
         ...req.body,
-        stlFileName: stlFile?.originalname,
-        stlFileUrl: stlFile ? `/api/files/${path.basename(stlFile.path)}` : null,
-        drawingFileName: drawingFile?.originalname,
-        drawingFileUrl: drawingFile ? `/api/files/${path.basename(drawingFile.path)}` : null,
-      });
+        estimatedPrintTime: req.body.estimatedPrintTime ? parseFloat(req.body.estimatedPrintTime) : undefined,
+        price: req.body.price ? parseFloat(req.body.price) : undefined,
+        stlFileName: stlFile?.originalname || undefined,
+        stlFileUrl: stlFile ? `/api/files/${path.basename(stlFile.path)}` : undefined,
+        drawingFileName: drawingFile?.originalname || undefined,
+        drawingFileUrl: drawingFile ? `/api/files/${path.basename(drawingFile.path)}` : undefined,
+      };
+
+      const productData = insertProductSchema.parse(formData);
       const product = await storage.createProduct(productData);
       res.status(201).json(product);
     } catch (error) {
+      console.error("Product creation error:", error);
       if (error instanceof z.ZodError) {
         res.status(400).json({ error: "Invalid product data", details: error.errors });
       } else {
