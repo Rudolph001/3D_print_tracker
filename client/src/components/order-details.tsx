@@ -153,7 +153,7 @@ export function OrderDetails({ order, onUpdate, onEdit, onDelete, getStatusColor
                       Time: {print.estimatedTime}h | Status: {getStatusLabel(print.status)}
                     </p>
                   </div>
-                  {print.status === "printing" && (
+                  {print.status === "in_progress" && (
                     <div className="mt-2">
                       <Progress value={getPrintProgress(print)} className="h-1" />
                     </div>

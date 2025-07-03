@@ -151,7 +151,7 @@ export const updateOrderStatusSchema = z.object({
 });
 
 export const updatePrintStatusSchema = z.object({
-  status: z.enum(["queued", "printing", "completed"]),
+  status: z.enum(["queued", "in_progress", "completed"]),
 });
 
 export const sendWhatsappMessageSchema = z.object({
