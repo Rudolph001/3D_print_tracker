@@ -494,6 +494,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
             ? parseFloat(req.body.estimatedPrintTime)
             : undefined,
           price: req.body.price ? parseFloat(req.body.price) : undefined,
+          filamentLengthMeters: req.body.filamentLengthMeters
+            ? parseFloat(req.body.filamentLengthMeters)
+            : undefined,
+          filamentWeightGrams: req.body.filamentWeightGrams
+            ? parseFloat(req.body.filamentWeightGrams)
+            : undefined,
           stlFileName: stlFile?.originalname || undefined,
           stlFileUrl: stlFile
             ? `/api/files/${path.basename(stlFile.path)}`

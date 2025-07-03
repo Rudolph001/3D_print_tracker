@@ -36,13 +36,20 @@ export default function Dashboard() {
   const [isAddCustomerModalOpen, setIsAddCustomerModalOpen] = useState(false);
   const [isEditCustomerModalOpen, setIsEditCustomerModalOpen] = useState(false);
   const [editingCustomer, setEditingCustomer] = useState<any | null>(null);
-  const [showNotifications, setShowNotifications] = useState(false);
   const [isFilamentStockModalOpen, setIsFilamentStockModalOpen] = useState(false);
+
+  const { data: filamentAlerts = [] } = useQuery({
+    queryKey: ["/api/filament-stock/alerts"],
+    refetchInterval: 30000, // Check every 30 seconds
+  });
+
+  // Show notifications for filament alerts
+  const showNotifications = filamentAlerts.length > 0;
 
   // Close notifications when clicking outside
   React.useEffect(() => {
     if (!showNotifications) return;
-    
+
     const handleClickOutside = (event: MouseEvent) => {
       if (!(event.target as Element).closest('.relative')) {
         setShowNotifications(false);
