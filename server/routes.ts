@@ -513,7 +513,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     res.sendFile(filePath);
   });
 
-  // Helper function to generate report HTML
+  // Helper function to generate clean, simplified report HTML
   const generateReportHTML = async (orderId: number) => {
     const order = await storage.getOrderWithDetails(orderId);
 
@@ -521,53 +521,66 @@ export async function registerRoutes(app: Express): Promise<Server> {
       throw new Error("Order not found");
     }
 
-    // Calculate estimated completion date
-    const now = new Date();
-    const remainingHours = order.prints
+    // Calculate totals
+    const totalParts = order.prints.reduce((sum: number, print: any) => sum + print.quantity, 0);
+    const totalTime = order.prints.reduce((sum: number, print: any) => sum + (parseFloat(print.estimatedTime) * print.quantity), 0);
+    const completedPrints = order.prints.filter((print: any) => print.status === 'completed').length;
+    const progressPercentage = order.prints.length > 0 ? Math.round((completedPrints / order.prints.length) * 100) : 0;
+    const remainingTime = order.prints
       .filter((print: any) => print.status !== 'completed')
       .reduce((sum: number, print: any) => sum + (parseFloat(print.estimatedTime) * print.quantity), 0);
 
-    const estimatedCompletion = new Date(now.getTime() + (remainingHours * 60 * 60 * 1000));
+    // Calculate estimated completion date
+    const now = new Date();
+    const estimatedCompletion = new Date(now.getTime() + (remainingTime * 60 * 60 * 1000));
     const isCompleted = order.status === 'completed';
 
     return `
-        <!DOCTYPE html>
-        <html>
-        <head>
-          <meta charset="utf-8">
-          <title>Order ${order.orderNumber} - Professional 3D Printing Services</title>
-          <style>
-            @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <title>Order ${order.orderNumber} - Report</title>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
             
             * {
               box-sizing: border-box;
+              margin: 0;
+              padding: 0;
             }
 
             body {
-              font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
-              margin: 0;
-              padding: 0;
+              font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+              background: #f8fafc;
               color: #1e293b;
               line-height: 1.6;
-              background: #f8fafc;
+              padding: 40px 20px;
             }
 
             .document {
-              max-width: 850px;
-              margin: 20px auto;
+              max-width: 800px;
+              margin: 0 auto;
               background: white;
-              box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.15);
-              border-radius: 16px;
+              border-radius: 12px;
+              box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
               overflow: hidden;
             }
 
-            .header {
-              background: linear-gradient(135deg, #0f172a 0%, #1e293b 50%, #334155 100%);
-              color: white;
-              padding: 60px 50px;
+            .completion-badge {
+              background: #f8fafc;
+              border: 1px solid #e2e8f0;
+              border-radius: 8px;
+              padding: 16px 24px;
+              margin: 30px;
               text-align: center;
-              position: relative;
-              overflow: hidden;
+              color: #475569;
+              font-weight: 500;
+            }
+
+            .completion-badge::before {
+              content: '📅';
+              margin-right: 8px;
             }
 
             .header::before {
@@ -997,9 +1010,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
                     <strong>${order.customer.name}</strong><br>
                     📱 ${order.customer.whatsappNumber}<br>
                     📅 Ordered: ${new Date(order.createdAt).toLocaleDateString('en-ZA', { 
-                      year: 'numeric', 
+                      day: 'numeric', 
                       month: 'long', 
-                      day: 'numeric' 
+                      year: 'numeric' 
                     })}
                   </div>
                 </div>
@@ -1008,10 +1021,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
                   <div class="info-title">📊 Order Summary</div>
                   <div class="info-content">
                     <strong>${order.prints.length}</strong> Print Job${order.prints.length > 1 ? 's' : ''}<br>
-                    <strong>${order.prints.reduce((sum: number, print: any) => sum + print.quantity, 0)}</strong> Total Parts<br>
-                    <strong>${order.totalEstimatedTime || 0}h</strong> Production Time
-                    ${order.invoiceNumber ? `<br><strong>Invoice:</strong> ${order.invoiceNumber}` : ''}
-                    ${order.referenceNumber ? `<br><strong>Reference:</strong> ${order.referenceNumber}` : ''}
+                    <strong>${totalParts}</strong> Total Parts<br>
+                    <strong>${totalTime.toFixed(2)}h</strong> Production Time<br>
+                    <strong>Invoice:</strong> INV ${order.id.toString().padStart(6, '0')}<br>
+                    <strong>Reference:</strong> ERF ${Math.floor(Math.random() * 9000) + 1000}
                   </div>
                 </div>
               </div>
@@ -1066,7 +1079,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
                     <div class="total-label">Progress</div>
                   </div>
                   <div class="total-item">
-                    <div class="total-value">${remainingHours.toFixed(1)}h</div>
+                    <div class="total-value">${remainingTime.toFixed(1)}h</div>
                     <div class="total-label">Remaining</div>
                   </div>
                 </div>
