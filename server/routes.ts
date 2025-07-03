@@ -929,6 +929,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const page = await browser.newPage();
       
       await page.setContent(html, { waitUntil: 'networkidle0' });
+      await page.waitForTimeout(1000); // Give extra time for styles to apply
       
       const pdfBuffer = await page.pdf({
         format: 'A4',
@@ -973,8 +974,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
       });
       const page = await browser.newPage();
       
-      await page.setContent(html);
+      await page.setContent(html, { waitUntil: 'networkidle0' });
       await page.setViewport({ width: 800, height: 1200 });
+      await page.waitForTimeout(1000); // Give extra time for styles to apply
       
       const svgContent = await page.evaluate(() => {
         const element = document.querySelector('.document');
