@@ -25,6 +25,18 @@ export default function Dashboard() {
   const queryClient = useQueryClient();
   const { toast } = useToast();
 
+  const [selectedOrderId, setSelectedOrderId] = useState<number | null>(null);
+  const [isNewOrderModalOpen, setIsNewOrderModalOpen] = useState(false);
+  const [isAddProductModalOpen, setIsAddProductModalOpen] = useState(false);
+  const [isEditOrderModalOpen, setIsEditOrderModalOpen] = useState(false);
+  const [isEditProductModalOpen, setIsEditProductModalOpen] = useState(false);
+  const [editingOrder, setEditingOrder] = useState<any | null>(null);
+  const [editingProduct, setEditingProduct] = useState<any | null>(null);
+  const [isAddCustomerModalOpen, setIsAddCustomerModalOpen] = useState(false);
+  const [isEditCustomerModalOpen, setIsEditCustomerModalOpen] = useState(false);
+  const [editingCustomer, setEditingCustomer] = useState<any | null>(null);
+  const [showNotifications, setShowNotifications] = useState(false);
+
   // Close notifications when clicking outside
   React.useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
@@ -38,17 +50,6 @@ export default function Dashboard() {
       document.removeEventListener('mousedown', handleClickOutside);
     };
   }, [showNotifications]);
-  const [selectedOrderId, setSelectedOrderId] = useState<number | null>(null);
-  const [isNewOrderModalOpen, setIsNewOrderModalOpen] = useState(false);
-  const [isAddProductModalOpen, setIsAddProductModalOpen] = useState(false);
-  const [isEditOrderModalOpen, setIsEditOrderModalOpen] = useState(false);
-  const [isEditProductModalOpen, setIsEditProductModalOpen] = useState(false);
-  const [editingOrder, setEditingOrder] = useState<any | null>(null);
-  const [editingProduct, setEditingProduct] = useState<any | null>(null);
-  const [isAddCustomerModalOpen, setIsAddCustomerModalOpen] = useState(false);
-  const [isEditCustomerModalOpen, setIsEditCustomerModalOpen] = useState(false);
-  const [editingCustomer, setEditingCustomer] = useState<any | null>(null);
-  const [showNotifications, setShowNotifications] = useState(false);
 
   const { data: orders = [], refetch: refetchOrders } = useQuery({
     queryKey: ["/api/orders"],
