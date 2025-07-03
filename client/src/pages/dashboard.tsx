@@ -12,8 +12,10 @@ import { AddProductModal } from "@/components/add-product-modal";
 import { EditOrderModal } from "@/components/edit-order-modal";
 import { EditProductModal } from "@/components/edit-product-modal";
 import { apiRequest } from "@/lib/queryClient";
+import { useToast } from "@/hooks/use-toast";
 
 export default function Dashboard() {
+  const { toast } = useToast();
   const [selectedOrderId, setSelectedOrderId] = useState<number | null>(null);
   const [isNewOrderModalOpen, setIsNewOrderModalOpen] = useState(false);
   const [isAddProductModalOpen, setIsAddProductModalOpen] = useState(false);
