@@ -1755,7 +1755,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
                         </div>
                         <div class="spec-item">
                           <div class="spec-label">Print Time</div>
-                          <div class="spec-value">${parseFloat(product.estimatedPrintTime).toFixed(1)}h</div>
+                          <div class="spec-value">${(() => {
+                            const hours = parseFloat(product.estimatedPrintTime);
+                            const totalMinutes = Math.round(hours * 60);
+                            const h = Math.floor(totalMinutes / 60);
+                            const m = Math.floor(totalMinutes % 60);
+                            const s = Math.round(((hours * 60) % 1) * 60);
+                            return `${h}:${m.toString().padStart(2, '0')}:${s.toString().padStart(2, '0')}`;
+                          })()}</div>
                         </div>
                       </div>
                     </div>
