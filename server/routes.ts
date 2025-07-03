@@ -1003,6 +1003,447 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Helper function to generate product catalog HTML
+  const generateProductCatalogHTML = async () => {
+    const products = await storage.getProducts();
+    
+    return `
+        <!DOCTYPE html>
+        <html>
+        <head>
+          <meta charset="utf-8">
+          <title>Professional Product Catalog - Precision 3D Printing</title>
+          <style>
+            * {
+              box-sizing: border-box;
+            }
+            
+            body {
+              font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+              margin: 0;
+              padding: 0;
+              color: #2c3e50;
+              line-height: 1.6;
+              background: #ffffff;
+            }
+            
+            .document {
+              max-width: 900px;
+              margin: 0 auto;
+              background: white;
+              box-shadow: 0 0 20px rgba(0,0,0,0.1);
+            }
+            
+            .header {
+              background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+              color: white;
+              padding: 50px 40px;
+              text-align: center;
+            }
+            
+            .company-name {
+              font-size: 36px;
+              font-weight: 300;
+              margin-bottom: 8px;
+              letter-spacing: 3px;
+            }
+            
+            .company-tagline {
+              font-size: 16px;
+              opacity: 0.9;
+              text-transform: uppercase;
+              letter-spacing: 1px;
+              margin-bottom: 20px;
+            }
+            
+            .catalog-badge {
+              display: inline-block;
+              background: rgba(255,255,255,0.2);
+              padding: 15px 30px;
+              border-radius: 30px;
+              margin-top: 20px;
+              font-size: 20px;
+              font-weight: 500;
+              letter-spacing: 1px;
+            }
+            
+            .content {
+              padding: 40px;
+            }
+            
+            .intro-section {
+              text-align: center;
+              margin-bottom: 50px;
+              padding: 40px;
+              background: #f8fafc;
+              border-radius: 12px;
+              border: 1px solid #e2e8f0;
+            }
+            
+            .intro-title {
+              font-size: 28px;
+              color: #2c3e50;
+              margin-bottom: 20px;
+              font-weight: 300;
+            }
+            
+            .intro-text {
+              font-size: 16px;
+              color: #64748b;
+              max-width: 600px;
+              margin: 0 auto;
+              line-height: 1.8;
+            }
+            
+            .products-grid {
+              display: grid;
+              grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+              gap: 30px;
+              margin-bottom: 40px;
+            }
+            
+            .product-card {
+              background: #ffffff;
+              border: 1px solid #e9ecef;
+              border-radius: 12px;
+              overflow: hidden;
+              box-shadow: 0 4px 6px rgba(0,0,0,0.07);
+              transition: all 0.3s ease;
+            }
+            
+            .product-image {
+              height: 200px;
+              background: linear-gradient(45deg, #f1f3f4 25%, transparent 25%), 
+                          linear-gradient(-45deg, #f1f3f4 25%, transparent 25%), 
+                          linear-gradient(45deg, transparent 75%, #f1f3f4 75%), 
+                          linear-gradient(-45deg, transparent 75%, #f1f3f4 75%);
+              background-size: 20px 20px;
+              background-position: 0 0, 0 10px, 10px -10px, -10px 0px;
+              display: flex;
+              align-items: center;
+              justify-content: center;
+              color: #94a3b8;
+              font-size: 14px;
+              text-transform: uppercase;
+              letter-spacing: 1px;
+              border-bottom: 1px solid #e9ecef;
+            }
+            
+            .product-info {
+              padding: 25px;
+            }
+            
+            .product-name {
+              font-size: 20px;
+              font-weight: 600;
+              color: #2c3e50;
+              margin-bottom: 10px;
+            }
+            
+            .product-description {
+              color: #64748b;
+              margin-bottom: 20px;
+              font-size: 14px;
+              line-height: 1.6;
+            }
+            
+            .product-specs {
+              display: grid;
+              grid-template-columns: 1fr 1fr;
+              gap: 15px;
+              margin-bottom: 20px;
+            }
+            
+            .spec-item {
+              display: flex;
+              flex-direction: column;
+            }
+            
+            .spec-label {
+              font-size: 11px;
+              font-weight: 600;
+              color: #94a3b8;
+              text-transform: uppercase;
+              letter-spacing: 0.5px;
+              margin-bottom: 5px;
+            }
+            
+            .spec-value {
+              font-size: 14px;
+              color: #2c3e50;
+              font-weight: 500;
+            }
+            
+            .product-price {
+              text-align: center;
+              padding: 15px;
+              background: #f8fafc;
+              border-top: 1px solid #e9ecef;
+              font-size: 18px;
+              font-weight: 700;
+              color: #667eea;
+            }
+            
+            .no-products {
+              text-align: center;
+              padding: 60px 40px;
+              color: #94a3b8;
+            }
+            
+            .no-products-icon {
+              font-size: 48px;
+              margin-bottom: 20px;
+            }
+            
+            .stats-section {
+              background: #f8fafc;
+              border-radius: 12px;
+              padding: 30px;
+              margin: 40px 0;
+              border-left: 4px solid #667eea;
+            }
+            
+            .stats-grid {
+              display: grid;
+              grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+              gap: 25px;
+              text-align: center;
+            }
+            
+            .stat-item {
+              display: flex;
+              flex-direction: column;
+            }
+            
+            .stat-value {
+              font-size: 32px;
+              font-weight: 700;
+              color: #667eea;
+              margin-bottom: 8px;
+            }
+            
+            .stat-label {
+              font-size: 12px;
+              color: #64748b;
+              text-transform: uppercase;
+              letter-spacing: 0.5px;
+              font-weight: 600;
+            }
+            
+            .footer {
+              background: #2c3e50;
+              color: white;
+              padding: 40px;
+              text-align: center;
+              font-size: 12px;
+              line-height: 1.8;
+            }
+            
+            .footer strong {
+              font-size: 18px;
+              display: block;
+              margin-bottom: 15px;
+            }
+            
+            .contact-grid {
+              display: grid;
+              grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+              gap: 20px;
+              margin-top: 20px;
+            }
+            
+            .contact-item {
+              padding: 15px;
+              background: rgba(255,255,255,0.1);
+              border-radius: 8px;
+            }
+            
+            @media print {
+              .document { box-shadow: none; }
+              body { margin: 0; }
+              .product-card { break-inside: avoid; }
+            }
+            
+            @media (max-width: 600px) {
+              .products-grid { grid-template-columns: 1fr; }
+              .stats-grid { grid-template-columns: 1fr 1fr; }
+              .content { padding: 20px; }
+            }
+          </style>
+        </head>
+        <body>
+          <div class="document">
+            <div class="header">
+              <div class="company-name">PRECISION 3D PRINTING</div>
+              <div class="company-tagline">Professional Manufacturing Solutions</div>
+              <div class="catalog-badge">PRODUCT CATALOG ${new Date().getFullYear()}</div>
+            </div>
+
+            <div class="content">
+              <div class="intro-section">
+                <div class="intro-title">Premium 3D Printing Services</div>
+                <div class="intro-text">
+                  Discover our comprehensive range of professionally designed 3D printable products. 
+                  From precision tools to creative designs, each item in our catalog is optimized for 
+                  high-quality manufacturing using state-of-the-art 3D printing technology.
+                </div>
+              </div>
+
+              ${products.length === 0 ? `
+              <div class="no-products">
+                <div class="no-products-icon">📦</div>
+                <h3>No Products Available</h3>
+                <p>Our catalog is currently being updated. Please check back soon for new products.</p>
+              </div>
+              ` : `
+              <div class="products-grid">
+                ${products.map((product: any) => `
+                  <div class="product-card">
+                    <div class="product-image">
+                      ${product.stlFileName ? `3D Model: ${product.stlFileName}` : '3D Model Available'}
+                    </div>
+                    <div class="product-info">
+                      <div class="product-name">${product.name}</div>
+                      <div class="product-description">
+                        ${product.description || 'Professional quality 3D printed product designed for optimal performance and durability.'}
+                      </div>
+                      <div class="product-specs">
+                        <div class="spec-item">
+                          <div class="spec-label">Material</div>
+                          <div class="spec-value">${product.material}</div>
+                        </div>
+                        <div class="spec-item">
+                          <div class="spec-label">Print Time</div>
+                          <div class="spec-value">${parseFloat(product.estimatedPrintTime).toFixed(1)}h</div>
+                        </div>
+                        <div class="spec-item">
+                          <div class="spec-label">Category</div>
+                          <div class="spec-value">${product.category || 'General'}</div>
+                        </div>
+                        <div class="spec-item">
+                          <div class="spec-label">Product ID</div>
+                          <div class="spec-value">#${product.id.toString().padStart(4, '0')}</div>
+                        </div>
+                      </div>
+                    </div>
+                    ${product.price ? `
+                    <div class="product-price">
+                      R${parseFloat(product.price).toFixed(2)}
+                    </div>
+                    ` : ''}
+                  </div>
+                `).join('')}
+              </div>
+              `}
+
+              <div class="stats-section">
+                <div class="stats-grid">
+                  <div class="stat-item">
+                    <div class="stat-value">${products.length}</div>
+                    <div class="stat-label">Products Available</div>
+                  </div>
+                  <div class="stat-item">
+                    <div class="stat-value">${new Set(products.map((p: any) => p.material)).size}</div>
+                    <div class="stat-label">Material Options</div>
+                  </div>
+                  <div class="stat-item">
+                    <div class="stat-value">${new Set(products.map((p: any) => p.category)).size}</div>
+                    <div class="stat-label">Categories</div>
+                  </div>
+                  <div class="stat-item">
+                    <div class="stat-value">${products.reduce((sum: number, p: any) => sum + parseFloat(p.estimatedPrintTime || 0), 0).toFixed(0)}h</div>
+                    <div class="stat-label">Total Print Time</div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div class="footer">
+              <strong>Precision 3D Printing Services</strong>
+              Your trusted partner for professional 3D manufacturing solutions
+              
+              <div class="contact-grid">
+                <div class="contact-item">
+                  <strong>Email</strong><br>
+                  orders@precision3d.co.za
+                </div>
+                <div class="contact-item">
+                  <strong>Phone</strong><br>
+                  +27 123 456 7890
+                </div>
+                <div class="contact-item">
+                  <strong>WhatsApp</strong><br>
+                  Available for quotes
+                </div>
+                <div class="contact-item">
+                  <strong>Generated</strong><br>
+                  ${new Date().toLocaleDateString('en-ZA')}
+                </div>
+              </div>
+            </div>
+          </div>
+        </body>
+        </html>
+      `;
+  };
+
+  // Product Catalog HTML Route
+  app.get("/api/products/catalog", async (req, res) => {
+    try {
+      const html = await generateProductCatalogHTML();
+      res.setHeader('Content-Type', 'text/html');
+      res.send(html);
+    } catch (error) {
+      console.error("Product catalog generation error:", error);
+      res.status(500).json({ error: "Failed to generate product catalog" });
+    }
+  });
+
+  // Product Catalog PDF Route
+  app.get("/api/products/catalog/pdf", async (req, res) => {
+    try {
+      const html = await generateProductCatalogHTML();
+      
+      const browser = await puppeteer.launch({ 
+        headless: true,
+        args: [
+          '--no-sandbox',
+          '--disable-setuid-sandbox',
+          '--disable-dev-shm-usage',
+          '--disable-accelerated-2d-canvas',
+          '--no-first-run',
+          '--no-zygote',
+          '--single-process',
+          '--disable-gpu'
+        ]
+      });
+      const page = await browser.newPage();
+      
+      await page.setContent(html, { waitUntil: 'networkidle0' });
+      await page.waitForTimeout(1000); // Give extra time for styles to apply
+      
+      const pdfBuffer = await page.pdf({
+        format: 'A4',
+        margin: {
+          top: '15mm',
+          bottom: '15mm',
+          left: '10mm',
+          right: '10mm'
+        },
+        printBackground: true
+      });
+      
+      await browser.close();
+      
+      res.setHeader('Content-Type', 'application/pdf');
+      res.setHeader('Content-Disposition', `attachment; filename="Product-Catalog-${new Date().getFullYear()}.pdf"`);
+      res.send(pdfBuffer);
+    } catch (error) {
+      console.error("Product catalog PDF generation error:", error);
+      res.status(500).json({ error: "Failed to generate product catalog PDF" });
+    }
+  });
+
   app.post("/api/whatsapp/send", async (req, res) => {
     try {
       const { orderId, message } = sendWhatsappMessageSchema.parse(req.body);
