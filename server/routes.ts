@@ -35,7 +35,7 @@ async function parseGCodeData(filePath: string): Promise<{
   try {
     const content = fs.readFileSync(filePath, 'utf8');
     const lines = content.split('\n');
-    
+
     let estimatedTime = 4; // Default fallback
     let nozzleTemp: number | undefined;
     let bedTemp: number | undefined;
@@ -49,10 +49,10 @@ async function parseGCodeData(filePath: string): Promise<{
     let minY = Infinity, maxY = -Infinity;
     let minZ = Infinity, maxZ = -Infinity;
     let currentZ = 0;
-    
+
     for (let i = 0; i < lines.length; i++) {
       const line = lines[i].trim();
-      
+
       // Extract print time
       if (line.includes(';TIME:') || line.includes('; estimated printing time')) {
         const timeMatch = line.match(/(\d+(?:\.\d+)?)\s*(?:h|hours|minutes|m|s|seconds)/i);
@@ -67,7 +67,7 @@ async function parseGCodeData(filePath: string): Promise<{
           }
         }
       }
-      
+
       // PrusaSlicer time format
       if (line.includes('; estimated printing time (normal mode)')) {
         const nextLine = lines[i + 1];
@@ -80,41 +80,41 @@ async function parseGCodeData(filePath: string): Promise<{
           }
         }
       }
-      
+
       // Extract temperatures
       if (line.startsWith('M104') || line.startsWith('M109')) {
         const tempMatch = line.match(/S(\d+)/);
         if (tempMatch) nozzleTemp = parseInt(tempMatch[1]);
       }
-      
+
       if (line.startsWith('M140') || line.startsWith('M190')) {
         const tempMatch = line.match(/S(\d+)/);
         if (tempMatch) bedTemp = parseInt(tempMatch[1]);
       }
-      
+
       // Extract layer height from comments
       if (line.includes('layer_height') || line.includes('Layer height')) {
         const heightMatch = line.match(/(\d+\.?\d*)\s*mm/);
         if (heightMatch) layerHeight = parseFloat(heightMatch[1]);
       }
-      
+
       // Extract infill percentage
       if (line.includes('fill_density') || line.includes('infill')) {
         const infillMatch = line.match(/(\d+)%/);
         if (infillMatch) infillPercentage = parseInt(infillMatch[1]);
       }
-      
+
       // Extract filament length
       if (line.includes('filament used') || line.includes('Filament used')) {
         const lengthMatch = line.match(/(\d+\.?\d*)\s*m/);
         if (lengthMatch) filamentLength = parseFloat(lengthMatch[1]);
       }
-      
+
       // Detect support material
       if (line.includes('support') && (line.includes('TYPE:') || line.includes('SUPPORT'))) {
         supportMaterial = true;
       }
-      
+
       // Extract movement commands to determine dimensions and speed
       if (line.startsWith('G1') || line.startsWith('G0')) {
         // Extract coordinates
@@ -122,19 +122,19 @@ async function parseGCodeData(filePath: string): Promise<{
         const yMatch = line.match(/Y([-\d.]+)/);
         const zMatch = line.match(/Z([-\d.]+)/);
         const fMatch = line.match(/F(\d+)/);
-        
+
         if (xMatch) {
           const x = parseFloat(xMatch[1]);
           minX = Math.min(minX, x);
           maxX = Math.max(maxX, x);
         }
-        
+
         if (yMatch) {
           const y = parseFloat(yMatch[1]);
           minY = Math.min(minY, y);
           maxY = Math.max(maxY, y);
         }
-        
+
         if (zMatch) {
           const z = parseFloat(zMatch[1]);
           if (z > currentZ) {
@@ -144,26 +144,26 @@ async function parseGCodeData(filePath: string): Promise<{
           minZ = Math.min(minZ, z);
           maxZ = Math.max(maxZ, z);
         }
-        
+
         if (fMatch && !printSpeed) {
           printSpeed = parseInt(fMatch[1]);
         }
       }
     }
-    
+
     // Calculate object dimensions
     const objectDimensions = (minX !== Infinity && maxX !== -Infinity) ? {
       x: Math.round((maxX - minX) * 10) / 10,
       y: Math.round((maxY - minY) * 10) / 10,
       z: Math.round((maxZ - minZ) * 10) / 10
     } : undefined;
-    
+
     // If no time found, estimate based on file size
     if (estimatedTime === 4) {
       const fileSizeKB = fs.statSync(filePath).size / 1024;
       estimatedTime = Math.max(1, Math.round(fileSizeKB / 100));
     }
-    
+
     return {
       estimatedTime,
       nozzleTemp,
@@ -271,7 +271,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.post("/api/orders", async (req, res) => {
     try {
       const { customer, order, prints } = req.body;
-      
+
       // Create or find customer
       let customerRecord = await storage.getCustomerByWhatsapp(customer.whatsappNumber);
       if (!customerRecord) {
@@ -294,7 +294,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         });
         return storage.createPrint(printData);
       });
-      
+
       await Promise.all(printPromises);
 
       // Return order with details
@@ -328,7 +328,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const id = parseInt(req.params.id);
       const { customer, order, prints } = req.body;
-      
+
       // Update customer
       if (customer) {
         await storage.updateCustomer(id, customer);
@@ -412,13 +412,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const id = parseInt(req.params.id);
       const updateData: any = { ...req.body };
-      
+
       // Add new file info if uploaded
       if (req.file) {
         updateData.stlFileName = req.file.originalname;
         updateData.stlFileUrl = `/api/files/${path.basename(req.file.path)}`;
       }
-      
+
       const updatedProduct = await storage.updateProduct(id, updateData);
       res.json(updatedProduct);
     } catch (error) {
@@ -444,7 +444,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       if (!req.file) {
         return res.status(400).json({ error: "No file uploaded" });
       }
-      
+
       res.json({
         filename: req.file.originalname,
         path: req.file.path,
@@ -464,7 +464,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       // Parse GCODE file to extract comprehensive print data
       const gcodeData = await parseGCodeData(req.file.path);
-      
+
       res.json({
         filename: req.file.originalname,
         path: req.file.path,
@@ -486,7 +486,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Helper function to generate report HTML
   const generateReportHTML = async (orderId: number) => {
     const order = await storage.getOrderWithDetails(orderId);
-    
+
     if (!order) {
       throw new Error("Order not found");
     }
@@ -496,7 +496,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     const remainingHours = order.prints
       .filter((print: any) => print.status !== 'completed')
       .reduce((sum: number, print: any) => sum + (parseFloat(print.estimatedTime) * print.quantity), 0);
-    
+
     const estimatedCompletion = new Date(now.getTime() + (remainingHours * 60 * 60 * 1000));
     const isCompleted = order.status === 'completed';
 
@@ -510,7 +510,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
             * {
               box-sizing: border-box;
             }
-            
+
             body {
               font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
               margin: 0;
@@ -519,35 +519,35 @@ export async function registerRoutes(app: Express): Promise<Server> {
               line-height: 1.6;
               background: #ffffff;
             }
-            
+
             .document {
               max-width: 800px;
               margin: 0 auto;
               background: white;
               box-shadow: 0 0 20px rgba(0,0,0,0.1);
             }
-            
+
             .header {
               background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
               color: white;
               padding: 40px;
               text-align: center;
             }
-            
+
             .company-name {
               font-size: 32px;
               font-weight: 300;
               margin-bottom: 8px;
               letter-spacing: 2px;
             }
-            
+
             .company-tagline {
               font-size: 14px;
               opacity: 0.9;
               text-transform: uppercase;
               letter-spacing: 1px;
             }
-            
+
             .order-badge {
               display: inline-block;
               background: rgba(255,255,255,0.2);
@@ -557,11 +557,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
               font-size: 18px;
               font-weight: 500;
             }
-            
+
             .content {
               padding: 40px;
             }
-            
+
             .status-section {
               text-align: center;
               margin-bottom: 40px;
@@ -570,7 +570,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
               border-radius: 12px;
               border: 1px solid #e2e8f0;
             }
-            
+
             .status-badge {
               display: inline-block;
               padding: 12px 30px;
@@ -581,38 +581,38 @@ export async function registerRoutes(app: Express): Promise<Server> {
               letter-spacing: 1px;
               margin-bottom: 15px;
             }
-            
+
             .status-queued { 
               background: #fff3cd; 
               color: #856404; 
               border: 2px solid #ffeaa7;
             }
-            
+
             .status-in_progress { 
               background: #d1ecf1; 
               color: #0c5460; 
               border: 2px solid #74b9ff;
             }
-            
+
             .status-completed { 
               background: #d4edda; 
               color: #155724; 
               border: 2px solid #00b894;
             }
-            
+
             .completion-date {
               font-size: 18px;
               color: #495057;
               margin-top: 10px;
             }
-            
+
             .info-grid {
               display: grid;
               grid-template-columns: 1fr 1fr;
               gap: 30px;
               margin-bottom: 40px;
             }
-            
+
             .info-card {
               background: #ffffff;
               border: 1px solid #e9ecef;
@@ -620,7 +620,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
               padding: 24px;
               box-shadow: 0 2px 4px rgba(0,0,0,0.05);
             }
-            
+
             .info-title {
               font-size: 14px;
               font-weight: 600;
@@ -631,13 +631,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
               border-bottom: 2px solid #667eea;
               padding-bottom: 8px;
             }
-            
+
             .info-content {
               font-size: 16px;
               color: #495057;
               line-height: 1.5;
             }
-            
+
             .prints-summary {
               background: #ffffff;
               border: 1px solid #e9ecef;
@@ -646,7 +646,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
               margin-bottom: 30px;
               box-shadow: 0 2px 4px rgba(0,0,0,0.05);
             }
-            
+
             .prints-header {
               background: #f8f9fa;
               padding: 20px;
@@ -655,12 +655,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
               color: #495057;
               font-size: 18px;
             }
-            
+
             .prints-table {
               width: 100%;
               border-collapse: collapse;
             }
-            
+
             .prints-table th {
               background: #f8f9fa;
               padding: 15px;
@@ -672,17 +672,17 @@ export async function registerRoutes(app: Express): Promise<Server> {
               text-transform: uppercase;
               letter-spacing: 0.5px;
             }
-            
+
             .prints-table td {
               padding: 15px;
               border-bottom: 1px solid #f1f3f4;
               color: #495057;
             }
-            
+
             .prints-table tr:last-child td {
               border-bottom: none;
             }
-            
+
             .print-status-badge {
               display: inline-block;
               padding: 4px 12px;
@@ -692,7 +692,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
               text-transform: uppercase;
               letter-spacing: 0.5px;
             }
-            
+
             .totals-section {
               background: #f8f9fa;
               border-radius: 8px;
@@ -700,24 +700,24 @@ export async function registerRoutes(app: Express): Promise<Server> {
               margin: 30px 0;
               border-left: 4px solid #667eea;
             }
-            
+
             .totals-grid {
               display: grid;
               grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
               gap: 20px;
             }
-            
+
             .total-item {
               text-align: center;
             }
-            
+
             .total-value {
               font-size: 24px;
               font-weight: 700;
               color: #667eea;
               margin-bottom: 5px;
             }
-            
+
             .total-label {
               font-size: 12px;
               color: #6c757d;
@@ -725,7 +725,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
               letter-spacing: 0.5px;
               font-weight: 600;
             }
-            
+
             .notes-section {
               background: #fff8e1;
               border-left: 4px solid #ffb300;
@@ -733,7 +733,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
               padding: 20px;
               margin: 30px 0;
             }
-            
+
             .footer {
               background: #2c3e50;
               color: white;
@@ -742,13 +742,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
               font-size: 12px;
               line-height: 1.8;
             }
-            
+
             .footer strong {
               font-size: 16px;
               display: block;
               margin-bottom: 10px;
             }
-            
+
             .contact-info {
               background: #e3f2fd;
               border: 1px solid #2196f3;
@@ -757,13 +757,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
               margin: 20px 0;
               text-align: center;
             }
-            
+
             @media print {
               .document { box-shadow: none; }
               .contact-info { display: none; }
               body { margin: 0; }
             }
-            
+
             @media (max-width: 600px) {
               .info-grid { grid-template-columns: 1fr; }
               .totals-grid { grid-template-columns: 1fr 1fr; }
@@ -811,7 +811,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
                     })}
                   </div>
                 </div>
-                
+
                 <div class="info-card">
                   <div class="info-title">Order Summary</div>
                   <div class="info-content">
@@ -912,7 +912,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const id = parseInt(req.params.id);
       const html = await generateReportHTML(id);
-      
+
       const browser = await puppeteer.launch({ 
         headless: true,
         args: [
@@ -923,14 +923,17 @@ export async function registerRoutes(app: Express): Promise<Server> {
           '--no-first-run',
           '--no-zygote',
           '--single-process',
-          '--disable-gpu'
-        ]
+          '--disable-gpu',
+          '--disable-web-security',
+          '--disable-features=VizDisplayCompositor'
+        ],
+        executablePath: process.env.NODE_ENV === 'production' ? '/usr/bin/chromium-browser' : undefined
       });
       const page = await browser.newPage();
-      
+
       await page.setContent(html, { waitUntil: 'networkidle0' });
       await page.waitForTimeout(1000); // Give extra time for styles to apply
-      
+
       const pdfBuffer = await page.pdf({
         format: 'A4',
         margin: {
@@ -941,9 +944,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
         },
         printBackground: true
       });
-      
+
       await browser.close();
-      
+
       res.setHeader('Content-Type', 'application/pdf');
       res.setHeader('Content-Disposition', `attachment; filename="Order-${id}-Report.pdf"`);
       res.send(pdfBuffer);
@@ -958,7 +961,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const id = parseInt(req.params.id);
       const html = await generateReportHTML(id);
-      
+
       const browser = await puppeteer.launch({ 
         headless: true,
         args: [
@@ -969,15 +972,18 @@ export async function registerRoutes(app: Express): Promise<Server> {
           '--no-first-run',
           '--no-zygote',
           '--single-process',
-          '--disable-gpu'
-        ]
+          '--disable-gpu',
+          '--disable-web-security',
+          '--disable-features=VizDisplayCompositor'
+        ],
+        executablePath: process.env.NODE_ENV === 'production' ? '/usr/bin/chromium-browser' : undefined
       });
       const page = await browser.newPage();
-      
+
       await page.setContent(html, { waitUntil: 'networkidle0' });
       await page.setViewport({ width: 800, height: 1200 });
       await page.waitForTimeout(1000); // Give extra time for styles to apply
-      
+
       const svgContent = await page.evaluate(() => {
         const element = document.querySelector('.document');
         if (element) {
@@ -991,9 +997,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
         }
         return '';
       });
-      
+
       await browser.close();
-      
+
       res.setHeader('Content-Type', 'image/svg+xml');
       res.setHeader('Content-Disposition', `attachment; filename="Order-${id}-Report.svg"`);
       res.send(svgContent);
@@ -1006,7 +1012,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Helper function to generate product catalog HTML
   const generateProductCatalogHTML = async () => {
     const products = await storage.getProducts();
-    
+
     return `
         <!DOCTYPE html>
         <html>
@@ -1017,7 +1023,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
             * {
               box-sizing: border-box;
             }
-            
+
             body {
               font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
               margin: 0;
@@ -1026,28 +1032,28 @@ export async function registerRoutes(app: Express): Promise<Server> {
               line-height: 1.6;
               background: #ffffff;
             }
-            
+
             .document {
               max-width: 900px;
               margin: 0 auto;
               background: white;
               box-shadow: 0 0 20px rgba(0,0,0,0.1);
             }
-            
+
             .header {
               background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
               color: white;
               padding: 50px 40px;
               text-align: center;
             }
-            
+
             .company-name {
               font-size: 36px;
               font-weight: 300;
               margin-bottom: 8px;
               letter-spacing: 3px;
             }
-            
+
             .company-tagline {
               font-size: 16px;
               opacity: 0.9;
@@ -1055,7 +1061,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
               letter-spacing: 1px;
               margin-bottom: 20px;
             }
-            
+
             .catalog-badge {
               display: inline-block;
               background: rgba(255,255,255,0.2);
@@ -1066,11 +1072,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
               font-weight: 500;
               letter-spacing: 1px;
             }
-            
+
             .content {
               padding: 40px;
             }
-            
+
             .intro-section {
               text-align: center;
               margin-bottom: 50px;
@@ -1079,14 +1085,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
               border-radius: 12px;
               border: 1px solid #e2e8f0;
             }
-            
+
             .intro-title {
               font-size: 28px;
               color: #2c3e50;
               margin-bottom: 20px;
               font-weight: 300;
             }
-            
+
             .intro-text {
               font-size: 16px;
               color: #64748b;
@@ -1094,14 +1100,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
               margin: 0 auto;
               line-height: 1.8;
             }
-            
+
             .products-grid {
               display: grid;
               grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
               gap: 30px;
               margin-bottom: 40px;
             }
-            
+
             .product-card {
               background: #ffffff;
               border: 1px solid #e9ecef;
@@ -1110,7 +1116,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
               box-shadow: 0 4px 6px rgba(0,0,0,0.07);
               transition: all 0.3s ease;
             }
-            
+
             .product-image {
               height: 200px;
               background: linear-gradient(45deg, #f1f3f4 25%, transparent 25%), 
@@ -1128,37 +1134,37 @@ export async function registerRoutes(app: Express): Promise<Server> {
               letter-spacing: 1px;
               border-bottom: 1px solid #e9ecef;
             }
-            
+
             .product-info {
               padding: 25px;
             }
-            
+
             .product-name {
               font-size: 20px;
               font-weight: 600;
               color: #2c3e50;
               margin-bottom: 10px;
             }
-            
+
             .product-description {
               color: #64748b;
               margin-bottom: 20px;
               font-size: 14px;
               line-height: 1.6;
             }
-            
+
             .product-specs {
               display: grid;
               grid-template-columns: 1fr 1fr;
               gap: 15px;
               margin-bottom: 20px;
             }
-            
+
             .spec-item {
               display: flex;
               flex-direction: column;
             }
-            
+
             .spec-label {
               font-size: 11px;
               font-weight: 600;
@@ -1167,13 +1173,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
               letter-spacing: 0.5px;
               margin-bottom: 5px;
             }
-            
+
             .spec-value {
               font-size: 14px;
               color: #2c3e50;
               font-weight: 500;
             }
-            
+
             .product-price {
               text-align: center;
               padding: 15px;
@@ -1183,18 +1189,18 @@ export async function registerRoutes(app: Express): Promise<Server> {
               font-weight: 700;
               color: #667eea;
             }
-            
+
             .no-products {
               text-align: center;
               padding: 60px 40px;
               color: #94a3b8;
             }
-            
+
             .no-products-icon {
               font-size: 48px;
               margin-bottom: 20px;
             }
-            
+
             .stats-section {
               background: #f8fafc;
               border-radius: 12px;
@@ -1202,26 +1208,26 @@ export async function registerRoutes(app: Express): Promise<Server> {
               margin: 40px 0;
               border-left: 4px solid #667eea;
             }
-            
+
             .stats-grid {
               display: grid;
               grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
               gap: 25px;
               text-align: center;
             }
-            
+
             .stat-item {
               display: flex;
               flex-direction: column;
             }
-            
+
             .stat-value {
               font-size: 32px;
               font-weight: 700;
               color: #667eea;
               margin-bottom: 8px;
             }
-            
+
             .stat-label {
               font-size: 12px;
               color: #64748b;
@@ -1229,7 +1235,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
               letter-spacing: 0.5px;
               font-weight: 600;
             }
-            
+
             .footer {
               background: #2c3e50;
               color: white;
@@ -1238,32 +1244,32 @@ export async function registerRoutes(app: Express): Promise<Server> {
               font-size: 12px;
               line-height: 1.8;
             }
-            
+
             .footer strong {
               font-size: 18px;
               display: block;
               margin-bottom: 15px;
             }
-            
+
             .contact-grid {
               display: grid;
               grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
               gap: 20px;
               margin-top: 20px;
             }
-            
+
             .contact-item {
               padding: 15px;
               background: rgba(255,255,255,0.1);
               border-radius: 8px;
             }
-            
+
             @media print {
               .document { box-shadow: none; }
               body { margin: 0; }
               .product-card { break-inside: avoid; }
             }
-            
+
             @media (max-width: 600px) {
               .products-grid { grid-template-columns: 1fr; }
               .stats-grid { grid-template-columns: 1fr 1fr; }
@@ -1361,7 +1367,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
             <div class="footer">
               <strong>Precision 3D Printing Services</strong>
               Your trusted partner for professional 3D manufacturing solutions
-              
+
               <div class="contact-grid">
                 <div class="contact-item">
                   <strong>Email</strong><br>
@@ -1403,7 +1409,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.get("/api/products/catalog/pdf", async (req, res) => {
     try {
       const html = await generateProductCatalogHTML();
-      
+
       const browser = await puppeteer.launch({ 
         headless: true,
         args: [
@@ -1414,14 +1420,17 @@ export async function registerRoutes(app: Express): Promise<Server> {
           '--no-first-run',
           '--no-zygote',
           '--single-process',
-          '--disable-gpu'
-        ]
+          '--disable-gpu',
+          '--disable-web-security',
+          '--disable-features=VizDisplayCompositor'
+        ],
+        executablePath: process.env.NODE_ENV === 'production' ? '/usr/bin/chromium-browser' : undefined
       });
       const page = await browser.newPage();
-      
+
       await page.setContent(html, { waitUntil: 'networkidle0' });
       await page.waitForTimeout(1000); // Give extra time for styles to apply
-      
+
       const pdfBuffer = await page.pdf({
         format: 'A4',
         margin: {
@@ -1432,9 +1441,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
         },
         printBackground: true
       });
-      
+
       await browser.close();
-      
+
       res.setHeader('Content-Type', 'application/pdf');
       res.setHeader('Content-Disposition', `attachment; filename="Product-Catalog-${new Date().getFullYear()}.pdf"`);
       res.send(pdfBuffer);
@@ -1447,7 +1456,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.post("/api/whatsapp/send", async (req, res) => {
     try {
       const { orderId, message } = sendWhatsappMessageSchema.parse(req.body);
-      
+
       // Get order details
       const order = await storage.getOrderWithDetails(orderId);
       if (!order) {
@@ -1465,7 +1474,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // Return download link and WhatsApp link for manual sending
       const downloadUrl = `${req.protocol}://${req.get('host')}/api/orders/${orderId}/pdf`;
       const whatsappLink = `https://wa.me/${order.customer.whatsappNumber.replace('+', '')}?text=${encodeURIComponent(`Hello ${order.customer.name}, here is your order update for ${order.orderNumber}. Download your order report: ${downloadUrl}`)}`;
-      
+
       res.json({ 
         success: true, 
         messageId: whatsappMessage.id,
