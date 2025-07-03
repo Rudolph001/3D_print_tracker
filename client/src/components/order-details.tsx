@@ -115,6 +115,18 @@ export function OrderDetails({ order, onUpdate, onEdit, onDelete, getStatusColor
               {format(new Date(order.createdAt), "MMMM d, yyyy")}
             </p>
           </div>
+          {order.invoiceNumber && (
+            <div>
+              <p className="text-sm text-gray-600">Invoice Number</p>
+              <p className="font-medium text-gray-800">{order.invoiceNumber}</p>
+            </div>
+          )}
+          {order.referenceNumber && (
+            <div>
+              <p className="text-sm text-gray-600">Reference Number</p>
+              <p className="font-medium text-gray-800">{order.referenceNumber}</p>
+            </div>
+          )}
           <div>
             <p className="text-sm text-gray-600">Status</p>
             <Badge className={`${getStatusBgColor(order.status)} ${getStatusColor(order.status)} font-medium`}>

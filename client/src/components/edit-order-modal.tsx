@@ -18,6 +18,8 @@ import { formatPrintTime } from "@/lib/time-utils";
 const orderSchema = z.object({
   customerName: z.string().min(1, "Customer name is required"),
   whatsappNumber: z.string().min(1, "WhatsApp number is required"),
+  invoiceNumber: z.string().optional(),
+  referenceNumber: z.string().optional(),
   notes: z.string().optional(),
 });
 
@@ -47,6 +49,8 @@ export function EditOrderModal({ isOpen, onClose, onSuccess, order }: EditOrderM
     defaultValues: {
       customerName: "",
       whatsappNumber: "",
+      invoiceNumber: "",
+      referenceNumber: "",
       notes: "",
     },
   });
@@ -56,6 +60,8 @@ export function EditOrderModal({ isOpen, onClose, onSuccess, order }: EditOrderM
       form.reset({
         customerName: order.customer?.name || "",
         whatsappNumber: order.customer?.whatsappNumber || "",
+        invoiceNumber: order.invoiceNumber || "",
+        referenceNumber: order.referenceNumber || "",
         notes: order.notes || "",
       });
       
@@ -154,6 +160,8 @@ export function EditOrderModal({ isOpen, onClose, onSuccess, order }: EditOrderM
         whatsappNumber: data.whatsappNumber,
       },
       order: {
+        invoiceNumber: data.invoiceNumber,
+        referenceNumber: data.referenceNumber,
         notes: data.notes,
         totalEstimatedTime: totalEstimatedTime.toString(),
       },
@@ -206,6 +214,31 @@ export function EditOrderModal({ isOpen, onClose, onSuccess, order }: EditOrderM
               />
               {form.formState.errors.whatsappNumber && (
                 <p className="text-sm text-red-600">{form.formState.errors.whatsappNumber.message}</p>
+              )}
+            </div>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div>
+              <Label htmlFor="invoiceNumber">Invoice Number (Optional)</Label>
+              <Input
+                id="invoiceNumber"
+                {...form.register("invoiceNumber")}
+                placeholder="INV-001"
+              />
+              {form.formState.errors.invoiceNumber && (
+                <p className="text-sm text-red-600">{form.formState.errors.invoiceNumber.message}</p>
+              )}
+            </div>
+            <div>
+              <Label htmlFor="referenceNumber">Reference Number (Optional)</Label>
+              <Input
+                id="referenceNumber"
+                {...form.register("referenceNumber")}
+                placeholder="REF-001"
+              />
+              {form.formState.errors.referenceNumber && (
+                <p className="text-sm text-red-600">{form.formState.errors.referenceNumber.message}</p>
               )}
             </div>
           </div>

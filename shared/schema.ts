@@ -15,6 +15,8 @@ export const orders = pgTable("orders", {
   id: serial("id").primaryKey(),
   customerId: integer("customer_id").references(() => customers.id).notNull(),
   orderNumber: text("order_number").notNull().unique(),
+  invoiceNumber: text("invoice_number"),
+  referenceNumber: text("reference_number"),
   status: text("status").notNull().default("queued"), // queued, in_progress, completed
   notes: text("notes"),
   totalEstimatedTime: decimal("total_estimated_time", { precision: 10, scale: 2 }).default("0"),
