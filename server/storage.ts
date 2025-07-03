@@ -187,6 +187,13 @@ export class DatabaseStorage implements IStorage {
   }
 
   async deleteProduct(id: number): Promise<void> {
+    // First check if the product is referenced by any prints
+    const referencedPrints = await db.select().from(prints).where(eq(prints.productId, id));
+    
+    if (referencedPrints.length > 0) {
+      throw new Error('Cannot delete product: it is referenced by existing prints. Please remove or update the associated prints first.');
+    }
+    
     await db.delete(products).where(eq(products.id, id));
   }
 

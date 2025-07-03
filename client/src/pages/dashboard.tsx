@@ -85,10 +85,18 @@ export default function Dashboard() {
       try {
         await apiRequest("DELETE", `/api/products/${productId}`);
         refetchProducts();
-        // You might want to add a toast notification here
+        toast({
+          title: "Success",
+          description: "Product deleted successfully",
+        });
       } catch (error) {
         console.error('Failed to delete product:', error);
-        // You might want to add an error toast notification here
+        const errorMessage = error instanceof Error ? error.message : 'Failed to delete product';
+        toast({
+          title: "Error",
+          description: errorMessage,
+          variant: "destructive",
+        });
       }
     }
   };

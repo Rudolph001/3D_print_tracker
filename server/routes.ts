@@ -463,7 +463,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.json({ success: true });
     } catch (error) {
       console.error("Delete product error:", error);
-      res.status(500).json({ error: "Failed to delete product" });
+      const errorMessage = error instanceof Error ? error.message : "Failed to delete product";
+      res.status(400).json({ error: errorMessage });
     }
   });
 
