@@ -1,9 +1,9 @@
 import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { useMutation } from "@tanstack/react-query";
+import { useMutation, useQuery } from "@tanstack/react-query";
 import { z } from "zod";
-import { X, Plus, Upload, Trash2 } from "lucide-react";
+import { X, Plus, Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -20,10 +20,9 @@ const orderSchema = z.object({
 });
 
 const printSchema = z.object({
-  name: z.string().min(1, "Print name is required"),
-  quantity: z.number().min(1, "Quantity must be at least 1"),
-  material: z.string().min(1, "Material is required"),
-  estimatedTime: z.number().min(0.5, "Estimated time must be at least 0.5 hours"),
+  productId: z.number().min(1, "Product selection is required"),
+  quantityNeeded: z.number().min(1, "Quantity needed must be at least 1"),
+  quantityPerPlate: z.number().min(1, "Quantity per plate must be at least 1"),
 });
 
 interface NewOrderModalProps {
@@ -36,15 +35,15 @@ export function NewOrderModal({ isOpen, onClose, onSuccess }: NewOrderModalProps
   const { toast } = useToast();
   const [prints, setPrints] = useState([
     { 
-      name: "", 
-      quantity: 1, 
-      material: "PLA", 
-      estimatedTime: 4, 
-      stlFile: null as File | null,
-      gcodeFile: null as File | null,
-      gcodeEstimatedTime: null as number | null
+      productId: 0,
+      quantityNeeded: 1,
+      quantityPerPlate: 1
     }
   ]);
+
+  const { data: products = [] } = useQuery({
+    queryKey: ["/api/products"],
+  });
 
   const form = useForm({
     resolver: zodResolver(orderSchema),
@@ -67,13 +66,9 @@ export function NewOrderModal({ isOpen, onClose, onSuccess }: NewOrderModalProps
       onSuccess();
       form.reset();
       setPrints([{ 
-        name: "", 
-        quantity: 1, 
-        material: "PLA", 
-        estimatedTime: 4, 
-        stlFile: null,
-        gcodeFile: null,
-        gcodeEstimatedTime: null
+        productId: 0,
+        quantityNeeded: 1,
+        quantityPerPlate: 1
       }]);
     },
     onError: () => {
@@ -87,13 +82,9 @@ export function NewOrderModal({ isOpen, onClose, onSuccess }: NewOrderModalProps
 
   const addPrint = () => {
     setPrints([...prints, { 
-      name: "", 
-      quantity: 1, 
-      material: "PLA", 
-      estimatedTime: 4, 
-      stlFile: null,
-      gcodeFile: null,
-      gcodeEstimatedTime: null
+      productId: 0,
+      quantityNeeded: 1,
+      quantityPerPlate: 1
     }]);
   };
 
@@ -107,68 +98,26 @@ export function NewOrderModal({ isOpen, onClose, onSuccess }: NewOrderModalProps
     setPrints(updated);
   };
 
-  const handleFileUpload = (index: number, file: File | null) => {
-    updatePrint(index, "stlFile", file);
+  const getSelectedProduct = (productId: number) => {
+    return products.find((product: any) => product.id === productId);
   };
 
-  const handleGcodeUpload = async (index: number, file: File | null) => {
-    if (!file) {
-      updatePrint(index, "gcodeFile", null);
-      updatePrint(index, "gcodeEstimatedTime", null);
-      return;
-    }
+  const calculatePlates = (quantityNeeded: number, quantityPerPlate: number) => {
+    return Math.ceil(quantityNeeded / quantityPerPlate);
+  };
 
-    try {
-      const formData = new FormData();
-      formData.append('gcodeFile', file);
-      
-      const response = await fetch('/api/upload/gcode', {
-        method: 'POST',
-        body: formData,
-      });
-      
-      if (response.ok) {
-        const result = await response.json();
-        
-        // Auto-fill form information from GCODE filename and data
-        const filename = file.name.replace(/\.(gcode|g)$/i, '');
-        
-        // Extract name from filename (remove common GCODE suffixes)
-        const cleanName = filename
-          .replace(/_\d+h\d+m/i, '') // Remove time patterns like _4h30m
-          .replace(/_\d+mm/gi, '') // Remove size patterns like _100mm
-          .replace(/_v\d+/gi, '') // Remove version patterns like _v2
-          .replace(/[_-]/g, ' ') // Replace underscores and dashes with spaces
-          .trim();
-        
-        updatePrint(index, "gcodeFile", file);
-        updatePrint(index, "gcodeEstimatedTime", result.estimatedTime);
-        updatePrint(index, "estimatedTime", result.estimatedTime);
-        
-        // Auto-fill name if it's empty or default
-        if (!prints[index].name || prints[index].name === `Print ${index + 1}`) {
-          updatePrint(index, "name", cleanName || `Print ${index + 1}`);
-        }
-        
-        toast({
-          title: "GCODE uploaded and form auto-filled",
-          description: `Print time: ${result.estimatedTime}h, Name: "${cleanName}"`,
-        });
-      } else {
-        throw new Error('Upload failed');
-      }
-    } catch (error) {
-      toast({
-        title: "Upload failed",
-        description: "Could not upload GCODE file. Please try again.",
-        variant: "destructive",
-      });
-    }
+  const calculateTotalPrintTime = (productId: number, quantityNeeded: number, quantityPerPlate: number) => {
+    const product = getSelectedProduct(productId);
+    if (!product) return 0;
+    
+    const plates = calculatePlates(quantityNeeded, quantityPerPlate);
+    const timePerPlate = parseFloat(product.estimatedPrintTime);
+    return plates * timePerPlate;
   };
 
   const onSubmit = async (data: any) => {
     // Validate prints
-    const validPrints = prints.filter(print => print.name.trim() !== "");
+    const validPrints = prints.filter(print => print.productId > 0);
     if (validPrints.length === 0) {
       toast({
         title: "No prints added",
@@ -178,6 +127,10 @@ export function NewOrderModal({ isOpen, onClose, onSuccess }: NewOrderModalProps
       return;
     }
 
+    const totalEstimatedTime = validPrints.reduce((sum, print) => {
+      return sum + calculateTotalPrintTime(print.productId, print.quantityNeeded, print.quantityPerPlate);
+    }, 0);
+
     const orderData = {
       customer: {
         name: data.customerName,
@@ -186,19 +139,23 @@ export function NewOrderModal({ isOpen, onClose, onSuccess }: NewOrderModalProps
       order: {
         orderNumber: `ORD-${Date.now()}-${Math.random().toString(36).substr(2, 9).toUpperCase()}`,
         notes: data.notes,
-        totalEstimatedTime: validPrints.reduce((sum, print) => sum + (print.gcodeEstimatedTime || print.estimatedTime) * print.quantity, 0).toString(),
+        totalEstimatedTime: totalEstimatedTime.toString(),
       },
-      prints: validPrints.map(print => ({
-        name: print.name,
-        quantity: print.quantity,
-        material: print.material,
-        estimatedTime: (print.gcodeEstimatedTime || print.estimatedTime * print.quantity).toString(),
-        stlFileName: print.stlFile?.name,
-        stlFileUrl: print.stlFile ? `/uploads/${print.stlFile.name}` : undefined,
-        gcodeFileName: print.gcodeFile?.name,
-        gcodeFileUrl: print.gcodeFile ? `/uploads/${print.gcodeFile.name}` : undefined,
-        gcodeEstimatedTime: print.gcodeEstimatedTime?.toString(),
-      })),
+      prints: validPrints.map(print => {
+        const product = getSelectedProduct(print.productId);
+        const plates = calculatePlates(print.quantityNeeded, print.quantityPerPlate);
+        const totalTime = calculateTotalPrintTime(print.productId, print.quantityNeeded, print.quantityPerPlate);
+        
+        return {
+          productId: print.productId,
+          name: `${product?.name} (${print.quantityNeeded} pieces, ${plates} plates)`,
+          quantity: print.quantityNeeded,
+          material: product?.material || "PLA",
+          estimatedTime: totalTime.toString(),
+          stlFileName: product?.stlFileName,
+          stlFileUrl: product?.stlFileUrl,
+        };
+      }),
     };
 
     createOrderMutation.mutate(orderData);
@@ -274,89 +231,69 @@ export function NewOrderModal({ isOpen, onClose, onSuccess }: NewOrderModalProps
                   </div>
                   
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <div>
-                      <Label>Print Name</Label>
-                      <Input
-                        value={print.name}
-                        onChange={(e) => updatePrint(index, "name", e.target.value)}
-                        placeholder="Enter print name"
-                      />
-                    </div>
-                    <div>
-                      <Label>Quantity</Label>
-                      <Input
-                        type="number"
-                        min="1"
-                        value={print.quantity}
-                        onChange={(e) => updatePrint(index, "quantity", parseInt(e.target.value) || 1)}
-                      />
-                    </div>
-                    <div>
-                      <Label>Material</Label>
+                    <div className="md:col-span-2">
+                      <Label>Select Product</Label>
                       <Select
-                        value={print.material}
-                        onValueChange={(value) => updatePrint(index, "material", value)}
+                        value={print.productId.toString()}
+                        onValueChange={(value) => updatePrint(index, "productId", parseInt(value))}
                       >
                         <SelectTrigger>
-                          <SelectValue />
+                          <SelectValue placeholder="Choose a product to print" />
                         </SelectTrigger>
                         <SelectContent>
-                          <SelectItem value="PLA">PLA</SelectItem>
-                          <SelectItem value="PETG">PETG</SelectItem>
-                          <SelectItem value="ABS">ABS</SelectItem>
-                          <SelectItem value="TPU">TPU</SelectItem>
+                          {products.map((product: any) => (
+                            <SelectItem key={product.id} value={product.id.toString()}>
+                              {product.name} - {product.material} ({product.estimatedPrintTime}h)
+                            </SelectItem>
+                          ))}
                         </SelectContent>
                       </Select>
                     </div>
                     <div>
-                      <Label>Estimated Time (hours)</Label>
+                      <Label>Quantity Needed</Label>
                       <Input
                         type="number"
-                        min="0.5"
-                        step="0.5"
-                        value={print.estimatedTime}
-                        onChange={(e) => updatePrint(index, "estimatedTime", parseFloat(e.target.value) || 0.5)}
+                        min="1"
+                        value={print.quantityNeeded}
+                        onChange={(e) => updatePrint(index, "quantityNeeded", parseInt(e.target.value) || 1)}
+                        placeholder="Total pieces needed"
+                      />
+                    </div>
+                    <div>
+                      <Label>Quantity Per Plate</Label>
+                      <Input
+                        type="number"
+                        min="1"
+                        value={print.quantityPerPlate}
+                        onChange={(e) => updatePrint(index, "quantityPerPlate", parseInt(e.target.value) || 1)}
+                        placeholder="Pieces per print plate"
                       />
                     </div>
                   </div>
                   
-                  <div className="mt-4 grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <div>
-                      <Label>Upload STL File</Label>
-                      <div className="border-2 border-dashed border-gray-300 rounded-lg p-4 text-center hover:border-gray-400 transition-colors cursor-pointer relative">
-                        <Upload className="h-6 w-6 mx-auto mb-2 text-gray-400" />
-                        <p className="text-xs text-gray-600">
-                          {print.stlFile ? print.stlFile.name : "Click to upload STL file"}
-                        </p>
-                        <input
-                          type="file"
-                          accept=".stl"
-                          className="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-10"
-                          onChange={(e) => handleFileUpload(index, e.target.files?.[0] || null)}
-                        />
+                  {print.productId > 0 && (
+                    <div className="mt-4 p-4 bg-gray-50 rounded-lg">
+                      <h5 className="font-medium text-sm mb-2">Print Calculation Summary</h5>
+                      <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm">
+                        <div>
+                          <span className="text-gray-600">Plates needed:</span>
+                          <div className="font-medium">{calculatePlates(print.quantityNeeded, print.quantityPerPlate)}</div>
+                        </div>
+                        <div>
+                          <span className="text-gray-600">Time per plate:</span>
+                          <div className="font-medium">{getSelectedProduct(print.productId)?.estimatedPrintTime}h</div>
+                        </div>
+                        <div>
+                          <span className="text-gray-600">Total print time:</span>
+                          <div className="font-medium">{calculateTotalPrintTime(print.productId, print.quantityNeeded, print.quantityPerPlate)}h</div>
+                        </div>
+                        <div>
+                          <span className="text-gray-600">Material:</span>
+                          <div className="font-medium">{getSelectedProduct(print.productId)?.material}</div>
+                        </div>
                       </div>
                     </div>
-                    <div>
-                      <Label>Upload GCODE File (Auto-fills form)</Label>
-                      <div className="border-2 border-dashed border-green-300 rounded-lg p-4 text-center hover:border-green-400 transition-colors cursor-pointer relative">
-                        <Upload className="h-6 w-6 mx-auto mb-2 text-green-500" />
-                        <p className="text-xs text-gray-600">
-                          {print.gcodeFile ? print.gcodeFile.name : "Click to upload GCODE file"}
-                        </p>
-                        {print.gcodeEstimatedTime && (
-                          <p className="text-xs text-green-600 font-medium">
-                            Est. time: {print.gcodeEstimatedTime}h
-                          </p>
-                        )}
-                        <input
-                          type="file"
-                          accept=".gcode,.g"
-                          className="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-10"
-                          onChange={(e) => handleGcodeUpload(index, e.target.files?.[0] || null)}
-                        />
-                      </div>
-                    </div>
-                  </div>
+                  )}
                 </div>
               ))}
             </div>
