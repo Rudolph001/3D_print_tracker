@@ -507,153 +507,231 @@ export async function registerRoutes(app: Express): Promise<Server> {
           <meta charset="utf-8">
           <title>Order ${order.orderNumber} - Professional 3D Printing Services</title>
           <style>
+            @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+            
             * {
               box-sizing: border-box;
             }
 
             body {
-              font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+              font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
               margin: 0;
               padding: 0;
-              color: #2c3e50;
+              color: #1e293b;
               line-height: 1.6;
-              background: #ffffff;
+              background: #f8fafc;
             }
 
             .document {
-              max-width: 800px;
-              margin: 0 auto;
+              max-width: 850px;
+              margin: 20px auto;
               background: white;
-              box-shadow: 0 0 20px rgba(0,0,0,0.1);
+              box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.15);
+              border-radius: 16px;
+              overflow: hidden;
             }
 
             .header {
-              background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+              background: linear-gradient(135deg, #0f172a 0%, #1e293b 50%, #334155 100%);
               color: white;
-              padding: 40px;
+              padding: 60px 50px;
               text-align: center;
+              position: relative;
+              overflow: hidden;
+            }
+
+            .header::before {
+              content: '';
+              position: absolute;
+              top: 0;
+              left: 0;
+              right: 0;
+              bottom: 0;
+              background: 
+                radial-gradient(circle at 20% 20%, rgba(99, 102, 241, 0.3) 0%, transparent 50%),
+                radial-gradient(circle at 80% 80%, rgba(147, 51, 234, 0.3) 0%, transparent 50%);
+              z-index: 1;
+            }
+
+            .header-content {
+              position: relative;
+              z-index: 2;
+            }
+
+            .company-logo {
+              width: 80px;
+              height: 80px;
+              background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%);
+              border-radius: 20px;
+              margin: 0 auto 20px;
+              display: flex;
+              align-items: center;
+              justify-content: center;
+              font-size: 32px;
+              font-weight: 700;
+              color: white;
+              box-shadow: 0 10px 25px rgba(99, 102, 241, 0.3);
             }
 
             .company-name {
-              font-size: 32px;
-              font-weight: 300;
+              font-size: 36px;
+              font-weight: 700;
               margin-bottom: 8px;
-              letter-spacing: 2px;
+              letter-spacing: -0.02em;
+              background: linear-gradient(135deg, #ffffff 0%, #e2e8f0 100%);
+              -webkit-background-clip: text;
+              -webkit-text-fill-color: transparent;
+              background-clip: text;
             }
 
             .company-tagline {
-              font-size: 14px;
-              opacity: 0.9;
-              text-transform: uppercase;
-              letter-spacing: 1px;
+              font-size: 16px;
+              opacity: 0.8;
+              font-weight: 400;
+              letter-spacing: 0.5px;
+              margin-bottom: 30px;
             }
 
             .order-badge {
               display: inline-block;
-              background: rgba(255,255,255,0.2);
-              padding: 12px 24px;
-              border-radius: 25px;
-              margin-top: 20px;
+              background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%);
+              padding: 16px 32px;
+              border-radius: 50px;
               font-size: 18px;
-              font-weight: 500;
+              font-weight: 600;
+              box-shadow: 0 8px 25px rgba(99, 102, 241, 0.3);
+              border: 1px solid rgba(255, 255, 255, 0.1);
             }
 
             .content {
-              padding: 40px;
+              padding: 50px;
             }
 
             .status-section {
               text-align: center;
-              margin-bottom: 40px;
-              padding: 30px;
-              background: #f8fafc;
-              border-radius: 12px;
+              margin-bottom: 50px;
+              padding: 40px;
+              background: linear-gradient(135deg, #f8fafc 0%, #ffffff 100%);
+              border-radius: 20px;
               border: 1px solid #e2e8f0;
+              box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
             }
 
             .status-badge {
               display: inline-block;
-              padding: 12px 30px;
-              border-radius: 30px;
+              padding: 16px 40px;
+              border-radius: 50px;
               font-size: 16px;
-              font-weight: 600;
+              font-weight: 700;
               text-transform: uppercase;
               letter-spacing: 1px;
-              margin-bottom: 15px;
+              margin-bottom: 20px;
+              box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+              border: 2px solid transparent;
             }
 
             .status-queued { 
-              background: #fff3cd; 
-              color: #856404; 
-              border: 2px solid #ffeaa7;
+              background: linear-gradient(135deg, #fef3c7 0%, #fde68a 100%);
+              color: #92400e;
+              border-color: #f59e0b;
             }
 
             .status-in_progress { 
-              background: #d1ecf1; 
-              color: #0c5460; 
-              border: 2px solid #74b9ff;
+              background: linear-gradient(135deg, #dbeafe 0%, #bfdbfe 100%);
+              color: #1e40af;
+              border-color: #3b82f6;
             }
 
             .status-completed { 
-              background: #d4edda; 
-              color: #155724; 
-              border: 2px solid #00b894;
+              background: linear-gradient(135deg, #dcfce7 0%, #bbf7d0 100%);
+              color: #166534;
+              border-color: #22c55e;
             }
 
             .completion-date {
-              font-size: 18px;
-              color: #495057;
-              margin-top: 10px;
+              font-size: 20px;
+              color: #475569;
+              font-weight: 500;
+              margin-top: 15px;
             }
 
             .info-grid {
               display: grid;
               grid-template-columns: 1fr 1fr;
               gap: 30px;
-              margin-bottom: 40px;
+              margin-bottom: 50px;
             }
 
             .info-card {
               background: #ffffff;
-              border: 1px solid #e9ecef;
-              border-radius: 8px;
-              padding: 24px;
-              box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+              border: 1px solid #e2e8f0;
+              border-radius: 16px;
+              padding: 32px;
+              box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+              transition: all 0.3s ease;
+            }
+
+            .info-card:hover {
+              transform: translateY(-2px);
+              box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1);
             }
 
             .info-title {
               font-size: 14px;
-              font-weight: 600;
-              color: #6c757d;
+              font-weight: 700;
+              color: #6366f1;
               text-transform: uppercase;
-              letter-spacing: 0.5px;
-              margin-bottom: 12px;
-              border-bottom: 2px solid #667eea;
-              padding-bottom: 8px;
+              letter-spacing: 1px;
+              margin-bottom: 16px;
+              display: flex;
+              align-items: center;
+              gap: 8px;
+            }
+
+            .info-title::before {
+              content: '';
+              width: 4px;
+              height: 20px;
+              background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%);
+              border-radius: 2px;
             }
 
             .info-content {
               font-size: 16px;
-              color: #495057;
-              line-height: 1.5;
+              color: #334155;
+              line-height: 1.7;
+              font-weight: 400;
+            }
+
+            .info-content strong {
+              color: #1e293b;
+              font-weight: 600;
             }
 
             .prints-summary {
               background: #ffffff;
-              border: 1px solid #e9ecef;
-              border-radius: 8px;
+              border: 1px solid #e2e8f0;
+              border-radius: 16px;
               overflow: hidden;
-              margin-bottom: 30px;
-              box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+              margin-bottom: 40px;
+              box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
             }
 
             .prints-header {
-              background: #f8f9fa;
-              padding: 20px;
-              border-bottom: 1px solid #e9ecef;
-              font-weight: 600;
-              color: #495057;
-              font-size: 18px;
+              background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%);
+              padding: 24px 32px;
+              border-bottom: 1px solid #e2e8f0;
+              font-weight: 700;
+              color: #1e293b;
+              font-size: 20px;
+              display: flex;
+              align-items: center;
+              gap: 12px;
+            }
+
+            .prints-header::before {
+              content: '📋';
+              font-size: 24px;
             }
 
             .prints-table {
@@ -662,21 +740,26 @@ export async function registerRoutes(app: Express): Promise<Server> {
             }
 
             .prints-table th {
-              background: #f8f9fa;
-              padding: 15px;
+              background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%);
+              padding: 20px;
               text-align: left;
               font-weight: 600;
-              color: #495057;
-              border-bottom: 1px solid #e9ecef;
+              color: #475569;
+              border-bottom: 2px solid #e2e8f0;
               font-size: 14px;
               text-transform: uppercase;
               letter-spacing: 0.5px;
             }
 
             .prints-table td {
-              padding: 15px;
-              border-bottom: 1px solid #f1f3f4;
-              color: #495057;
+              padding: 20px;
+              border-bottom: 1px solid #f1f5f9;
+              color: #334155;
+              font-weight: 400;
+            }
+
+            .prints-table tr:hover {
+              background: #f8fafc;
             }
 
             .prints-table tr:last-child td {
@@ -685,99 +768,178 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
             .print-status-badge {
               display: inline-block;
-              padding: 4px 12px;
-              border-radius: 15px;
+              padding: 6px 16px;
+              border-radius: 20px;
               font-size: 11px;
               font-weight: 600;
               text-transform: uppercase;
               letter-spacing: 0.5px;
+              border: 1px solid;
+            }
+
+            .print-status-badge.status-queued {
+              background: #fef3c7;
+              color: #92400e;
+              border-color: #f59e0b;
+            }
+
+            .print-status-badge.status-in_progress {
+              background: #dbeafe;
+              color: #1e40af;
+              border-color: #3b82f6;
+            }
+
+            .print-status-badge.status-completed {
+              background: #dcfce7;
+              color: #166534;
+              border-color: #22c55e;
             }
 
             .totals-section {
-              background: #f8f9fa;
-              border-radius: 8px;
-              padding: 25px;
-              margin: 30px 0;
-              border-left: 4px solid #667eea;
+              background: linear-gradient(135deg, #f8fafc 0%, #ffffff 100%);
+              border-radius: 20px;
+              padding: 40px;
+              margin: 40px 0;
+              border: 1px solid #e2e8f0;
+              box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
             }
 
             .totals-grid {
               display: grid;
-              grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
-              gap: 20px;
+              grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+              gap: 30px;
             }
 
             .total-item {
               text-align: center;
+              padding: 20px;
+              background: white;
+              border-radius: 12px;
+              border: 1px solid #e2e8f0;
+              box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
             }
 
             .total-value {
-              font-size: 24px;
+              font-size: 32px;
               font-weight: 700;
-              color: #667eea;
-              margin-bottom: 5px;
+              background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%);
+              -webkit-background-clip: text;
+              -webkit-text-fill-color: transparent;
+              background-clip: text;
+              margin-bottom: 8px;
             }
 
             .total-label {
               font-size: 12px;
-              color: #6c757d;
+              color: #64748b;
               text-transform: uppercase;
-              letter-spacing: 0.5px;
+              letter-spacing: 1px;
               font-weight: 600;
             }
 
             .notes-section {
-              background: #fff8e1;
-              border-left: 4px solid #ffb300;
-              border-radius: 0 8px 8px 0;
-              padding: 20px;
-              margin: 30px 0;
+              background: linear-gradient(135deg, #fffbeb 0%, #fef3c7 100%);
+              border-left: 4px solid #f59e0b;
+              border-radius: 12px;
+              padding: 24px;
+              margin: 40px 0;
+              box-shadow: 0 4px 12px rgba(245, 158, 11, 0.1);
+            }
+
+            .notes-section strong {
+              color: #92400e;
+              font-size: 16px;
+              font-weight: 600;
             }
 
             .footer {
-              background: #2c3e50;
+              background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%);
               color: white;
-              padding: 30px;
+              padding: 50px;
               text-align: center;
-              font-size: 12px;
+              font-size: 14px;
               line-height: 1.8;
             }
 
-            .footer strong {
-              font-size: 16px;
-              display: block;
-              margin-bottom: 10px;
+            .footer-logo {
+              width: 60px;
+              height: 60px;
+              background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%);
+              border-radius: 15px;
+              margin: 0 auto 20px;
+              display: flex;
+              align-items: center;
+              justify-content: center;
+              font-size: 24px;
+              font-weight: 700;
             }
 
-            .contact-info {
-              background: #e3f2fd;
-              border: 1px solid #2196f3;
-              border-radius: 8px;
+            .footer strong {
+              font-size: 20px;
+              display: block;
+              margin-bottom: 15px;
+              font-weight: 600;
+            }
+
+            .footer-grid {
+              display: grid;
+              grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+              gap: 20px;
+              margin-top: 30px;
+            }
+
+            .footer-item {
               padding: 20px;
-              margin: 20px 0;
-              text-align: center;
+              background: rgba(255, 255, 255, 0.05);
+              border-radius: 12px;
+              border: 1px solid rgba(255, 255, 255, 0.1);
+            }
+
+            .watermark {
+              position: fixed;
+              top: 50%;
+              left: 50%;
+              transform: translate(-50%, -50%) rotate(-45deg);
+              font-size: 120px;
+              color: rgba(0, 0, 0, 0.02);
+              font-weight: 900;
+              z-index: 0;
+              pointer-events: none;
             }
 
             @media print {
-              .document { box-shadow: none; }
-              .contact-info { display: none; }
-              body { margin: 0; }
+              .document { 
+                box-shadow: none; 
+                margin: 0;
+                border-radius: 0;
+              }
+              body { 
+                margin: 0; 
+                background: white;
+              }
+              .watermark { display: none; }
             }
 
-            @media (max-width: 600px) {
+            @media (max-width: 768px) {
               .info-grid { grid-template-columns: 1fr; }
               .totals-grid { grid-template-columns: 1fr 1fr; }
               .prints-table { font-size: 14px; }
-              .content { padding: 20px; }
+              .content { padding: 30px; }
+              .header { padding: 40px 30px; }
+              .footer { padding: 30px; }
             }
           </style>
         </head>
         <body>
+          <div class="watermark">PRECISION 3D</div>
           <div class="document">
             <div class="header">
-              <div class="company-name">PRECISION 3D PRINTING</div>
-              <div class="company-tagline">Professional Manufacturing Solutions</div>
-              <div class="order-badge">Order #${order.orderNumber}</div>
+              <div class="header-content">
+                <div class="company-logo">P3D</div>
+                <div class="company-name">PRECISION 3D PRINTING</div>
+                <div class="company-tagline">Professional Manufacturing Excellence</div>
+                <div class="order-badge">Order #${order.orderNumber}</div>
+              </div>
             </div>
 
             <div class="content">
@@ -800,7 +962,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
               <div class="info-grid">
                 <div class="info-card">
-                  <div class="info-title">Customer Details</div>
+                  <div class="info-title">👤 Customer Details</div>
                   <div class="info-content">
                     <strong>${order.customer.name}</strong><br>
                     📱 ${order.customer.whatsappNumber}<br>
@@ -813,7 +975,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
                 </div>
 
                 <div class="info-card">
-                  <div class="info-title">Order Summary</div>
+                  <div class="info-title">📊 Order Summary</div>
                   <div class="info-content">
                     <strong>${order.prints.length}</strong> Print Job${order.prints.length > 1 ? 's' : ''}<br>
                     <strong>${order.prints.reduce((sum: number, print: any) => sum + print.quantity, 0)}</strong> Total Parts<br>
@@ -882,10 +1044,28 @@ export async function registerRoutes(app: Express): Promise<Server> {
             </div>
 
             <div class="footer">
+              <div class="footer-logo">P3D</div>
               <strong>Precision 3D Printing Services</strong>
-              Professional manufacturing with quality assurance<br>
-              📧 orders@precision3d.co.za | 📞 +27 123 456 7890<br>
-              Generated: ${new Date().toLocaleString('en-ZA')}
+              Your trusted partner for professional manufacturing excellence
+              
+              <div class="footer-grid">
+                <div class="footer-item">
+                  <strong>📧 Email</strong><br>
+                  orders@precision3d.co.za
+                </div>
+                <div class="footer-item">
+                  <strong>📞 Phone</strong><br>
+                  +27 123 456 7890
+                </div>
+                <div class="footer-item">
+                  <strong>💬 WhatsApp</strong><br>
+                  Available for quotes
+                </div>
+                <div class="footer-item">
+                  <strong>📅 Generated</strong><br>
+                  ${new Date().toLocaleString('en-ZA')}
+                </div>
+              </div>
             </div>
           </div>
         </body>
