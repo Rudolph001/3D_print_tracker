@@ -14,7 +14,7 @@ import {
   updateOrderStatusSchema,
   updatePrintStatusSchema,
   sendWhatsappMessageSchema
-} from "@shared/schema";
+} from "@shared/schema-sqlite";
 import { z } from "zod";
 
 

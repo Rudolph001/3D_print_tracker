@@ -3,18 +3,20 @@ import {
   orders, 
   products, 
   prints, 
-  whatsappMessages,
-  type Customer, 
-  type InsertCustomer,
-  type Order,
-  type InsertOrder,
-  type Product,
-  type InsertProduct,
-  type Print,
-  type InsertPrint,
-  type WhatsappMessage,
-  type InsertWhatsappMessage
-} from "@shared/schema";
+  whatsappMessages
+} from "@shared/schema-sqlite";
+import type { 
+  Customer, 
+  InsertCustomer,
+  Order,
+  InsertOrder,
+  Product,
+  InsertProduct,
+  Print,
+  InsertPrint,
+  WhatsappMessage,
+  InsertWhatsappMessage
+} from "@shared/schema-sqlite";
 import { db } from "./db";
 import { eq, desc, asc } from "drizzle-orm";
 
