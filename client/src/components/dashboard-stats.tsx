@@ -29,57 +29,57 @@ export function DashboardStats() {
 
   return (
     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-      <Card>
+      <Card className="bg-white/80 backdrop-blur-sm shadow-lg border border-slate-200/50 hover:shadow-xl transition-all duration-300">
         <CardContent className="p-6">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-sm text-gray-600">Active Orders</p>
-              <p className="text-2xl font-bold text-gray-800">{stats.activeOrders || 0}</p>
+              <p className="text-sm text-slate-500 font-medium">Active Orders</p>
+              <p className="text-3xl font-bold text-slate-800 mt-1">{stats.activeOrders || 0}</p>
             </div>
-            <div className="bg-primary bg-opacity-10 p-3 rounded-full">
-              <ShoppingCart className="h-6 w-6 text-primary" />
+            <div className="bg-gradient-to-br from-blue-500 to-indigo-600 p-3 rounded-xl shadow-lg">
+              <ShoppingCart className="h-6 w-6 text-white" />
             </div>
           </div>
         </CardContent>
       </Card>
 
-      <Card>
+      <Card className="bg-white/80 backdrop-blur-sm shadow-lg border border-slate-200/50 hover:shadow-xl transition-all duration-300">
         <CardContent className="p-6">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-sm text-gray-600">Prints in Queue</p>
-              <p className="text-2xl font-bold text-gray-800">{stats.printsInQueue || 0}</p>
+              <p className="text-sm text-slate-500 font-medium">Prints in Queue</p>
+              <p className="text-3xl font-bold text-slate-800 mt-1">{stats.printsInQueue || 0}</p>
             </div>
-            <div className="bg-warning bg-opacity-10 p-3 rounded-full">
-              <Clock className="h-6 w-6 text-warning" />
+            <div className="bg-gradient-to-br from-amber-500 to-orange-600 p-3 rounded-xl shadow-lg">
+              <Clock className="h-6 w-6 text-white" />
             </div>
           </div>
         </CardContent>
       </Card>
 
-      <Card>
+      <Card className="bg-white/80 backdrop-blur-sm shadow-lg border border-slate-200/50 hover:shadow-xl transition-all duration-300">
         <CardContent className="p-6">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-sm text-gray-600">Estimated Hours</p>
-              <p className="text-2xl font-bold text-gray-800">{stats.estimatedHours || 0}</p>
+              <p className="text-sm text-slate-500 font-medium">Estimated Hours</p>
+              <p className="text-3xl font-bold text-slate-800 mt-1">{stats.estimatedHours || 0}</p>
             </div>
-            <div className="bg-orange-100 p-3 rounded-full">
-              <Hourglass className="h-6 w-6 text-orange-600" />
+            <div className="bg-gradient-to-br from-cyan-500 to-blue-600 p-3 rounded-xl shadow-lg">
+              <Hourglass className="h-6 w-6 text-white" />
             </div>
           </div>
         </CardContent>
       </Card>
 
-      <Card>
+      <Card className="bg-white/80 backdrop-blur-sm shadow-lg border border-slate-200/50 hover:shadow-xl transition-all duration-300">
         <CardContent className="p-6">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-sm text-gray-600">Completed Today</p>
-              <p className="text-2xl font-bold text-gray-800">{stats.completedToday || 0}</p>
+              <p className="text-sm text-slate-500 font-medium">Completed Today</p>
+              <p className="text-3xl font-bold text-slate-800 mt-1">{stats.completedToday || 0}</p>
             </div>
-            <div className="bg-success bg-opacity-10 p-3 rounded-full">
-              <CheckCircle className="h-6 w-6 text-success" />
+            <div className="bg-gradient-to-br from-emerald-500 to-green-600 p-3 rounded-xl shadow-lg">
+              <CheckCircle className="h-6 w-6 text-white" />
             </div>
           </div>
         </CardContent>

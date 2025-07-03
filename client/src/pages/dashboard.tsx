@@ -156,30 +156,35 @@ export default function Dashboard() {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-gradient-to-br from-slate-50 to-blue-50/30">
       {/* Header */}
-      <header className="bg-white shadow-sm border-b border-gray-200">
+      <header className="bg-white/95 backdrop-blur-md shadow-lg border-b border-slate-200/50 sticky top-0 z-50">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between items-center h-16">
             <div className="flex items-center space-x-4">
-              <div className="flex items-center space-x-2">
-                <Box className="text-primary text-2xl" />
-                <h1 className="text-xl font-bold text-gray-800">3D Print Shop Manager</h1>
+              <div className="flex items-center space-x-3">
+                <div className="bg-gradient-to-br from-blue-600 to-indigo-700 p-2 rounded-lg shadow-md">
+                  <Box className="text-white text-xl" />
+                </div>
+                <div>
+                  <h1 className="text-xl font-bold text-slate-800">3D Print Shop</h1>
+                  <p className="text-xs text-slate-500 -mt-1">Professional Management</p>
+                </div>
               </div>
             </div>
-            <div className="flex items-center space-x-4">
+            <div className="flex items-center space-x-3">
               <Button 
                 onClick={() => setIsNewOrderModalOpen(true)}
-                className="bg-primary hover:bg-blue-700 text-white"
+                className="bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white shadow-lg hover:shadow-xl transition-all duration-200 font-medium"
               >
                 <Plus className="h-4 w-4 mr-2" />
                 New Order
               </Button>
               <div className="relative">
-                <Button variant="ghost" size="sm" className="p-2 rounded-full">
-                  <Bell className="h-5 w-5" />
+                <Button variant="ghost" size="sm" className="p-2.5 rounded-full hover:bg-slate-100 transition-colors">
+                  <Bell className="h-5 w-5 text-slate-600" />
                 </Button>
-                <span className="absolute -top-1 -right-1 bg-red-500 text-white text-xs rounded-full w-5 h-5 flex items-center justify-center">
+                <span className="absolute -top-1 -right-1 bg-gradient-to-r from-red-500 to-pink-500 text-white text-xs rounded-full w-5 h-5 flex items-center justify-center font-medium shadow-lg">
                   3
                 </span>
               </div>
@@ -190,24 +195,41 @@ export default function Dashboard() {
 
       {/* Main Content */}
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        <DashboardStats />
+        <div className="mb-8">
+          <DashboardStats />
+        </div>
 
-        <Tabs defaultValue="orders" className="mt-8">
-          <TabsList className="grid w-full grid-cols-3">
-            <TabsTrigger value="orders">Orders</TabsTrigger>
-            <TabsTrigger value="products">Products</TabsTrigger>
-            <TabsTrigger value="customers">Customers</TabsTrigger>
+        <Tabs defaultValue="orders" className="space-y-6">
+          <TabsList className="grid w-full grid-cols-3 bg-white/70 backdrop-blur-sm shadow-md border border-slate-200/50 rounded-xl p-1">
+            <TabsTrigger 
+              value="orders" 
+              className="data-[state=active]:bg-gradient-to-r data-[state=active]:from-blue-600 data-[state=active]:to-indigo-600 data-[state=active]:text-white data-[state=active]:shadow-lg rounded-lg font-medium transition-all duration-200"
+            >
+              Orders
+            </TabsTrigger>
+            <TabsTrigger 
+              value="products" 
+              className="data-[state=active]:bg-gradient-to-r data-[state=active]:from-blue-600 data-[state=active]:to-indigo-600 data-[state=active]:text-white data-[state=active]:shadow-lg rounded-lg font-medium transition-all duration-200"
+            >
+              Products
+            </TabsTrigger>
+            <TabsTrigger 
+              value="customers" 
+              className="data-[state=active]:bg-gradient-to-r data-[state=active]:from-blue-600 data-[state=active]:to-indigo-600 data-[state=active]:text-white data-[state=active]:shadow-lg rounded-lg font-medium transition-all duration-200"
+            >
+              Customers
+            </TabsTrigger>
           </TabsList>
 
           <TabsContent value="orders" className="mt-6">
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
               {/* Orders List */}
               <div className="lg:col-span-2">
-                <div className="bg-white rounded-lg shadow-sm border border-gray-200">
-                  <div className="p-6 border-b border-gray-200">
+                <div className="bg-white/80 backdrop-blur-sm rounded-xl shadow-lg border border-slate-200/50 overflow-hidden">
+                  <div className="p-6 border-b border-slate-200/50 bg-gradient-to-r from-slate-50 to-blue-50/30">
                     <div className="flex items-center justify-between">
-                      <h2 className="text-lg font-semibold text-gray-800">Recent Orders</h2>
-                      <select className="border border-gray-300 rounded-lg px-3 py-2 text-sm">
+                      <h2 className="text-lg font-semibold text-slate-800">Recent Orders</h2>
+                      <select className="border border-slate-300 rounded-lg px-3 py-2 text-sm bg-white/70 backdrop-blur-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all">
                         <option>All Status</option>
                         <option>Queued</option>
                         <option>In Progress</option>
@@ -215,11 +237,14 @@ export default function Dashboard() {
                       </select>
                     </div>
                   </div>
-                  <div className="divide-y divide-gray-200">
-                    {orders.length === 0 ? (
-                      <div className="p-8 text-center text-gray-500">
-                        <Box className="h-12 w-12 mx-auto mb-4 text-gray-400" />
-                        <p>No orders yet. Create your first order to get started!</p>
+                  <div className="divide-y divide-slate-200/50">
+                    {(orders as any[]).length === 0 ? (
+                      <div className="p-12 text-center">
+                        <div className="bg-gradient-to-br from-blue-100 to-indigo-100 p-4 rounded-full w-20 h-20 mx-auto mb-4 flex items-center justify-center">
+                          <Box className="h-8 w-8 text-blue-600" />
+                        </div>
+                        <h3 className="text-lg font-medium text-slate-800 mb-2">No orders yet</h3>
+                        <p className="text-slate-500">Create your first order to get started!</p>
                       </div>
                     ) : (
                       orders.map((order: any) => (
@@ -285,10 +310,13 @@ export default function Dashboard() {
                 </div>
               </div>
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 p-6">
-                {products.length === 0 ? (
-                  <div className="col-span-full text-center py-8 text-gray-500">
-                    <Box className="h-12 w-12 mx-auto mb-4 text-gray-400" />
-                    <p>No products in catalog yet. Add your first product!</p>
+                {(products as any[]).length === 0 ? (
+                  <div className="col-span-full text-center py-12">
+                    <div className="bg-gradient-to-br from-blue-100 to-indigo-100 p-4 rounded-full w-20 h-20 mx-auto mb-4 flex items-center justify-center">
+                      <Package className="h-8 w-8 text-blue-600" />
+                    </div>
+                    <h3 className="text-lg font-medium text-slate-800 mb-2">No products yet</h3>
+                    <p className="text-slate-500">Add your first product to the catalog!</p>
                   </div>
                 ) : (
                   products.map((product: any) => (
@@ -304,20 +332,26 @@ export default function Dashboard() {
             </div>
           </TabsContent>
 
-          <TabsContent value="customers" className="mt-6">
-            <div className="flex items-center justify-between mb-6">
-              <div>
-                <h2 className="text-2xl font-bold text-gray-900">Customers</h2>
-                <p className="text-gray-600 mt-1">Manage your customer database</p>
+          <TabsContent value="customers" className="space-y-6">
+            <div className="bg-white/80 backdrop-blur-sm rounded-xl shadow-lg border border-slate-200/50 overflow-hidden">
+              <div className="p-6 border-b border-slate-200/50 bg-gradient-to-r from-slate-50 to-blue-50/30">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <h2 className="text-lg font-semibold text-slate-800">Customer Database</h2>
+                    <p className="text-slate-500 text-sm mt-1">Manage your customer relationships</p>
+                  </div>
+                  <Button 
+                    onClick={() => setIsAddCustomerModalOpen(true)} 
+                    className="bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white shadow-lg hover:shadow-xl transition-all duration-200 font-medium"
+                  >
+                    <Plus className="h-4 w-4 mr-2" />
+                    Add Customer
+                  </Button>
+                </div>
               </div>
-              <Button onClick={() => setIsAddCustomerModalOpen(true)} className="flex items-center gap-2">
-                <Plus className="h-4 w-4" />
-                Add Customer
-              </Button>
-            </div>
-
-            <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-              {(customers as any[])?.map((customer: any) => (
+              
+              <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3 p-6">
+                {(customers as any[])?.map((customer: any) => (
                 <Card key={customer.id} className="hover:shadow-lg transition-shadow">
                   <CardHeader className="pb-3">
                     <div className="flex items-center justify-between">
@@ -382,23 +416,22 @@ export default function Dashboard() {
                   </CardContent>
                 </Card>
               ))}
-            </div>
-
-            {(customers as any[])?.length === 0 && (
-              <div className="text-center py-12">
-                <User className="h-16 w-16 text-gray-300 mx-auto mb-4" />
-                <h3 className="text-lg font-semibold text-gray-600 mb-2">
-                  No customers yet
-                </h3>
-                <p className="text-gray-500 mb-4">
-                  Start by adding your first customer to begin managing your customer database.
-                </p>
-                <Button onClick={() => setIsAddCustomerModalOpen(true)} className="flex items-center gap-2">
-                  <Plus className="h-4 w-4" />
-                  Add First Customer
-                </Button>
+                
+                {(customers as any[])?.length === 0 && (
+                  <div className="text-center py-12">
+                    <div className="bg-gradient-to-br from-blue-100 to-indigo-100 p-4 rounded-full w-20 h-20 mx-auto mb-4 flex items-center justify-center">
+                      <User className="h-8 w-8 text-blue-600" />
+                    </div>
+                    <h3 className="text-lg font-medium text-slate-800 mb-2">No customers yet</h3>
+                    <p className="text-slate-500 mb-4">Start by adding your first customer to begin managing your database.</p>
+                    <Button onClick={() => setIsAddCustomerModalOpen(true)} className="bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white shadow-lg hover:shadow-xl transition-all duration-200 font-medium">
+                      <Plus className="h-4 w-4 mr-2" />
+                      Add First Customer
+                    </Button>
+                </div>
+              )}
               </div>
-            )}
+            </div>
           </TabsContent>
         </Tabs>
       </main>
