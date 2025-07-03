@@ -15,8 +15,11 @@ import { useToast } from "@/hooks/use-toast";
 import { formatPrintTime } from "@/lib/time-utils";
 
 const orderSchema = z.object({
+  customerId: z.number().optional(),
   customerName: z.string().min(1, "Customer name is required"),
   whatsappNumber: z.string().min(1, "WhatsApp number is required"),
+  email: z.string().optional(),
+  address: z.string().optional(),
   invoiceNumber: z.string().optional(),
   referenceNumber: z.string().optional(),
   notes: z.string().optional(),
@@ -36,6 +39,8 @@ interface NewOrderModalProps {
 
 export function NewOrderModal({ isOpen, onClose, onSuccess }: NewOrderModalProps) {
   const { toast } = useToast();
+  const [selectedCustomerId, setSelectedCustomerId] = useState<number | null>(null);
+  const [isNewCustomer, setIsNewCustomer] = useState(false);
   const [prints, setPrints] = useState([
     { 
       productId: 0,
@@ -48,20 +53,55 @@ export function NewOrderModal({ isOpen, onClose, onSuccess }: NewOrderModalProps
     queryKey: ["/api/products"],
   });
 
+  const { data: customers = [] } = useQuery({
+    queryKey: ["/api/customers"],
+  });
+
   const form = useForm({
     resolver: zodResolver(orderSchema),
     defaultValues: {
+      customerId: undefined,
       customerName: "",
       whatsappNumber: "",
+      email: "",
+      address: "",
       invoiceNumber: "",
       referenceNumber: "",
       notes: "",
     },
   });
 
+  // Handle customer selection
+  const handleCustomerSelect = (customerId: string) => {
+    if (customerId === "new") {
+      setIsNewCustomer(true);
+      setSelectedCustomerId(null);
+      form.setValue("customerId", undefined);
+      form.setValue("customerName", "");
+      form.setValue("whatsappNumber", "");
+      form.setValue("email", "");
+      form.setValue("address", "");
+    } else {
+      const customer = (customers as any[]).find(c => c.id === parseInt(customerId));
+      if (customer) {
+        setIsNewCustomer(false);
+        setSelectedCustomerId(customer.id);
+        form.setValue("customerId", customer.id);
+        form.setValue("customerName", customer.name);
+        form.setValue("whatsappNumber", customer.whatsappNumber);
+        form.setValue("email", customer.email || "");
+        form.setValue("address", customer.address || "");
+      }
+    }
+  };
+
   const createOrderMutation = useMutation({
     mutationFn: async (data: any) => {
-      return apiRequest("POST", "/api/orders", data);
+      return apiRequest("/api/orders", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(data),
+      });
     },
     onSuccess: () => {
       toast({
@@ -95,6 +135,22 @@ export function NewOrderModal({ isOpen, onClose, onSuccess }: NewOrderModalProps
 
   const removePrint = (index: number) => {
     setPrints(prints.filter((_, i) => i !== index));
+  };
+
+  const resetForm = () => {
+    form.reset();
+    setSelectedCustomerId(null);
+    setIsNewCustomer(false);
+    setPrints([{ 
+      productId: 0,
+      quantityNeeded: 1,
+      quantityPerPlate: 1
+    }]);
+  };
+
+  const handleClose = () => {
+    resetForm();
+    onClose();
   };
 
   const updatePrint = (index: number, field: string, value: any) => {
@@ -140,6 +196,8 @@ export function NewOrderModal({ isOpen, onClose, onSuccess }: NewOrderModalProps
       customer: {
         name: data.customerName,
         whatsappNumber: data.whatsappNumber,
+        email: data.email || "",
+        address: data.address || "",
       },
       order: {
         orderNumber: `ORD-${Date.now()}-${Math.random().toString(36).substr(2, 9).toUpperCase()}`,
@@ -169,37 +227,81 @@ export function NewOrderModal({ isOpen, onClose, onSuccess }: NewOrderModalProps
   };
 
   return (
-    <Dialog open={isOpen} onOpenChange={onClose}>
+    <Dialog open={isOpen} onOpenChange={handleClose}>
       <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle>Create New Order</DialogTitle>
         </DialogHeader>
         
         <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
+          {/* Customer Selection */}
+          <div className="space-y-4">
+            <Label>Customer</Label>
+            <Select onValueChange={handleCustomerSelect}>
+              <SelectTrigger className="w-full">
+                <SelectValue placeholder="Select existing customer or create new" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="new">+ Create New Customer</SelectItem>
+                {(customers as any[])?.map((customer: any) => (
+                  <SelectItem key={customer.id} value={customer.id.toString()}>
+                    {customer.name} - {customer.whatsappNumber}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+
+          {/* Customer Details */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <div>
-              <Label htmlFor="customerName">Customer Name</Label>
+              <Label htmlFor="customerName">Customer Name*</Label>
               <Input
                 id="customerName"
                 {...form.register("customerName")}
                 placeholder="Enter customer name"
+                disabled={!isNewCustomer && selectedCustomerId !== null}
               />
               {form.formState.errors.customerName && (
                 <p className="text-sm text-red-600">{form.formState.errors.customerName.message}</p>
               )}
             </div>
             <div>
-              <Label htmlFor="whatsappNumber">WhatsApp Number</Label>
+              <Label htmlFor="whatsappNumber">WhatsApp Number*</Label>
               <Input
                 id="whatsappNumber"
                 {...form.register("whatsappNumber")}
                 placeholder="+1 (555) 123-4567"
+                disabled={!isNewCustomer && selectedCustomerId !== null}
               />
               {form.formState.errors.whatsappNumber && (
                 <p className="text-sm text-red-600">{form.formState.errors.whatsappNumber.message}</p>
               )}
             </div>
           </div>
+
+          {/* Additional Customer Fields for New Customers */}
+          {isNewCustomer && (
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <div>
+                <Label htmlFor="email">Email</Label>
+                <Input
+                  id="email"
+                  type="email"
+                  {...form.register("email")}
+                  placeholder="customer@example.com"
+                />
+              </div>
+              <div>
+                <Label htmlFor="address">Address</Label>
+                <Input
+                  id="address"
+                  {...form.register("address")}
+                  placeholder="Customer address"
+                />
+              </div>
+            </div>
+          )}
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <div>

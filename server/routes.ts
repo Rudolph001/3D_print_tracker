@@ -256,10 +256,23 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Customer routes
   app.get("/api/customers", async (req, res) => {
     try {
-      // For now, return empty array - implement customer listing if needed
-      res.json([]);
+      const customers = await storage.getCustomers();
+      res.json(customers);
     } catch (error) {
       res.status(500).json({ error: "Failed to fetch customers" });
+    }
+  });
+
+  app.get("/api/customers/:id", async (req, res) => {
+    try {
+      const id = parseInt(req.params.id);
+      const customer = await storage.getCustomer(id);
+      if (!customer) {
+        return res.status(404).json({ error: "Customer not found" });
+      }
+      res.json(customer);
+    } catch (error) {
+      res.status(500).json({ error: "Failed to fetch customer" });
     }
   });
 
@@ -276,6 +289,33 @@ export async function registerRoutes(app: Express): Promise<Server> {
       } else {
         res.status(500).json({ error: "Failed to create customer" });
       }
+    }
+  });
+
+  app.patch("/api/customers/:id", async (req, res) => {
+    try {
+      const id = parseInt(req.params.id);
+      const customerData = req.body;
+      const customer = await storage.updateCustomer(id, customerData);
+      res.json(customer);
+    } catch (error) {
+      if (error instanceof z.ZodError) {
+        res
+          .status(400)
+          .json({ error: "Invalid customer data", details: error.errors });
+      } else {
+        res.status(500).json({ error: "Failed to update customer" });
+      }
+    }
+  });
+
+  app.delete("/api/customers/:id", async (req, res) => {
+    try {
+      const id = parseInt(req.params.id);
+      await storage.deleteCustomer(id);
+      res.json({ success: true });
+    } catch (error) {
+      res.status(500).json({ error: "Failed to delete customer" });
     }
   });
 
@@ -371,7 +411,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       // Update customer
       if (customer) {
-        await storage.updateCustomer(id, customer);
+        await storage.updateCustomerByOrder(id, customer);
       }
 
       // Update order

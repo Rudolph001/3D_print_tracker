@@ -24,7 +24,10 @@ export interface IStorage {
   // Customer operations
   getCustomer(id: number): Promise<Customer | undefined>;
   getCustomerByWhatsapp(whatsappNumber: string): Promise<Customer | undefined>;
+  getCustomers(): Promise<Customer[]>;
   createCustomer(customer: InsertCustomer): Promise<Customer>;
+  updateCustomer(id: number, customerData: Partial<InsertCustomer>): Promise<Customer>;
+  deleteCustomer(id: number): Promise<void>;
 
   // Order operations
   getOrder(id: number): Promise<Order | undefined>;
@@ -68,6 +71,22 @@ export class DatabaseStorage implements IStorage {
   async createCustomer(customer: InsertCustomer): Promise<Customer> {
     const [newCustomer] = await db.insert(customers).values(customer).returning();
     return newCustomer;
+  }
+
+  async getCustomers(): Promise<Customer[]> {
+    return await db.select().from(customers).orderBy(asc(customers.name));
+  }
+
+  async updateCustomer(id: number, customerData: Partial<InsertCustomer>): Promise<Customer> {
+    const [updatedCustomer] = await db.update(customers)
+      .set({ ...customerData, updatedAt: new Date() })
+      .where(eq(customers.id, id))
+      .returning();
+    return updatedCustomer;
+  }
+
+  async deleteCustomer(id: number): Promise<void> {
+    await db.delete(customers).where(eq(customers.id, id));
   }
 
   async getOrder(id: number): Promise<Order | undefined> {
@@ -117,7 +136,7 @@ export class DatabaseStorage implements IStorage {
     return updatedOrder;
   }
 
-  async updateCustomer(orderId: number, customerData: any): Promise<Customer> {
+  async updateCustomerByOrder(orderId: number, customerData: any): Promise<Customer> {
     // Get the order to find the customer ID
     const order = await this.getOrder(orderId);
     if (!order) {
