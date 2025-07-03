@@ -1895,11 +1895,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
             body {
               font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
               margin: 0;
-              padding: 12mm;
+              padding: 8mm;
               color: #2c3e50;
-              line-height: 1.3;
+              line-height: 1.4;
               background: #ffffff;
-              font-size: 10pt;
+              font-size: 9pt;
             }
             
             .print-instructions {
@@ -1928,12 +1928,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
             
             .header {
               text-align: center;
-              padding: 20pt 0;
+              padding: 15pt 0;
               border-bottom: 2pt solid #667eea;
-              margin-bottom: 20pt;
+              margin-bottom: 15pt;
               background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
               color: white;
-              border-radius: 8pt;
+              border-radius: 6pt;
               break-after: avoid;
             }
             
@@ -1963,7 +1963,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
             
             .intro-section {
               text-align: center;
-              margin-bottom: 25pt;
+              margin-bottom: 15pt;
               break-after: avoid;
             }
             
@@ -1985,34 +1985,33 @@ export async function registerRoutes(app: Express): Promise<Server> {
             .products-grid {
               display: grid;
               grid-template-columns: repeat(2, 1fr);
-              gap: 15pt;
-              margin-bottom: 30pt;
+              gap: 10pt;
+              margin-bottom: 20pt;
+              align-items: start;
             }
             
             .product-card {
               border: 1pt solid #e9ecef;
               border-radius: 4pt;
-              overflow: hidden;
+              overflow: visible;
               background: white;
               box-shadow: 0 1pt 2pt rgba(0,0,0,0.05);
               break-inside: avoid;
               page-break-inside: avoid;
-              margin-bottom: 12pt;
-              min-height: 280pt;
-              max-height: 350pt;
-              display: flex;
-              flex-direction: column;
+              margin-bottom: 8pt;
+              height: auto;
+              display: block;
+              position: relative;
             }
 
             .product-image {
-              height: 100pt;
+              height: 80pt;
               background: #f8fafc;
               display: flex;
               align-items: center;
               justify-content: center;
               border-bottom: 1pt solid #e9ecef;
               overflow: hidden;
-              flex-shrink: 0;
             }
 
             .product-image img {
@@ -2023,16 +2022,16 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
             .no-image {
               color: #94a3b8;
-              font-size: 7pt;
+              font-size: 6pt;
               text-transform: uppercase;
-              letter-spacing: 0.3pt;
+              letter-spacing: 0.2pt;
               text-align: center;
               background: repeating-linear-gradient(
                 45deg,
                 #f1f3f4,
-                #f1f3f4 8pt,
-                transparent 8pt,
-                transparent 16pt
+                #f1f3f4 6pt,
+                transparent 6pt,
+                transparent 12pt
               );
               width: 100%;
               height: 100%;
@@ -2040,52 +2039,43 @@ export async function registerRoutes(app: Express): Promise<Server> {
               align-items: center;
               justify-content: center;
               line-height: 1.1;
+              padding: 4pt;
             }
             
             .product-info {
-              padding: 10pt;
-              flex: 1;
-              display: flex;
-              flex-direction: column;
-              min-height: 0;
+              padding: 8pt;
             }
             
             .product-name {
-              font-size: 11pt;
+              font-size: 10pt;
               font-weight: 600;
               color: #2c3e50;
-              margin-bottom: 6pt;
+              margin-bottom: 4pt;
               line-height: 1.2;
-              overflow: hidden;
-              text-overflow: ellipsis;
-              display: -webkit-box;
-              -webkit-line-clamp: 2;
-              -webkit-box-orient: vertical;
+              word-wrap: break-word;
+              overflow-wrap: break-word;
+              hyphens: auto;
             }
             
             .product-description {
               color: #64748b;
-              margin-bottom: 8pt;
-              font-size: 8pt;
-              line-height: 1.25;
-              overflow: hidden;
-              text-overflow: ellipsis;
-              display: -webkit-box;
-              -webkit-line-clamp: 4;
-              -webkit-box-orient: vertical;
-              max-height: 32pt;
-              flex: 1;
+              margin-bottom: 6pt;
+              font-size: 7pt;
+              line-height: 1.3;
+              word-wrap: break-word;
+              overflow-wrap: break-word;
+              hyphens: auto;
+              max-height: none;
             }
             
             .product-specs {
               display: grid;
               grid-template-columns: 1fr 1fr;
-              gap: 6pt;
-              margin-bottom: 8pt;
+              gap: 4pt;
+              margin-bottom: 6pt;
               background: #f8fafc;
-              padding: 6pt;
-              border-radius: 3pt;
-              flex-shrink: 0;
+              padding: 4pt;
+              border-radius: 2pt;
             }
             
             .spec-item {
@@ -2094,29 +2084,29 @@ export async function registerRoutes(app: Express): Promise<Server> {
             }
             
             .spec-label {
-              font-size: 6pt;
+              font-size: 5pt;
               font-weight: 600;
               color: #94a3b8;
               text-transform: uppercase;
-              letter-spacing: 0.2pt;
+              letter-spacing: 0.1pt;
               margin-bottom: 1pt;
             }
             
             .spec-value {
-              font-size: 8pt;
+              font-size: 7pt;
               color: #2c3e50;
               font-weight: 600;
+              word-wrap: break-word;
             }
             
             .product-footer {
               text-align: center;
-              padding: 6pt;
+              padding: 4pt;
               background: #f8fafc;
               border-top: 1pt solid #e9ecef;
-              font-size: 7pt;
+              font-size: 6pt;
               color: #667eea;
               font-weight: 600;
-              flex-shrink: 0;
             }
             
             .no-products {
@@ -2283,12 +2273,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
                     ${
                       product.drawingFileUrl
                         ? `<img src="${product.drawingFileUrl}" alt="${product.name} technical drawing" />`
-                        : `<div class="no-image">Technical Drawing<br>Not Available</div>`
+                        : `<div class="no-image">Technical Drawing Not Available</div>`
                     }
                   </div>
                   <div class="product-info">
                     <div class="product-name">${product.name}</div>
-                    <div class="product-description">${(product.description || "Professional 3D printed component with premium quality finish and precision engineering.").substring(0, 120)}${(product.description || "Professional 3D printed component with premium quality finish and precision engineering.").length > 120 ? "..." : ""}</div>
+                    <div class="product-description">${product.description || "Professional 3D printed component with premium quality finish and precision engineering designed for optimal performance and durability."}</div>
                     <div class="product-specs">
                       <div class="spec-item">
                         <div class="spec-label">Product Code</div>
@@ -2304,7 +2294,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
                     Professional Grade Quality
                   </div>
                 </div>
-                ${(index + 1) % 4 === 0 ? '<div class="page-break"></div>' : ''}
               `,
                 )
                 .join("")}</div>
