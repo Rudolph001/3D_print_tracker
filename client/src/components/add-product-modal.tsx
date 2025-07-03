@@ -21,7 +21,6 @@ const productSchema = z.object({
   category: z.string().optional(),
   material: z.string().min(1, "Material is required"),
   estimatedPrintTime: z.number().min(0.0003, "Print time must be at least 1 second"),
-  price: z.number().min(0, "Price must be positive").optional(),
 });
 
 interface AddProductModalProps {
@@ -43,7 +42,6 @@ export function AddProductModal({ isOpen, onClose, onSuccess }: AddProductModalP
       category: "",
       material: "PLA",
       estimatedPrintTime: 4,
-      price: 0,
     },
   });
 
@@ -148,7 +146,7 @@ export function AddProductModal({ isOpen, onClose, onSuccess }: AddProductModalP
             />
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <div>
               <Label htmlFor="material">Material</Label>
               <Select
@@ -181,17 +179,6 @@ export function AddProductModal({ isOpen, onClose, onSuccess }: AddProductModalP
               {form.formState.errors.estimatedPrintTime && (
                 <p className="text-sm text-red-600">{form.formState.errors.estimatedPrintTime.message}</p>
               )}
-            </div>
-            <div>
-              <Label htmlFor="price">Price (ZAR)</Label>
-              <Input
-                id="price"
-                type="number"
-                min="0"
-                step="0.01"
-                {...form.register("price", { valueAsNumber: true })}
-                placeholder="0.00"
-              />
             </div>
           </div>
           

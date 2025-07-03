@@ -28,35 +28,31 @@ export function ProductCard({ product, onEdit, onDelete }: ProductCardProps) {
           <div className="text-sm text-gray-600">
             <p>Print time: {formatPrintTime(parseFloat(product.estimatedPrintTime))}</p>
             <p>Material: {product.material}</p>
+            {product.category && <p>Category: {product.category}</p>}
           </div>
-          <div className="text-right">
-            <p className="font-semibold text-gray-800">
-              R{product.price || "N/A"}
-            </p>
-            <div className="flex gap-1 justify-end mt-2">
-              {onEdit && (
-                <Button 
-                  variant="outline" 
-                  size="sm" 
-                  onClick={() => onEdit(product)}
-                  className="text-xs px-2 py-1"
-                >
-                  <Edit className="h-3 w-3 mr-1" />
-                  Edit
-                </Button>
-              )}
-              {onDelete && (
-                <Button 
-                  variant="destructive" 
-                  size="sm" 
-                  onClick={() => onDelete(product.id)}
-                  className="text-xs px-2 py-1"
-                >
-                  <Trash2 className="h-3 w-3 mr-1" />
-                  Delete
-                </Button>
-              )}
-            </div>
+          <div className="flex gap-1">
+            {onEdit && (
+              <Button 
+                variant="outline" 
+                size="sm" 
+                onClick={() => onEdit(product)}
+                className="text-xs px-2 py-1"
+              >
+                <Edit className="h-3 w-3 mr-1" />
+                Edit
+              </Button>
+            )}
+            {onDelete && (
+              <Button 
+                variant="destructive" 
+                size="sm" 
+                onClick={() => onDelete(product.id)}
+                className="text-xs px-2 py-1"
+              >
+                <Trash2 className="h-3 w-3 mr-1" />
+                Delete
+              </Button>
+            )}
           </div>
         </div>
       </div>
