@@ -22,6 +22,8 @@ const productSchema = z.object({
   productCode: z.string().optional(),
   material: z.string().min(1, "Material is required"),
   estimatedPrintTime: z.number().min(0.0003, "Print time must be at least 1 second"),
+  filamentLengthMeters: z.number().min(0, "Filament length must be positive").optional(),
+  filamentWeightGrams: z.number().min(0, "Filament weight must be positive").optional(),
 });
 
 interface AddProductModalProps {
@@ -44,6 +46,8 @@ export function AddProductModal({ isOpen, onClose, onSuccess }: AddProductModalP
       productCode: "",
       material: "PLA",
       estimatedPrintTime: 4,
+      filamentLengthMeters: 0,
+      filamentWeightGrams: 0,
     },
   });
 
@@ -193,6 +197,49 @@ export function AddProductModal({ isOpen, onClose, onSuccess }: AddProductModalP
                 <p className="text-sm text-red-600">{form.formState.errors.estimatedPrintTime.message}</p>
               )}
             </div>
+          </div>
+
+          <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+            <h4 className="text-sm font-semibold text-blue-800 mb-3">Filament Requirements</h4>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div>
+                <Label htmlFor="filamentWeightGrams">Weight (grams)</Label>
+                <Input
+                  id="filamentWeightGrams"
+                  type="number"
+                  step="0.1"
+                  min="0"
+                  {...form.register("filamentWeightGrams", { valueAsNumber: true })}
+                  placeholder="e.g. 25.5"
+                />
+                <p className="text-xs text-gray-500 mt-1">
+                  Total filament weight needed for one unit
+                </p>
+                {form.formState.errors.filamentWeightGrams && (
+                  <p className="text-sm text-red-600">{form.formState.errors.filamentWeightGrams.message}</p>
+                )}
+              </div>
+              <div>
+                <Label htmlFor="filamentLengthMeters">Length (meters)</Label>
+                <Input
+                  id="filamentLengthMeters"
+                  type="number"
+                  step="0.01"
+                  min="0"
+                  {...form.register("filamentLengthMeters", { valueAsNumber: true })}
+                  placeholder="e.g. 8.5"
+                />
+                <p className="text-xs text-gray-500 mt-1">
+                  Total filament length needed for one unit
+                </p>
+                {form.formState.errors.filamentLengthMeters && (
+                  <p className="text-sm text-red-600">{form.formState.errors.filamentLengthMeters.message}</p>
+                )}
+              </div>
+            </div>
+            <p className="text-xs text-blue-600 mt-2">
+              💡 You can get these values from your slicer software (Cura, PrusaSlicer, etc.)
+            </p>
           </div>
           
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">

@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Link } from "wouter";
-import { Plus, Users, Clock, Package, TrendingUp, Box, Download, Bell, Edit, Trash2, Phone, Mail, MapPin, User } from "lucide-react";
+import { Plus, Users, Clock, Package, TrendingUp, Box, Download, Bell, Edit, Trash2, Phone, Mail, MapPin, User, Palette } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -16,6 +16,7 @@ import { EditOrderModal } from "@/components/edit-order-modal";
 import { EditProductModal } from "@/components/edit-product-modal";
 import { AddCustomerModal } from "@/components/add-customer-modal";
 import { EditCustomerModal } from "@/components/edit-customer-modal";
+import { FilamentStockModal } from "@/components/filament-stock-modal";
 import { apiRequest } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
 import { format } from "date-fns";
@@ -36,11 +37,14 @@ export default function Dashboard() {
   const [isEditCustomerModalOpen, setIsEditCustomerModalOpen] = useState(false);
   const [editingCustomer, setEditingCustomer] = useState<any | null>(null);
   const [showNotifications, setShowNotifications] = useState(false);
+  const [isFilamentStockModalOpen, setIsFilamentStockModalOpen] = useState(false);
 
   // Close notifications when clicking outside
   React.useEffect(() => {
+    if (!showNotifications) return;
+    
     const handleClickOutside = (event: MouseEvent) => {
-      if (showNotifications && !(event.target as Element).closest('.relative')) {
+      if (!(event.target as Element).closest('.relative')) {
         setShowNotifications(false);
       }
     };
@@ -268,7 +272,7 @@ export default function Dashboard() {
         </div>
 
         <Tabs defaultValue="orders" className="space-y-6">
-          <TabsList className="grid w-full grid-cols-3 bg-white/70 backdrop-blur-sm shadow-md border border-slate-200/50 rounded-xl p-1">
+          <TabsList className="grid w-full grid-cols-4 bg-white/70 backdrop-blur-sm shadow-md border border-slate-200/50 rounded-xl p-1">
             <TabsTrigger 
               value="orders" 
               className="data-[state=active]:bg-gradient-to-r data-[state=active]:from-blue-600 data-[state=active]:to-indigo-600 data-[state=active]:text-white data-[state=active]:shadow-lg rounded-lg font-medium transition-all duration-200"
@@ -286,6 +290,12 @@ export default function Dashboard() {
               className="data-[state=active]:bg-gradient-to-r data-[state=active]:from-blue-600 data-[state=active]:to-indigo-600 data-[state=active]:text-white data-[state=active]:shadow-lg rounded-lg font-medium transition-all duration-200"
             >
               Customers
+            </TabsTrigger>
+            <TabsTrigger 
+              value="filament" 
+              className="data-[state=active]:bg-gradient-to-r data-[state=active]:from-blue-600 data-[state=active]:to-indigo-600 data-[state=active]:text-white data-[state=active]:shadow-lg rounded-lg font-medium transition-all duration-200"
+            >
+              Filament
             </TabsTrigger>
           </TabsList>
 
@@ -501,6 +511,41 @@ export default function Dashboard() {
               </div>
             </div>
           </TabsContent>
+
+          <TabsContent value="filament" className="space-y-6">
+            <div className="bg-white/80 backdrop-blur-sm rounded-xl shadow-lg border border-slate-200/50 overflow-hidden">
+              <div className="p-6 border-b border-slate-200/50 bg-gradient-to-r from-slate-50 to-blue-50/30">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <h2 className="text-lg font-semibold text-slate-800">Filament Stock Management</h2>
+                    <p className="text-slate-500 text-sm mt-1">Track your filament inventory and get low stock alerts</p>
+                  </div>
+                  <Button 
+                    onClick={() => setIsFilamentStockModalOpen(true)} 
+                    className="bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white shadow-lg hover:shadow-xl transition-all duration-200 font-medium"
+                  >
+                    <Palette className="h-4 w-4 mr-2" />
+                    Manage Stock
+                  </Button>
+                </div>
+              </div>
+
+              <div className="p-6 text-center">
+                <div className="bg-gradient-to-br from-blue-100 to-indigo-100 p-4 rounded-full w-20 h-20 mx-auto mb-4 flex items-center justify-center">
+                  <Palette className="h-8 w-8 text-blue-600" />
+                </div>
+                <h3 className="text-lg font-medium text-slate-800 mb-2">Filament Inventory</h3>
+                <p className="text-slate-500 mb-4">Manage your filament stock, track usage, and get low stock alerts.</p>
+                <Button 
+                  onClick={() => setIsFilamentStockModalOpen(true)} 
+                  className="bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white shadow-lg hover:shadow-xl transition-all duration-200 font-medium"
+                >
+                  <Palette className="h-4 w-4 mr-2" />
+                  Open Stock Management
+                </Button>
+              </div>
+            </div>
+          </TabsContent>
         </Tabs>
       </main>
 
@@ -572,6 +617,11 @@ export default function Dashboard() {
           refetchCustomers();
         }}
         customer={editingCustomer}
+      />
+
+      <FilamentStockModal
+        isOpen={isFilamentStockModalOpen}
+        onClose={() => setIsFilamentStockModalOpen(false)}
       />
     </div>
   );

@@ -14,6 +14,7 @@ import {
   updateOrderStatusSchema,
   updatePrintStatusSchema,
   sendWhatsappMessageSchema,
+  insertFilamentStockSchema,
 } from "@shared/schema-sqlite";
 import { z } from "zod";
 
@@ -1252,6 +1253,70 @@ export async function registerRoutes(app: Express): Promise<Server> {
         </html>
       `;
   };
+
+  // Filament stock routes
+  app.get("/api/filament-stock", async (req, res) => {
+    try {
+      const stock = await storage.getFilamentStock();
+      res.json(stock);
+    } catch (error) {
+      res.status(500).json({ error: "Failed to fetch filament stock" });
+    }
+  });
+
+  app.post("/api/filament-stock", async (req, res) => {
+    try {
+      const stockData = insertFilamentStockSchema.parse(req.body);
+      const stock = await storage.createFilamentStock(stockData);
+      res.status(201).json(stock);
+    } catch (error) {
+      if (error instanceof z.ZodError) {
+        res.status(400).json({ error: "Invalid stock data", details: error.errors });
+      } else {
+        res.status(500).json({ error: "Failed to create filament stock" });
+      }
+    }
+  });
+
+  app.patch("/api/filament-stock/:id", async (req, res) => {
+    try {
+      const id = parseInt(req.params.id);
+      const updates = req.body;
+      const stock = await storage.updateFilamentStock(id, updates);
+      res.json(stock);
+    } catch (error) {
+      res.status(500).json({ error: "Failed to update filament stock" });
+    }
+  });
+
+  app.delete("/api/filament-stock/:id", async (req, res) => {
+    try {
+      const id = parseInt(req.params.id);
+      await storage.deleteFilamentStock(id);
+      res.json({ success: true });
+    } catch (error) {
+      res.status(500).json({ error: "Failed to delete filament stock" });
+    }
+  });
+
+  app.get("/api/filament-stock/alerts", async (req, res) => {
+    try {
+      const alerts = await storage.getLowStockAlerts();
+      res.json(alerts);
+    } catch (error) {
+      res.status(500).json({ error: "Failed to fetch low stock alerts" });
+    }
+  });
+
+  app.get("/api/orders/:id/filament-requirements", async (req, res) => {
+    try {
+      const id = parseInt(req.params.id);
+      const requirements = await storage.calculateOrderFilamentRequirements(id);
+      res.json(requirements);
+    } catch (error) {
+      res.status(500).json({ error: "Failed to calculate filament requirements" });
+    }
+  });
 
   // WhatsApp routes
   // Professional HTML Report for printing

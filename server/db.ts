@@ -54,8 +54,35 @@ if (!process.env.DATABASE_URL) {
         drawing_file_url TEXT,
         estimated_print_time REAL NOT NULL,
         material TEXT NOT NULL,
+        filament_length_meters REAL,
+        filament_weight_grams REAL,
         price REAL,
         created_at TEXT NOT NULL DEFAULT (datetime('now'))
+      );
+
+      CREATE TABLE IF NOT EXISTS filament_stock (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        material TEXT NOT NULL,
+        color TEXT NOT NULL,
+        brand TEXT,
+        total_weight_grams REAL NOT NULL,
+        current_weight_grams REAL NOT NULL,
+        low_stock_threshold_grams REAL NOT NULL DEFAULT 100,
+        cost_per_kg REAL,
+        supplier_info TEXT,
+        created_at TEXT NOT NULL DEFAULT (datetime('now')),
+        updated_at TEXT NOT NULL DEFAULT (datetime('now'))
+      );
+
+      CREATE TABLE IF NOT EXISTS filament_usage (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        print_id INTEGER NOT NULL,
+        filament_stock_id INTEGER NOT NULL,
+        weight_used_grams REAL NOT NULL,
+        length_used_meters REAL NOT NULL,
+        created_at TEXT NOT NULL DEFAULT (datetime('now')),
+        FOREIGN KEY (print_id) REFERENCES prints(id),
+        FOREIGN KEY (filament_stock_id) REFERENCES filament_stock(id)
       );
       
       CREATE TABLE IF NOT EXISTS prints (
@@ -91,6 +118,21 @@ if (!process.env.DATABASE_URL) {
     } catch (error) {
       // Column already exists, ignore error
       console.log("product_code column already exists");
+    }
+
+    // Add filament columns if they don't exist
+    try {
+      sqlite.exec(`ALTER TABLE products ADD COLUMN filament_length_meters REAL;`);
+      console.log("Added filament_length_meters column");
+    } catch (error) {
+      console.log("filament_length_meters column already exists");
+    }
+
+    try {
+      sqlite.exec(`ALTER TABLE products ADD COLUMN filament_weight_grams REAL;`);
+      console.log("Added filament_weight_grams column");
+    } catch (error) {
+      console.log("filament_weight_grams column already exists");
     }
     
     console.log("SQLite tables created successfully");

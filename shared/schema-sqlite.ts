@@ -36,7 +36,34 @@ export const products = sqliteTable("products", {
   drawingFileUrl: text("drawing_file_url"),
   estimatedPrintTime: real("estimated_print_time").notNull(),
   material: text("material").notNull(),
+  filamentLengthMeters: real("filament_length_meters"), // Total filament length in meters
+  filamentWeightGrams: real("filament_weight_grams"), // Total filament weight in grams
   price: real("price"),
+  createdAt: text("created_at").notNull().default(new Date().toISOString()),
+});
+
+// Filament stock management
+export const filamentStock = sqliteTable("filament_stock", {
+  id: integer("id").primaryKey({ autoIncrement: true }),
+  material: text("material").notNull(), // PLA, PETG, ABS, etc.
+  color: text("color").notNull(), // White, Black, Red, etc.
+  brand: text("brand"), // eSUN, Hatchbox, etc.
+  totalWeightGrams: real("total_weight_grams").notNull(), // Original spool weight
+  currentWeightGrams: real("current_weight_grams").notNull(), // Current remaining weight
+  lowStockThresholdGrams: real("low_stock_threshold_grams").notNull().default(100), // When to warn
+  costPerKg: real("cost_per_kg"), // Cost per kilogram
+  supplierInfo: text("supplier_info"), // Where to reorder
+  createdAt: text("created_at").notNull().default(new Date().toISOString()),
+  updatedAt: text("updated_at").notNull().default(new Date().toISOString()),
+});
+
+// Track filament usage per print
+export const filamentUsage = sqliteTable("filament_usage", {
+  id: integer("id").primaryKey({ autoIncrement: true }),
+  printId: integer("print_id").references(() => prints.id).notNull(),
+  filamentStockId: integer("filament_stock_id").references(() => filamentStock.id).notNull(),
+  weightUsedGrams: real("weight_used_grams").notNull(),
+  lengthUsedMeters: real("length_used_meters").notNull(),
   createdAt: text("created_at").notNull().default(new Date().toISOString()),
 });
 
@@ -52,6 +79,40 @@ export const prints = sqliteTable("prints", {
   notes: text("notes"),
   createdAt: text("created_at").notNull().default(new Date().toISOString()),
   updatedAt: text("updated_at").notNull().default(new Date().toISOString()),
+});
+
+// Relations
+export const filamentStockRelations = relations(filamentStock, ({ many }) => ({
+  usage: many(filamentUsage),
+}));
+
+export const filamentUsageRelations = relations(filamentUsage, ({ one }) => ({
+  print: one(prints, {
+    fields: [filamentUsage.printId],
+    references: [prints.id],
+  }),
+  filamentStock: one(filamentStock, {
+    fields: [filamentUsage.filamentStockId],
+    references: [filamentStock.id],
+  }),
+}));
+
+// Insert schemas
+export const insertFilamentStockSchema = createInsertSchema(filamentStock).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+});
+
+export const insertFilamentUsageSchema = createInsertSchema(filamentUsage).omit({
+  id: true,
+  createdAt: true,
+});
+
+// Update product schema to include filament info
+export const insertProductSchema = createInsertSchema(products).omit({
+  id: true,
+  createdAt: true,
 });
 
 export const whatsappMessages = sqliteTable("whatsapp_messages", {

@@ -9,6 +9,7 @@ import { useToast } from "@/hooks/use-toast";
 import { openOrderReport } from "@/lib/whatsapp";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useQueryClient } from "@tanstack/react-query";
+import { OrderFilamentRequirements } from "./order-filament-requirements";
 
 interface OrderDetailsProps {
   order: any;
@@ -194,8 +195,8 @@ export function OrderDetails({ order, onUpdate, onEdit, onDelete, getStatusColor
             <Download className="h-4 w-4 mr-2" />
             View Report
           </Button>
-          
-          
+
+
           <div className="grid grid-cols-2 gap-2">
             <Button variant="outline" onClick={() => onEdit(order.id)} className="w-full">
               <Edit className="h-4 w-4 mr-2" />
@@ -208,6 +209,7 @@ export function OrderDetails({ order, onUpdate, onEdit, onDelete, getStatusColor
           </div>
         </div>
       </div>
+      <OrderFilamentRequirements orderId={order.id} />
     </div>
   );
 }

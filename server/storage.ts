@@ -3,7 +3,16 @@ import {
   orders, 
   products, 
   prints, 
-  whatsappMessages
+  whatsappMessages,
+  filamentStock,
+  filamentUsage,
+  insertCustomerSchema,
+  insertOrderSchema,
+  insertProductSchema,
+  insertPrintSchema,
+  insertWhatsappMessageSchema,
+  insertFilamentStockSchema,
+  insertFilamentUsageSchema,
 } from "@shared/schema-sqlite";
 import type { 
   Customer, 
@@ -18,7 +27,7 @@ import type {
   InsertWhatsappMessage
 } from "@shared/schema-sqlite";
 import { db } from "./db";
-import { eq, desc, asc } from "drizzle-orm";
+import { eq, desc, sql, and, lt } from "drizzle-orm";
 
 export interface IStorage {
   // Customer operations
@@ -55,6 +64,16 @@ export interface IStorage {
 
   // Dashboard stats
   getDashboardStats(): Promise<any>;
+
+    // Filament stock methods
+  getFilamentStock(): Promise<any>;
+  createFilamentStock(stockData: any): Promise<any>;
+  updateFilamentStock(id: number, updates: any): Promise<any>;
+  deleteFilamentStock(id: number): Promise<void>;
+  getLowStockAlerts(): Promise<any>;
+  updateFilamentUsage(printId: number, filamentStockId: number, weightUsed: number, lengthUsed: number): Promise<void>;
+  getFilamentUsageByPrint(printId: number): Promise<any>;
+  calculateOrderFilamentRequirements(orderId: number): Promise<any>;
 }
 
 export class DatabaseStorage implements IStorage {
@@ -210,11 +229,11 @@ export class DatabaseStorage implements IStorage {
   async deleteProduct(id: number): Promise<void> {
     // First check if the product is referenced by any prints
     const referencedPrints = await db.select().from(prints).where(eq(prints.productId, id));
-    
+
     if (referencedPrints.length > 0) {
       throw new Error('Cannot delete product: it is referenced by existing prints. Please remove or update the associated prints first.');
     }
-    
+
     await db.delete(products).where(eq(products.id, id));
   }
 
@@ -250,28 +269,105 @@ export class DatabaseStorage implements IStorage {
   }
 
   async getDashboardStats(): Promise<any> {
-    const allOrders = await db.select().from(orders);
-    const allPrints = await db.select().from(prints);
-
-    const activeOrders = allOrders.filter(order => order.status !== 'completed').length;
-    const printsInQueue = allPrints.filter(print => print.status === 'queued').length;
-    const completedToday = allOrders.filter(order => {
-      const today = new Date();
-      const orderDate = new Date(order.updatedAt);
-      return order.status === 'completed' && 
-             orderDate.toDateString() === today.toDateString();
-    }).length;
-
-    const estimatedHours = allPrints
-      .filter(print => print.status !== 'completed')
-      .reduce((total, print) => total + parseFloat(print.estimatedTime), 0);
+    const totalOrders = await db.select({ count: sql<number>`count(*)` }).from(orders);
+    const activeOrders = await db.select({ count: sql<number>`count(*)` }).from(orders).where(sql`status != 'completed'`);
+    const totalPrints = await db.select({ count: sql<number>`count(*)` }).from(prints);
+    const printsInQueue = await db.select({ count: sql<number>`count(*)` }).from(prints).where(eq(prints.status, "queued"));
+    const estimatedTime = await db.select({ total: sql<number>`sum(estimated_time * quantity)` }).from(prints).where(sql`status != 'completed'`);
+    const lowStockCount = await db.select({ count: sql<number>`count(*)` }).from(filamentStock).where(sql`current_weight_grams <= low_stock_threshold_grams`);
 
     return {
-      activeOrders,
-      printsInQueue,
-      estimatedHours: Math.round(estimatedHours),
-      completedToday,
+      totalOrders: totalOrders[0]?.count || 0,
+      activeOrders: activeOrders[0]?.count || 0,
+      totalPrints: totalPrints[0]?.count || 0,
+      printsInQueue: printsInQueue[0]?.count || 0,
+      estimatedTimeRemaining: estimatedTime[0]?.total || 0,
+      lowStockAlerts: lowStockCount[0]?.count || 0,
     };
+  }
+
+  // Filament stock methods
+  async getFilamentStock() {
+    return await db.select().from(filamentStock).orderBy(desc(filamentStock.updatedAt));
+  }
+
+  async createFilamentStock(stockData: any) {
+    const [result] = await db.insert(filamentStock).values(stockData).returning();
+    return result;
+  }
+
+  async updateFilamentStock(id: number, updates: any) {
+    const [result] = await db
+      .update(filamentStock)
+      .set({ ...updates, updatedAt: new Date().toISOString() })
+      .where(eq(filamentStock.id, id))
+      .returning();
+    return result;
+  }
+
+  async deleteFilamentStock(id: number) {
+    await db.delete(filamentStock).where(eq(filamentStock.id, id));
+  }
+
+  async getLowStockAlerts() {
+    return await db
+      .select()
+      .from(filamentStock)
+      .where(sql`current_weight_grams <= low_stock_threshold_grams`);
+  }
+
+  async updateFilamentUsage(printId: number, filamentStockId: number, weightUsed: number, lengthUsed: number) {
+    // Record usage
+    await db.insert(filamentUsage).values({
+      printId,
+      filamentStockId,
+      weightUsedGrams: weightUsed,
+      lengthUsedMeters: lengthUsed,
+    });
+
+    // Update stock
+    await db
+      .update(filamentStock)
+      .set({
+        currentWeightGrams: sql`current_weight_grams - ${weightUsed}`,
+        updatedAt: new Date().toISOString(),
+      })
+      .where(eq(filamentStock.id, filamentStockId));
+  }
+
+  async getFilamentUsageByPrint(printId: number) {
+    return await db
+      .select({
+        usage: filamentUsage,
+        stock: filamentStock,
+      })
+      .from(filamentUsage)
+      .leftJoin(filamentStock, eq(filamentUsage.filamentStockId, filamentStock.id))
+      .where(eq(filamentUsage.printId, printId));
+  }
+
+  async calculateOrderFilamentRequirements(orderId: number) {
+    const order = await this.getOrderWithDetails(orderId);
+    if (!order) return null;
+
+    const requirements: Record<string, { weight: number; length: number }> = {};
+
+    for (const print of order.prints) {
+      const product = await this.getProduct(print.productId);
+      if (product && product.filamentWeightGrams && product.filamentLengthMeters) {
+        const totalWeight = product.filamentWeightGrams * print.quantity;
+        const totalLength = product.filamentLengthMeters * print.quantity;
+
+        if (!requirements[print.material]) {
+          requirements[print.material] = { weight: 0, length: 0 };
+        }
+
+        requirements[print.material].weight += totalWeight;
+        requirements[print.material].length += totalLength;
+      }
+    }
+
+    return requirements;
   }
 }
 
