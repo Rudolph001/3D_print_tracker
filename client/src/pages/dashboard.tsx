@@ -203,13 +203,23 @@ export default function Dashboard() {
               <div className="p-6 border-b border-gray-200">
                 <div className="flex items-center justify-between">
                   <h2 className="text-lg font-semibold text-gray-800">Product Catalog</h2>
-                  <Button 
-                    onClick={() => setIsAddProductModalOpen(true)}
-                    className="bg-primary hover:bg-blue-700 text-white"
-                  >
-                    <Plus className="h-4 w-4 mr-2" />
-                    Add Product
-                  </Button>
+                  <div className="flex gap-2">
+                    <Button 
+                      onClick={() => window.open('/api/products/catalog/pdf', '_blank')}
+                      variant="outline"
+                      className="border-primary text-primary hover:bg-primary hover:text-white"
+                    >
+                      <Download className="h-4 w-4 mr-2" />
+                      Download PDF Catalog
+                    </Button>
+                    <Button 
+                      onClick={() => setIsAddProductModalOpen(true)}
+                      className="bg-primary hover:bg-blue-700 text-white"
+                    >
+                      <Plus className="h-4 w-4 mr-2" />
+                      Add Product
+                    </Button>
+                  </div>
                 </div>
               </div>
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 p-6">
