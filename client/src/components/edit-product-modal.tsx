@@ -14,13 +14,14 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/u
 import { apiRequest } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
 import { formatPrintTime } from "@/lib/time-utils";
+import { TimeInput } from "@/components/ui/time-input";
 
 const productSchema = z.object({
   name: z.string().min(1, "Product name is required"),
   description: z.string().optional(),
   category: z.string().optional(),
   material: z.string().min(1, "Material is required"),
-  estimatedPrintTime: z.number().min(0.5, "Print time must be at least 0.5 hours"),
+  estimatedPrintTime: z.number().min(0.0003, "Print time must be at least 1 second"),
   price: z.number().min(0, "Price must be positive").optional(),
 });
 
@@ -171,19 +172,15 @@ export function EditProductModal({ isOpen, onClose, onSuccess, product }: EditPr
               </Select>
             </div>
             <div>
-              <Label htmlFor="estimatedPrintTime">Print Time (hours)</Label>
-              <Input
-                id="estimatedPrintTime"
-                type="number"
-                min="0.5"
-                step="0.5"
-                {...form.register("estimatedPrintTime", { valueAsNumber: true })}
+              <Label htmlFor="estimatedPrintTime">Print Time (H:MM:SS)</Label>
+              <TimeInput
+                value={form.watch("estimatedPrintTime") || 0}
+                onChange={(hours) => form.setValue("estimatedPrintTime", hours)}
+                placeholder="0:00:00"
               />
-              {form.watch("estimatedPrintTime") && (
-                <p className="text-xs text-gray-500 mt-1">
-                  Display time: {formatPrintTime(form.watch("estimatedPrintTime"))}
-                </p>
-              )}
+              <p className="text-xs text-gray-500 mt-1">
+                Format: hours:minutes:seconds (e.g., 1:30:00 for 1.5 hours)
+              </p>
               {form.formState.errors.estimatedPrintTime && (
                 <p className="text-sm text-red-600">{form.formState.errors.estimatedPrintTime.message}</p>
               )}
