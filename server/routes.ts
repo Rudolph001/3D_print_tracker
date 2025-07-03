@@ -3,7 +3,7 @@ import { createServer, type Server } from "http";
 import multer from "multer";
 import path from "path";
 import fs from "fs";
-import puppeteer from "puppeteer";
+// Removed puppeteer - using browser-native printing instead
 
 import { storage } from "./storage";
 import { 
@@ -1087,107 +1087,211 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // PDF Export Route
+  // Print-Ready Order Report Route
   app.get("/api/orders/:id/pdf", async (req, res) => {
     try {
       const id = parseInt(req.params.id);
-      const html = await generateReportHTML(id);
+      const order = await storage.getOrderWithDetails(id);
 
-      const browser = await puppeteer.launch({ 
-        headless: true,
-        args: [
-          '--no-sandbox',
-          '--disable-setuid-sandbox',
-          '--disable-dev-shm-usage',
-          '--disable-accelerated-2d-canvas',
-          '--no-first-run',
-          '--no-zygote',
-          '--single-process',
-          '--disable-gpu',
-          '--disable-web-security',
-          '--disable-features=VizDisplayCompositor'
-        ],
-        executablePath: process.env.NODE_ENV === 'production' ? '/usr/bin/chromium-browser' : undefined
-      });
-      const page = await browser.newPage();
+      if (!order) {
+        return res.status(404).json({ error: "Order not found" });
+      }
 
-      await page.setContent(html, { waitUntil: 'networkidle0' });
-      await page.waitForTimeout(1000); // Give extra time for styles to apply
+      const html = `
+        <!DOCTYPE html>
+        <html>
+        <head>
+          <meta charset="utf-8">
+          <title>Order Report #${id} - Precision 3D Printing</title>
+          <style>
+            @media print {
+              body { margin: 0; padding: 0; }
+              .no-print { display: none !important; }
+            }
+            
+            body {
+              font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+              margin: 0;
+              padding: 20px;
+              color: #2c3e50;
+              line-height: 1.6;
+              background: #ffffff;
+            }
+            
+            .print-instructions {
+              background: #e3f2fd;
+              border: 1px solid #2196f3;
+              border-radius: 8px;
+              padding: 20px;
+              margin-bottom: 30px;
+              text-align: center;
+            }
+            
+            .print-button {
+              background: #2196f3;
+              color: white;
+              border: none;
+              padding: 12px 24px;
+              border-radius: 6px;
+              cursor: pointer;
+              font-size: 16px;
+              margin: 10px;
+            }
+            
+            .header {
+              text-align: center;
+              padding: 30px 0;
+              border-bottom: 3px solid #667eea;
+              margin-bottom: 30px;
+              background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+              color: white;
+              border-radius: 12px;
+            }
+            
+            .company-name {
+              font-size: 32px;
+              font-weight: 800;
+              margin-bottom: 10px;
+            }
+            
+            .report-title {
+              font-size: 18px;
+              opacity: 0.9;
+            }
+            
+            .order-info {
+              display: grid;
+              grid-template-columns: 1fr 1fr;
+              gap: 20px;
+              margin-bottom: 30px;
+            }
+            
+            .info-card {
+              background: #f8fafc;
+              padding: 20px;
+              border-radius: 8px;
+              border-left: 4px solid #667eea;
+            }
+            
+            .info-title {
+              font-weight: 600;
+              color: #2c3e50;
+              margin-bottom: 10px;
+            }
+            
+            .prints-table {
+              width: 100%;
+              border-collapse: collapse;
+              margin-bottom: 30px;
+            }
+            
+            .prints-table th, .prints-table td {
+              padding: 12px;
+              text-align: left;
+              border-bottom: 1px solid #e2e8f0;
+            }
+            
+            .prints-table th {
+              background: #f8fafc;
+              font-weight: 600;
+              color: #475569;
+            }
+            
+            .status-badge {
+              padding: 4px 12px;
+              border-radius: 12px;
+              font-size: 12px;
+              font-weight: 600;
+              text-transform: uppercase;
+            }
+            
+            .status-queued { background: #fef3c7; color: #92400e; }
+            .status-in_progress { background: #dbeafe; color: #1e40af; }
+            .status-completed { background: #dcfce7; color: #166534; }
+            
+            .totals {
+              background: #f8fafc;
+              padding: 20px;
+              border-radius: 8px;
+              margin-top: 30px;
+            }
+          </style>
+        </head>
+        <body>
+          <div class="print-instructions no-print">
+            <h3>📄 Order Report Ready to Print!</h3>
+            <p>This professional order report is optimized for printing. Use your browser's print function to save as PDF.</p>
+            <button class="print-button" onclick="window.print()">🖨️ Print Report</button>
+            <button class="print-button" onclick="window.close()">❌ Close</button>
+          </div>
 
-      const pdfBuffer = await page.pdf({
-        format: 'A4',
-        margin: {
-          top: '20mm',
-          bottom: '20mm',
-          left: '15mm',
-          right: '15mm'
-        },
-        printBackground: true
-      });
+          <div class="header">
+            <div class="company-name">PRECISION 3D PRINTING</div>
+            <div class="report-title">Order Report #${id}</div>
+          </div>
 
-      await browser.close();
+          <div class="order-info">
+            <div class="info-card">
+              <div class="info-title">Customer Information</div>
+              <strong>Name:</strong> ${order.customer?.name || 'N/A'}<br>
+              <strong>Email:</strong> ${order.customer?.email || 'N/A'}<br>
+              <strong>Phone:</strong> ${order.customer?.whatsappNumber || 'N/A'}
+            </div>
+            <div class="info-card">
+              <div class="info-title">Order Details</div>
+              <strong>Status:</strong> ${order.status}<br>
+              <strong>Created:</strong> ${new Date(order.createdAt).toLocaleDateString()}<br>
+              <strong>Total Prints:</strong> ${order.prints?.length || 0}
+            </div>
+          </div>
 
-      res.setHeader('Content-Type', 'application/pdf');
-      res.setHeader('Content-Disposition', `attachment; filename="Order-${id}-Report.pdf"`);
-      res.send(pdfBuffer);
+          <table class="prints-table">
+            <thead>
+              <tr>
+                <th>Print Name</th>
+                <th>Quantity</th>
+                <th>Status</th>
+                <th>Time (hrs)</th>
+                <th>Material</th>
+              </tr>
+            </thead>
+            <tbody>
+              ${order.prints?.map((print: any) => `
+                <tr>
+                  <td>${print.name}</td>
+                  <td>${print.quantity}</td>
+                  <td><span class="status-badge status-${print.status}">${print.status}</span></td>
+                  <td>${print.estimatedTime}</td>
+                  <td>${print.material || 'PLA'}</td>
+                </tr>
+              `).join('') || '<tr><td colspan="5">No prints found</td></tr>'}
+            </tbody>
+          </table>
+
+          <div class="totals">
+            <h3>Order Summary</h3>
+            <strong>Total Print Time:</strong> ${order.prints?.reduce((sum: number, print: any) => sum + (parseFloat(print.estimatedTime || 0) * print.quantity), 0).toFixed(2)} hours<br>
+            <strong>Generated:</strong> ${new Date().toLocaleString()}
+          </div>
+
+          <script>
+            window.onload = function() {
+              document.body.focus();
+            };
+          </script>
+        </body>
+        </html>
+      `;
+
+      res.setHeader('Content-Type', 'text/html');
+      res.send(html);
     } catch (error) {
-      console.error("PDF generation error:", error);
-      res.status(500).json({ error: "Failed to generate PDF" });
+      console.error("Order report generation error:", error);
+      res.status(500).json({ error: "Failed to generate order report" });
     }
   });
 
-  // SVG Export Route
-  app.get("/api/orders/:id/svg", async (req, res) => {
-    try {
-      const id = parseInt(req.params.id);
-      const html = await generateReportHTML(id);
-
-      const browser = await puppeteer.launch({ 
-        headless: true,
-        args: [
-          '--no-sandbox',
-          '--disable-setuid-sandbox',
-          '--disable-dev-shm-usage',
-          '--disable-accelerated-2d-canvas',
-          '--no-first-run',
-          '--no-zygote',
-          '--single-process',
-          '--disable-gpu',
-          '--disable-web-security',
-          '--disable-features=VizDisplayCompositor'
-        ],
-        executablePath: process.env.NODE_ENV === 'production' ? '/usr/bin/chromium-browser' : undefined
-      });
-      const page = await browser.newPage();
-
-      await page.setContent(html, { waitUntil: 'networkidle0' });
-      await page.setViewport({ width: 800, height: 1200 });
-      await page.waitForTimeout(1000); // Give extra time for styles to apply
-
-      const svgContent = await page.evaluate(() => {
-        const element = document.querySelector('.document');
-        if (element) {
-          const rect = element.getBoundingClientRect();
-          const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="${rect.width}" height="${rect.height}" viewBox="0 0 ${rect.width} ${rect.height}">
-            <foreignObject width="100%" height="100%">
-              <div xmlns="http://www.w3.org/1999/xhtml">${element.outerHTML}</div>
-            </foreignObject>
-          </svg>`;
-          return svg;
-        }
-        return '';
-      });
-
-      await browser.close();
-
-      res.setHeader('Content-Type', 'image/svg+xml');
-      res.setHeader('Content-Disposition', `attachment; filename="Order-${id}-Report.svg"`);
-      res.send(svgContent);
-    } catch (error) {
-      console.error("SVG generation error:", error);
-      res.status(500).json({ error: "Failed to generate SVG" });
-    }
-  });
+  // Removed SVG export - using browser-native printing instead
 
   // Helper function to generate product catalog HTML
   const generateProductCatalogHTML = async () => {
