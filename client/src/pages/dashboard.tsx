@@ -19,20 +19,36 @@ import { EditCustomerModal } from "@/components/edit-customer-modal";
 import { apiRequest } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
 import { format } from "date-fns";
+import React from "react";
 
 export default function Dashboard() {
-  const { toast } = useToast();
   const queryClient = useQueryClient();
+  const { toast } = useToast();
+
+  // Close notifications when clicking outside
+  React.useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (showNotifications && !(event.target as Element).closest('.relative')) {
+        setShowNotifications(false);
+      }
+    };
+
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, [showNotifications]);
   const [selectedOrderId, setSelectedOrderId] = useState<number | null>(null);
   const [isNewOrderModalOpen, setIsNewOrderModalOpen] = useState(false);
   const [isAddProductModalOpen, setIsAddProductModalOpen] = useState(false);
   const [isEditOrderModalOpen, setIsEditOrderModalOpen] = useState(false);
   const [isEditProductModalOpen, setIsEditProductModalOpen] = useState(false);
-  const [isAddCustomerModalOpen, setIsAddCustomerModalOpen] = useState(false);
-  const [isEditCustomerModalOpen, setIsEditCustomerModalOpen] = useState(false);
   const [editingOrder, setEditingOrder] = useState<any | null>(null);
   const [editingProduct, setEditingProduct] = useState<any | null>(null);
+  const [isAddCustomerModalOpen, setIsAddCustomerModalOpen] = useState(false);
+  const [isEditCustomerModalOpen, setIsEditCustomerModalOpen] = useState(false);
   const [editingCustomer, setEditingCustomer] = useState<any | null>(null);
+  const [showNotifications, setShowNotifications] = useState(false);
 
   const { data: orders = [], refetch: refetchOrders } = useQuery({
     queryKey: ["/api/orders"],
@@ -181,12 +197,63 @@ export default function Dashboard() {
                 New Order
               </Button>
               <div className="relative">
-                <Button variant="ghost" size="sm" className="p-2.5 rounded-full hover:bg-slate-100 transition-colors">
+                <Button 
+                  variant="ghost" 
+                  size="sm" 
+                  className="relative p-2 hover:bg-gray-100 transition-colors"
+                  onClick={() => setShowNotifications(!showNotifications)}
+                >
                   <Bell className="h-5 w-5 text-slate-600" />
                 </Button>
                 <span className="absolute -top-1 -right-1 bg-gradient-to-r from-red-500 to-pink-500 text-white text-xs rounded-full w-5 h-5 flex items-center justify-center font-medium shadow-lg">
                   3
                 </span>
+                {showNotifications && (
+                  <div className="absolute right-0 top-12 w-80 bg-white rounded-lg shadow-xl border border-gray-200 z-50">
+                    <div className="p-4 border-b border-gray-100">
+                      <h3 className="font-semibold text-gray-900">Notifications</h3>
+                    </div>
+                    <div className="max-h-64 overflow-y-auto">
+                      <div className="p-3 border-b border-gray-50 hover:bg-gray-50 transition-colors">
+                        <div className="flex items-start space-x-3">
+                          <div className="w-2 h-2 bg-blue-500 rounded-full mt-2 flex-shrink-0"></div>
+                          <div className="flex-1">
+                            <p className="text-sm text-gray-800">New order received from Von Beneke</p>
+                            <p className="text-xs text-gray-500 mt-1">2 minutes ago</p>
+                          </div>
+                        </div>
+                      </div>
+                      <div className="p-3 border-b border-gray-50 hover:bg-gray-50 transition-colors">
+                        <div className="flex items-start space-x-3">
+                          <div className="w-2 h-2 bg-green-500 rounded-full mt-2 flex-shrink-0"></div>
+                          <div className="flex-1">
+                            <p className="text-sm text-gray-800">Print job completed successfully</p>
+                            <p className="text-xs text-gray-500 mt-1">15 minutes ago</p>
+                          </div>
+                        </div>
+                      </div>
+                      <div className="p-3 border-b border-gray-50 hover:bg-gray-50 transition-colors">
+                        <div className="flex items-start space-x-3">
+                          <div className="w-2 h-2 bg-yellow-500 rounded-full mt-2 flex-shrink-0"></div>
+                          <div className="flex-1">
+                            <p className="text-sm text-gray-800">Low filament warning - PLA White</p>
+                            <p className="text-xs text-gray-500 mt-1">1 hour ago</p>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                    <div className="p-3 border-t border-gray-100">
+                      <Button 
+                        variant="ghost" 
+                        size="sm" 
+                        className="w-full text-center text-blue-600 hover:bg-blue-50"
+                        onClick={() => setShowNotifications(false)}
+                      >
+                        Mark all as read
+                      </Button>
+                    </div>
+                  </div>
+                )}
               </div>
             </div>
           </div>
@@ -349,7 +416,7 @@ export default function Dashboard() {
                   </Button>
                 </div>
               </div>
-              
+
               <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3 p-6">
                 {(customers as any[])?.map((customer: any) => (
                 <Card key={customer.id} className="hover:shadow-lg transition-shadow">
@@ -388,21 +455,21 @@ export default function Dashboard() {
                         </Badge>
                       </div>
                     )}
-                    
+
                     {customer.email && (
                       <div className="flex items-center gap-2 text-sm text-gray-600">
                         <Mail className="h-4 w-4" />
                         {customer.email}
                       </div>
                     )}
-                    
+
                     {customer.address && (
                       <div className="flex items-center gap-2 text-sm text-gray-600">
                         <MapPin className="h-4 w-4" />
                         <span className="truncate">{customer.address}</span>
                       </div>
                     )}
-                    
+
                     <div className="pt-2 border-t">
                       <div className="text-xs text-gray-500">
                         Created: {format(new Date(customer.createdAt), "MMM d, yyyy")}
@@ -416,7 +483,7 @@ export default function Dashboard() {
                   </CardContent>
                 </Card>
               ))}
-                
+
                 {(customers as any[])?.length === 0 && (
                   <div className="text-center py-12">
                     <div className="bg-gradient-to-br from-blue-100 to-indigo-100 p-4 rounded-full w-20 h-20 mx-auto mb-4 flex items-center justify-center">
