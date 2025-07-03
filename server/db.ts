@@ -47,6 +47,7 @@ if (!process.env.DATABASE_URL) {
         name TEXT NOT NULL,
         description TEXT,
         category TEXT,
+        product_code TEXT,
         stl_file_name TEXT,
         stl_file_url TEXT,
         drawing_file_name TEXT,
@@ -82,6 +83,16 @@ if (!process.env.DATABASE_URL) {
         FOREIGN KEY (order_id) REFERENCES orders(id)
       );
     `);
+    
+    // Add product_code column if it doesn't exist
+    try {
+      sqlite.exec(`ALTER TABLE products ADD COLUMN product_code TEXT;`);
+      console.log("Added product_code column");
+    } catch (error) {
+      // Column already exists, ignore error
+      console.log("product_code column already exists");
+    }
+    
     console.log("SQLite tables created successfully");
   } catch (error) {
     console.error("Error creating SQLite tables:", error);

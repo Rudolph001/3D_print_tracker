@@ -29,6 +29,7 @@ export const products = sqliteTable("products", {
   name: text("name").notNull(),
   description: text("description"),
   category: text("category"),
+  productCode: text("product_code"),
   stlFileName: text("stl_file_name"),
   stlFileUrl: text("stl_file_url"),
   drawingFileName: text("drawing_file_name"),

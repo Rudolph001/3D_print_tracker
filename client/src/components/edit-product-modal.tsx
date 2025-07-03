@@ -20,6 +20,7 @@ const productSchema = z.object({
   name: z.string().min(1, "Product name is required"),
   description: z.string().optional(),
   category: z.string().optional(),
+  productCode: z.string().optional(),
   material: z.string().min(1, "Material is required"),
   estimatedPrintTime: z.number().min(0.0003, "Print time must be at least 1 second"),
 });
@@ -42,6 +43,7 @@ export function EditProductModal({ isOpen, onClose, onSuccess, product }: EditPr
       name: "",
       description: "",
       category: "",
+      productCode: "",
       material: "PLA",
       estimatedPrintTime: 4,
     },
@@ -53,6 +55,7 @@ export function EditProductModal({ isOpen, onClose, onSuccess, product }: EditPr
         name: product.name || "",
         description: product.description || "",
         category: product.category || "",
+        productCode: product.productCode || "",
         material: product.material || "PLA",
         estimatedPrintTime: parseFloat(product.estimatedPrintTime) || 4,
       });
@@ -138,6 +141,17 @@ export function EditProductModal({ isOpen, onClose, onSuccess, product }: EditPr
                 <p className="text-sm text-red-600">{form.formState.errors.name.message}</p>
               )}
             </div>
+            <div>
+              <Label htmlFor="productCode">Product Code</Label>
+              <Input
+                id="productCode"
+                {...form.register("productCode")}
+                placeholder="e.g. P001, TOOL-001"
+              />
+            </div>
+          </div>
+          
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <div>
               <Label htmlFor="category">Category</Label>
               <Input

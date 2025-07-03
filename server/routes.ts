@@ -1648,28 +1648,15 @@ export async function registerRoutes(app: Express): Promise<Server> {
                       </div>
                       <div class="product-specs">
                         <div class="spec-item">
-                          <div class="spec-label">Material</div>
-                          <div class="spec-value">${product.material}</div>
+                          <div class="spec-label">Product Code</div>
+                          <div class="spec-value">${product.productCode || `P${product.id.toString().padStart(3, '0')}`}</div>
                         </div>
                         <div class="spec-item">
                           <div class="spec-label">Print Time</div>
                           <div class="spec-value">${parseFloat(product.estimatedPrintTime).toFixed(1)}h</div>
                         </div>
-                        <div class="spec-item">
-                          <div class="spec-label">Category</div>
-                          <div class="spec-value">${product.category || 'General'}</div>
-                        </div>
-                        <div class="spec-item">
-                          <div class="spec-label">Product ID</div>
-                          <div class="spec-value">#${product.id.toString().padStart(4, '0')}</div>
-                        </div>
                       </div>
                     </div>
-                    ${product.price ? `
-                    <div class="product-price">
-                      R${parseFloat(product.price).toFixed(2)}
-                    </div>
-                    ` : ''}
                   </div>
                 `).join('')}
               </div>
@@ -2027,24 +2014,15 @@ export async function registerRoutes(app: Express): Promise<Server> {
                     <div class="product-description">${product.description || 'Professional 3D printed item with premium quality finish.'}</div>
                     <div class="product-specs">
                       <div class="spec-item">
-                        <div class="spec-label">Material</div>
-                        <div class="spec-value">${product.material || 'PLA+'}</div>
-                      </div>
-                      <div class="spec-item">
-                        <div class="spec-label">Category</div>
-                        <div class="spec-value">${product.category || 'Custom'}</div>
+                        <div class="spec-label">Product Code</div>
+                        <div class="spec-value">${product.productCode || `P${product.id.toString().padStart(3, '0')}`}</div>
                       </div>
                       <div class="spec-item">
                         <div class="spec-label">Print Time</div>
-                        <div class="spec-value">${product.estimatedPrintTime || '2-4'}h</div>
-                      </div>
-                      <div class="spec-item">
-                        <div class="spec-label">Quality</div>
-                        <div class="spec-value">Professional</div>
+                        <div class="spec-value">${parseFloat(product.estimatedPrintTime).toFixed(1)}h</div>
                       </div>
                     </div>
                   </div>
-                  <div class="product-price">R${product.price || '99.00'}</div>
                 </div>
               `).join('')}
             </div>

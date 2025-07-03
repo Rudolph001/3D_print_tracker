@@ -114,6 +114,11 @@ Changelog:
   * Completed full migration to Replit environment with SQLite database
   * Fixed product creation, dashboard stats, and all API endpoints
   * Application running successfully with 3D visualization support
+  * Updated PDF catalog to remove price, material, category, and quality fields
+  * Added product code functionality to products and PDF catalog
+  * Removed price display from product catalog interface
+  * Product code field added to both add and edit product forms
+  * Database updated with product_code column migration
 - July 02, 2025. Initial setup
 ```
 
