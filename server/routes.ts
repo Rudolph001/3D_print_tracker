@@ -844,7 +844,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
                         <td><strong>${print.name}</strong></td>
                         <td>${print.quantity}x</td>
                         <td>${print.material}</td>
-                        <td>${print.estimatedTime}h</td>
+                        <td>${(parseFloat(print.estimatedTime) * print.quantity).toFixed(1)}h</td>
                         <td>
                           <span class="print-status-badge status-${print.status}">
                             ${print.status.replace('_', ' ')}
