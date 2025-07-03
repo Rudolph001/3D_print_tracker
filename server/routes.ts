@@ -1979,8 +1979,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
               background: white;
               box-shadow: 0 1pt 3pt rgba(0,0,0,0.1);
               break-inside: avoid;
-              margin-bottom: 15pt;
-              min-height: 280pt;
+              margin-bottom: 20pt;
+              min-height: 320pt;
+              display: flex;
+              flex-direction: column;
             }
 
             .product-image {
@@ -2022,6 +2024,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
             
             .product-info {
               padding: 12pt;
+              flex: 1;
+              display: flex;
+              flex-direction: column;
             }
             
             .product-name {
@@ -2037,11 +2042,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
               margin-bottom: 10pt;
               font-size: 9pt;
               line-height: 1.3;
-              height: 40pt;
-              overflow: hidden;
-              display: -webkit-box;
-              -webkit-line-clamp: 3;
-              -webkit-box-orient: vertical;
+              height: auto;
+              overflow: visible;
+              max-height: 60pt;
             }
             
             .product-specs {
@@ -2109,7 +2112,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
             
             .stats-grid {
               display: grid;
-              grid-template-columns: repeat(4, 1fr);
+              grid-template-columns: repeat(3, 1fr);
               gap: 10pt;
             }
             
@@ -2231,10 +2234,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
                 <div class="stat-item">
                   <div class="stat-value">${new Set(products.map((p: any) => p.category)).size || 1}</div>
                   <div class="stat-label">Categories</div>
-                </div>
-                <div class="stat-item">
-                  <div class="stat-value">${products.reduce((sum: number, p: any) => sum + parseFloat(p.estimatedPrintTime || 0), 0).toFixed(0)}h</div>
-                  <div class="stat-label">Total Print Time</div>
                 </div>
                 <div class="stat-item">
                   <div class="stat-value">${new Date().getFullYear()}</div>
