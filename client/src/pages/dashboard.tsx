@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
-import { Plus, Users, Clock, Package, TrendingUp, Box, Download } from "lucide-react";
+import { Plus, Users, Clock, Package, TrendingUp, Box, Download, Bell } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { DashboardStats } from "@/components/dashboard-stats";
