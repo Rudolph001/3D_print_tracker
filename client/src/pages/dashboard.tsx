@@ -376,11 +376,18 @@ export default function Dashboard() {
       // Open WhatsApp with the generated link
       if (response.whatsappLink) {
         window.open(response.whatsappLink, '_blank');
+        
+        // Also open the PDF report in a new tab for easy manual sharing
+        setTimeout(() => {
+          if (response.downloadUrl) {
+            window.open(response.downloadUrl, '_blank');
+          }
+        }, 1000);
       }
 
       toast({
         title: "WhatsApp notification sent!",
-        description: "Opening WhatsApp to share the order update with your customer.",
+        description: "Opening WhatsApp message and PDF report. You can manually share the PDF if needed.",
       });
 
       refetchOrders();

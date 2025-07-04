@@ -2578,10 +2578,16 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const downloadUrl = `${req.protocol}://${req.get("host")}/api/orders/${orderId}/pdf`;
       const cleanReportUrl = `${req.protocol}://${req.get("host")}/api/orders/${orderId}/report`;
       
-      const fullMessage = `${message}\n\n📄 *ORDER REPORT*\n` +
-                         `• View Online: ${cleanReportUrl}\n` +
+      const fullMessage = `${message}\n\n📄 *ORDER REPORT READY*\n` +
+                         `Your detailed order report is ready for download!\n\n` +
+                         `🔗 Quick Access Links:\n` +
+                         `• View Report: ${cleanReportUrl}\n` +
                          `• Download PDF: ${downloadUrl}\n\n` +
-                         `💡 Tip: Click the links above to view your complete order details, print specifications, and status updates.`;
+                         `📱 *How to save the report:*\n` +
+                         `1. Click the PDF link above\n` +
+                         `2. The report will open in your browser\n` +
+                         `3. Save or print directly from there\n\n` +
+                         `Note: Due to WhatsApp limitations, reports cannot be sent as file attachments. The links above provide instant access to your complete order details.`;
       
       const whatsappLink = `https://wa.me/${cleanPhoneNumber}?text=${encodeURIComponent(fullMessage)}`;
 
@@ -2592,6 +2598,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
         whatsappLink,
         phoneNumber: cleanPhoneNumber,
         customerName: order.customer.name,
+        reportUrl: cleanReportUrl,
+        alternativeMessage: `📄 Here's your order report for ${order.orderNumber}! You can view all details, print specifications, and status updates.`
       });
     } catch (error) {
       console.error("WhatsApp send error:", error);
