@@ -2,7 +2,29 @@
 
 A comprehensive web application for managing a 3D print shop with order tracking, customer management, and 3D file visualization.
 
-## Quick Start (Local Development)
+## 🚀 Quick Start (Windows Users)
+
+### Easy Installation (Recommended)
+1. **Download/copy** all files to a folder on your computer
+2. **Right-click** on `install-3d-print-shop.bat` and select **"Run as administrator"**
+3. The installer will automatically:
+   - Install Node.js if needed
+   - Install all dependencies
+   - Create desktop shortcut
+   - Start the app
+
+### Alternative Installation Methods
+- **PowerShell**: Run `install-3d-print-shop.ps1` in PowerShell (as administrator)
+- **Manual**: Install [Node.js](https://nodejs.org) then run `start-3d-print-shop.bat`
+
+### Using the App
+- App opens automatically at `http://localhost:5000`
+- Keep the command window open while using the app
+- Close the window to stop the server
+
+📖 **See [SETUP_GUIDE.md](SETUP_GUIDE.md) for detailed installation instructions and troubleshooting**
+
+## Developer Setup
 
 1. **Install Node.js** (version 18+) from [nodejs.org](https://nodejs.org/)
 
@@ -30,12 +52,14 @@ A comprehensive web application for managing a 3D print shop with order tracking
 
 ## Features
 
-✅ **Order Management** - Track orders with multiple 3D prints  
+✅ **Order Management** - Track orders with multiple 3D prints and filament selection  
 ✅ **Customer Database** - Store customer info and WhatsApp numbers  
 ✅ **3D File Viewer** - Preview STL files in the browser  
 ✅ **Print Status Tracking** - Monitor print progress and completion  
 ✅ **Dashboard Analytics** - View shop statistics and metrics  
-✅ **Filament Management** - Track material inventory and usage  
+✅ **Filament Management** - Track material inventory, usage, and low stock alerts  
+✅ **WhatsApp Integration** - Send order updates and reports to customers  
+✅ **Professional Reports** - Generate detailed order reports and catalogs  
 
 ## Technology Stack
 

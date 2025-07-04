@@ -105,6 +105,16 @@ The application is designed to be deployed on Replit but can be adapted for othe
 
 ```
 Changelog:
+- July 04, 2025. Added automated local deployment with desktop shortcuts for non-technical users
+  * Created comprehensive Windows batch file installer (install-3d-print-shop.bat)
+  * Added PowerShell installer alternative (install-3d-print-shop.ps1)
+  * Automated Node.js installation with administrator privileges
+  * Created desktop and Start Menu shortcuts automatically
+  * Added simple launcher script (start-3d-print-shop.bat) for easy app starting
+  * Created detailed setup guide (SETUP_GUIDE.md) with troubleshooting
+  * Added installation verification script (check-installation.bat)
+  * Updated README.md with clear installation instructions for end users
+  * Deployment solution designed for users without technical knowledge
 - July 04, 2025. Enhanced WhatsApp notifications with order reports and completed Replit migration
   * Fixed "Notified" button in order cards to properly send WhatsApp notifications
   * Enhanced WhatsApp messages to include detailed order summaries with print status emojis
