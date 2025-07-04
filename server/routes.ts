@@ -980,21 +980,38 @@ export async function registerRoutes(app: Express): Promise<Server> {
             }
 
             .print-status-badge.status-queued {
-              background: #fef3c7;
+              background: linear-gradient(135deg, #fef3c7 0%, #fde68a 100%);
               color: #92400e;
               border-color: #f59e0b;
+              box-shadow: 0 2px 8px rgba(245, 158, 11, 0.2);
             }
 
             .print-status-badge.status-in_progress {
-              background: #dbeafe;
+              background: linear-gradient(135deg, #dbeafe 0%, #93c5fd 100%);
               color: #1e40af;
               border-color: #3b82f6;
+              box-shadow: 0 2px 8px rgba(59, 130, 246, 0.2);
+            }
+
+            .print-status-badge.status-printing {
+              background: linear-gradient(135deg, #e0e7ff 0%, #c7d2fe 100%);
+              color: #3730a3;
+              border-color: #6366f1;
+              box-shadow: 0 2px 8px rgba(99, 102, 241, 0.2);
             }
 
             .print-status-badge.status-completed {
-              background: #dcfce7;
+              background: linear-gradient(135deg, #dcfce7 0%, #86efac 100%);
               color: #166534;
               border-color: #22c55e;
+              box-shadow: 0 2px 8px rgba(34, 197, 94, 0.2);
+            }
+
+            .print-status-badge.status-failed {
+              background: linear-gradient(135deg, #fee2e2 0%, #fecaca 100%);
+              color: #991b1b;
+              border-color: #ef4444;
+              box-shadow: 0 2px 8px rgba(239, 68, 68, 0.2);
             }
 
             .totals-section {
@@ -1214,13 +1231,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
                       .map(
                         (print: any) => `
                       <tr>
-                        <td><strong>${print.name}</strong></td>
+                        <td><strong>${print.name.split('(')[0].trim()}</strong></td>
                         <td>${print.quantity}x</td>
                         <td>${print.material}</td>
                         <td>${(parseFloat(print.estimatedTime) * print.quantity).toFixed(1)}h</td>
                         <td>
                           <span class="print-status-badge status-${print.status}">
-                            ${print.status.replace("_", " ")}
+                            ${print.status.replace("_", " ").toUpperCase()}
                           </span>
                         </td>
                       </tr>
