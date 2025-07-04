@@ -83,6 +83,8 @@ export default function Dashboard() {
 
   // Generate real notifications from data
   useEffect(() => {
+    if (!orders || !Array.isArray(orders)) return;
+    
     const newNotifications: Array<{
       id: string;
       message: string;
@@ -93,7 +95,7 @@ export default function Dashboard() {
     }> = [];
 
     // Recent orders (last 24 hours)
-    const recentOrders = orders?.filter((order: any) => {
+    const recentOrders = orders.filter((order: any) => {
       const orderDate = new Date(order.createdAt);
       const now = new Date();
       const diffHours = (now.getTime() - orderDate.getTime()) / (1000 * 60 * 60);

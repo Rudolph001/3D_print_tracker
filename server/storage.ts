@@ -251,34 +251,55 @@ export class DatabaseStorage implements IStorage {
     return newPrint;
   }
 
-  async updatePrintStatus(id: number, status: string) {
+  async updatePrintStatus(printId: number, status: string) {
     try {
       // First check if the print exists
       const existingPrint = await db
         .select()
         .from(prints)
-        .where(eq(prints.id, id))
+        .where(eq(prints.id, printId))
         .then((result) => result[0]);
 
       if (!existingPrint) {
-        throw new Error(`Print with ID ${id} not found`);
+        throw new Error(`Print with ID ${printId} not found`);
       }
 
       // Update the print status
       const updatedPrint = await db
         .update(prints)
-        .set({ status, updatedAt: new Date().toISOString() })
-        .where(eq(prints.id, id))
+        .set({ 
+          status, 
+          updatedAt: new Date().toISOString() 
+        })
+        .where(eq(prints.id, printId))
         .returning()
         .then((result) => result[0]);
 
       if (!updatedPrint) {
-        throw new Error(`Failed to update print status for ID ${id}`);
+        throw new Error(`Failed to update print status for ID ${printId}`);
+      }
+
+      const allPrints = await this.getPrintsByOrder(updatedPrint.orderId);
+
+      const allCompleted = allPrints.every(print => print.status === 'completed');
+      const hasInProgress = allPrints.some(print => print.status === 'in_progress');
+
+      let newOrderStatus = 'queued';
+      if (allCompleted) {
+        newOrderStatus = 'completed';
+      } else if (hasInProgress || status === 'in_progress') {
+        newOrderStatus = 'in_progress';
+      }
+
+      const currentOrder = await this.getOrder(updatedPrint.orderId);
+
+      if (currentOrder && currentOrder.status !== newOrderStatus) {
+        await this.updateOrderStatus(updatedPrint.orderId, newOrderStatus);
       }
 
       return updatedPrint;
     } catch (error) {
-      console.error("Storage updatePrintStatus error:", error);
+      console.error("Database error in updatePrintStatus:", error);
       throw error;
     }
   }
