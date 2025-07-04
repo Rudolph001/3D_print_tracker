@@ -467,16 +467,27 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.patch("/api/prints/:id/status", async (req, res) => {
     try {
       const id = parseInt(req.params.id);
+      if (isNaN(id)) {
+        return res.status(400).json({ error: "Invalid print ID" });
+      }
+      
       const { status } = updatePrintStatusSchema.parse(req.body);
       const updatedPrint = await storage.updatePrintStatus(id, status);
+      
+      if (!updatedPrint) {
+        return res.status(404).json({ error: "Print not found" });
+      }
+      
       res.json(updatedPrint);
     } catch (error) {
+      console.error("Print status update error:", error);
       if (error instanceof z.ZodError) {
         res
           .status(400)
           .json({ error: "Invalid status", details: error.errors });
       } else {
-        res.status(500).json({ error: "Failed to update print status" });
+        const errorMessage = error instanceof Error ? error.message : "Failed to update print status";
+        res.status(500).json({ error: errorMessage });
       }
     }
   });

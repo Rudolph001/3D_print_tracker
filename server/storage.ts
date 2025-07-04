@@ -251,20 +251,36 @@ export class DatabaseStorage implements IStorage {
     return newPrint;
   }
 
-  async updatePrintStatus(id: number, status: string): Promise<Print> {
-    // First check if the print exists
-    const existingPrint = await db.select().from(prints).where(eq(prints.id, id));
-    
-    if (!existingPrint.length) {
-      throw new Error(`Print with ID ${id} not found`);
+  async updatePrintStatus(id: number, status: string) {
+    try {
+      // First check if the print exists
+      const existingPrint = await db
+        .select()
+        .from(prints)
+        .where(eq(prints.id, id))
+        .then((result) => result[0]);
+
+      if (!existingPrint) {
+        throw new Error(`Print with ID ${id} not found`);
+      }
+
+      // Update the print status
+      const updatedPrint = await db
+        .update(prints)
+        .set({ status, updatedAt: new Date().toISOString() })
+        .where(eq(prints.id, id))
+        .returning()
+        .then((result) => result[0]);
+
+      if (!updatedPrint) {
+        throw new Error(`Failed to update print status for ID ${id}`);
+      }
+
+      return updatedPrint;
+    } catch (error) {
+      console.error("Storage updatePrintStatus error:", error);
+      throw error;
     }
-    
-    const [updatedPrint] = await db.update(prints)
-      .set({ status, updatedAt: new Date() })
-      .where(eq(prints.id, id))
-      .returning();
-    
-    return updatedPrint;
   }
 
   async createWhatsappMessage(message: InsertWhatsappMessage): Promise<WhatsappMessage> {

@@ -72,7 +72,19 @@ export function OrderDetails({ order, onUpdate, onEdit, onDelete, getStatusColor
 
   const updatePrintStatusMutation = useMutation({
     mutationFn: async ({ printId, status }: { printId: number; status: string }) => {
-      return apiRequest("PATCH", `/api/prints/${printId}/status`, { status });
+      const response = await fetch(`/api/prints/${printId}/status`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ status }),
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}));
+        const errorMessage = errorData.error || `Failed to update print status (${response.status})`;
+        throw new Error(errorMessage);
+      }
+
+      return response.json();
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["orders"] });
