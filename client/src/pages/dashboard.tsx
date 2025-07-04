@@ -37,14 +37,17 @@ export default function Dashboard() {
   const [isEditCustomerModalOpen, setIsEditCustomerModalOpen] = useState(false);
   const [editingCustomer, setEditingCustomer] = useState<any | null>(null);
   const [isFilamentStockModalOpen, setIsFilamentStockModalOpen] = useState(false);
+  const [showNotifications, setShowNotifications] = useState(false);
 
   const { data: filamentAlerts = [] } = useQuery({
     queryKey: ["/api/filament-stock/alerts"],
     refetchInterval: 30000, // Check every 30 seconds
   });
 
-  // Show notifications for filament alerts
-  const showNotifications = filamentAlerts.length > 0;
+  // Update notifications when alerts change
+  React.useEffect(() => {
+    setShowNotifications(filamentAlerts.length > 0);
+  }, [filamentAlerts]);
 
   // Close notifications when clicking outside
   React.useEffect(() => {
