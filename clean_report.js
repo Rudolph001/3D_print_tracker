@@ -17,19 +17,139 @@ const generateCleanReportHTML = (order, totalParts, totalTime, completedPrints, 
 
     body {
       font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
-      background: #f8fafc;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
       color: #1e293b;
       line-height: 1.6;
       padding: 40px 20px;
+      min-height: 100vh;
     }
 
     .document {
-      max-width: 800px;
+      max-width: 850px;
       margin: 0 auto;
       background: white;
-      border-radius: 12px;
-      box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
+      border-radius: 20px;
+      box-shadow: 0 25px 50px rgba(0, 0, 0, 0.15);
       overflow: hidden;
+      position: relative;
+    }
+
+    .document::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      height: 6px;
+      background: linear-gradient(90deg, #667eea 0%, #764ba2 100%);
+    }
+
+    .header {
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      color: white;
+      text-align: center;
+      padding: 50px 40px;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .header::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background: 
+        radial-gradient(circle at 20% 20%, rgba(255, 255, 255, 0.1) 0%, transparent 50%),
+        radial-gradient(circle at 80% 80%, rgba(255, 255, 255, 0.1) 0%, transparent 50%);
+      z-index: 1;
+    }
+
+    .header-content {
+      position: relative;
+      z-index: 2;
+    }
+
+    .company-logo {
+      width: 80px;
+      height: 80px;
+      background: linear-gradient(135deg, #ffffff 0%, #e2e8f0 100%);
+      border-radius: 20px;
+      margin: 0 auto 20px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 32px;
+      font-weight: 700;
+      color: #667eea;
+      box-shadow: 0 10px 25px rgba(0, 0, 0, 0.2);
+    }
+
+    .company-name {
+      font-size: 42px;
+      font-weight: 700;
+      margin-bottom: 8px;
+      letter-spacing: -0.02em;
+      text-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    }
+
+    .company-tagline {
+      font-size: 18px;
+      opacity: 0.9;
+      text-transform: uppercase;
+      letter-spacing: 2px;
+      margin-bottom: 30px;
+      font-weight: 300;
+    }
+
+    .order-badge {
+      display: inline-block;
+      background: rgba(255, 255, 255, 0.2);
+      backdrop-filter: blur(10px);
+      padding: 20px 40px;
+      border-radius: 50px;
+      margin-top: 10px;
+      font-size: 24px;
+      font-weight: 600;
+      letter-spacing: 1px;
+      border: 2px solid rgba(255, 255, 255, 0.3);
+      box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+    }
+
+    .status-header {
+      background: #f8fafc;
+      border-left: 6px solid #667eea;
+      padding: 30px;
+      margin: 30px;
+      border-radius: 12px;
+      text-align: center;
+    }
+
+    .status-badge-large {
+      display: inline-block;
+      padding: 12px 24px;
+      border-radius: 25px;
+      font-weight: 600;
+      font-size: 16px;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      margin-bottom: 15px;
+    }
+
+    .status-badge-large.queued {
+      background: #fef3c7;
+      color: #d97706;
+    }
+
+    .status-badge-large.in_progress {
+      background: #dbeafe;
+      color: #2563eb;
+    }
+
+    .status-badge-large.completed {
+      background: #dcfce7;
+      color: #16a34a;
     }
 
     .completion-badge {
@@ -56,22 +176,36 @@ const generateCleanReportHTML = (order, totalParts, totalTime, completedPrints, 
     }
 
     .info-card {
-      background: #f8fafc;
+      background: linear-gradient(135deg, #f8fafc 0%, #ffffff 100%);
       border: 1px solid #e2e8f0;
-      border-radius: 8px;
-      padding: 24px;
+      border-radius: 16px;
+      padding: 30px;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+      transition: all 0.3s ease;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .info-card::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      height: 4px;
+      background: linear-gradient(90deg, #667eea 0%, #764ba2 100%);
     }
 
     .info-title {
-      font-weight: 600;
-      color: #6366f1;
-      font-size: 14px;
+      font-weight: 700;
+      color: #667eea;
+      font-size: 16px;
       text-transform: uppercase;
-      letter-spacing: 0.5px;
-      margin-bottom: 16px;
+      letter-spacing: 1px;
+      margin-bottom: 20px;
       display: flex;
       align-items: center;
-      gap: 8px;
+      gap: 12px;
     }
 
     .info-content {
@@ -86,53 +220,69 @@ const generateCleanReportHTML = (order, totalParts, totalTime, completedPrints, 
 
     .schedule-section {
       margin: 0 30px 30px;
+      border-radius: 16px;
+      overflow: hidden;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+      border: 1px solid #e2e8f0;
     }
 
     .schedule-header {
-      background: #f1f5f9;
-      border: 1px solid #e2e8f0;
-      border-bottom: none;
-      border-radius: 8px 8px 0 0;
-      padding: 16px 24px;
-      font-weight: 600;
-      color: #374151;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      color: white;
+      padding: 20px 30px;
+      font-weight: 700;
+      font-size: 18px;
       display: flex;
       align-items: center;
-      gap: 8px;
+      gap: 12px;
+      text-transform: uppercase;
+      letter-spacing: 1px;
     }
 
     .schedule-header::before {
       content: '📋';
+      font-size: 20px;
     }
 
     .schedule-table {
       width: 100%;
       border-collapse: collapse;
-      border: 1px solid #e2e8f0;
-      border-radius: 0 0 8px 8px;
-      overflow: hidden;
+      background: white;
+      font-size: 14px;
     }
 
     .schedule-table th {
-      background: #f8fafc;
-      padding: 12px 16px;
+      background: linear-gradient(135deg, #f8fafc 0%, #ffffff 100%);
+      padding: 16px 24px;
       text-align: left;
-      font-weight: 600;
-      color: #4b5563;
-      border-bottom: 1px solid #e2e8f0;
-      font-size: 12px;
+      font-weight: 700;
+      color: #475569;
+      border-bottom: 2px solid #667eea;
+      font-size: 13px;
       text-transform: uppercase;
-      letter-spacing: 0.5px;
+      letter-spacing: 1px;
+      position: relative;
     }
 
     .schedule-table td {
-      padding: 16px;
+      padding: 18px 24px;
       border-bottom: 1px solid #f1f5f9;
       color: #374151;
+      font-weight: 500;
     }
 
     .schedule-table tr:last-child td {
       border-bottom: none;
+    }
+
+    .schedule-table tr:nth-child(even) {
+      background: #fafbfc;
+    }
+
+    .schedule-table tr:hover {
+      background: #f1f5f9;
+      transform: translateY(-1px);
+      transition: all 0.2s ease;
     }
 
     .status-badge {
@@ -197,8 +347,20 @@ const generateCleanReportHTML = (order, totalParts, totalTime, completedPrints, 
 </head>
 <body>
   <div class="document">
-    <!-- COMPLETION BADGE -->
-    <div class="completion-badge">
+    <!-- HEADER -->
+    <div class="header">
+      <div class="header-content">
+        <div class="company-logo">P3D</div>
+        <div class="company-name">PRECISION 3D PRINT</div>
+        <div class="company-tagline">Professional Manufacturing Excellence</div>
+        <div class="order-badge">Order #${order.orderNumber || 'ORD-' + order.id.toString().padStart(6, '0')}</div>
+      </div>
+    </div>
+
+    <!-- STATUS HEADER -->
+    <div class="status-header">
+      <div class="status-badge-large status-${order.status}">${order.status.replace('_', ' ').toUpperCase()}</div>
+      <div class="completion-badge">
       ${isCompleted 
         ? 'Order Completed Successfully' 
         : `Estimated Completion: ${estimatedCompletion.toLocaleDateString('en-ZA', { 
