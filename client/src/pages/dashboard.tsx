@@ -329,14 +329,27 @@ export default function Dashboard() {
         return;
       }
 
-      // Generate status message
+      // Generate status message with order details
       const completedPrints = order.prints?.filter((p: any) => p.status === 'completed').length || 0;
       const totalPrints = order.prints?.length || 0;
       
       let message = `Hello ${order.customer.name}! 👋\n\n`;
-      message += `Order Update: ${order.orderNumber}\n`;
+      message += `📦 *ORDER UPDATE*\n`;
+      message += `Order #: ${order.orderNumber}\n`;
       message += `Status: ${order.status.charAt(0).toUpperCase() + order.status.slice(1).replace('_', ' ')}\n`;
       message += `Progress: ${completedPrints}/${totalPrints} prints completed\n\n`;
+
+      // Add order summary
+      if (order.prints && order.prints.length > 0) {
+        message += `📋 *ORDER SUMMARY*\n`;
+        order.prints.forEach((print: any, index: number) => {
+          const statusEmoji = print.status === 'completed' ? '✅' : 
+                            print.status === 'printing' ? '🔄' : 
+                            print.status === 'in_progress' ? '🔄' : '⏳';
+          message += `${index + 1}. ${print.name} ${statusEmoji}\n`;
+        });
+        message += `\n`;
+      }
 
       if (order.status === 'completed') {
         message += `🎉 Great news! Your order is now complete and ready for pickup.\n\n`;

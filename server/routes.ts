@@ -2567,9 +2567,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // Create WhatsApp message record
       const whatsappMessage = await storage.createWhatsappMessage({
         orderId,
-        customerId: order.customerId,
         message,
-        status: "sent",
+        sent: true,
       });
 
       // Clean phone number (remove all non-numeric characters)
@@ -2577,7 +2576,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       // Create download link and WhatsApp link
       const downloadUrl = `${req.protocol}://${req.get("host")}/api/orders/${orderId}/pdf`;
-      const fullMessage = `${message}\n\nDownload your order report: ${downloadUrl}`;
+      const cleanReportUrl = `${req.protocol}://${req.get("host")}/api/orders/${orderId}/report`;
+      
+      const fullMessage = `${message}\n\n📄 *ORDER REPORT*\n` +
+                         `• View Online: ${cleanReportUrl}\n` +
+                         `• Download PDF: ${downloadUrl}\n\n` +
+                         `💡 Tip: Click the links above to view your complete order details, print specifications, and status updates.`;
+      
       const whatsappLink = `https://wa.me/${cleanPhoneNumber}?text=${encodeURIComponent(fullMessage)}`;
 
       res.json({

@@ -105,11 +105,12 @@ The application is designed to be deployed on Replit but can be adapted for othe
 
 ```
 Changelog:
-- July 04, 2025. Fixed WhatsApp notification functionality and completed Replit migration
+- July 04, 2025. Enhanced WhatsApp notifications with order reports and completed Replit migration
   * Fixed "Notified" button in order cards to properly send WhatsApp notifications
-  * Enhanced handleUpdateOrder function to send WhatsApp messages when order is completed
-  * Added comprehensive message generation with order details and customer information
-  * WhatsApp notifications now open automatically in new tab with pre-filled message
+  * Enhanced WhatsApp messages to include detailed order summaries with print status emojis
+  * Added both online view and PDF download links for order reports in WhatsApp messages
+  * WhatsApp messages now include order number, completion progress, and individual print statuses
+  * Messages formatted with clear sections and professional layout with emojis
   * Successfully migrated project from Replit Agent to Replit environment
   * All core functionality working: order management, 3D visualization, database operations
   * Project running cleanly with proper client/server separation and security practices
