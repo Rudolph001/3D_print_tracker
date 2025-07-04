@@ -182,7 +182,7 @@ export function OrderDetails({ order, onUpdate, onEdit, onDelete, getStatusColor
               order.prints?.map((print: any) => (
                 <div key={print.id} className="border border-gray-200 rounded-lg p-3">
                   <div className="flex items-center justify-between mb-2">
-                    <p className="font-medium text-sm text-gray-800">{print.name}</p>
+                    <p className="font-medium text-sm text-gray-800">{print.name.split('(')[0].trim()}</p>
                     <Badge className={`${getStatusBgColor(print.status)} ${getStatusColor(print.status)} text-xs`}>
                       {getStatusLabel(print.status)}
                     </Badge>
