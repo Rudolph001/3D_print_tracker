@@ -91,7 +91,7 @@ export function OrderCard({ order, onClick, isSelected, getStatusColor, getStatu
       <div className="mb-4">
         <div className="flex justify-between text-sm text-gray-600 mb-2">
           <span>Progress: {completedPrints} of {totalPrints} prints completed</span>
-          <span>{order.totalEstimatedTime || 0}h remaining</span>
+          <span>{(order.totalEstimatedTime || 0).toFixed(2)}h remaining</span>
         </div>
         <Progress value={progress} className="h-2" />
       </div>
@@ -104,7 +104,7 @@ export function OrderCard({ order, onClick, isSelected, getStatusColor, getStatu
           </span>
           <span className="text-sm text-gray-600">
             <Clock className="h-4 w-4 inline mr-1" />
-            {order.totalEstimatedTime || 0}h total
+            {(order.totalEstimatedTime || 0).toFixed(2)}h total
           </span>
         </div>
         <div className="flex items-center space-x-2">
