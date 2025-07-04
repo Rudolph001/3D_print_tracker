@@ -113,7 +113,7 @@ export function OrderCard({ order, onClick, isSelected, getStatusColor, getStatu
             className={`${order.status === 'completed' ? 'bg-success hover:bg-green-600' : 'bg-primary hover:bg-blue-700'} text-white`}
             onClick={(e) => {
               e.stopPropagation();
-              if (onUpdate && order.status !== 'completed') {
+              if (onUpdate) {
                 onUpdate(order.id);
               }
             }}

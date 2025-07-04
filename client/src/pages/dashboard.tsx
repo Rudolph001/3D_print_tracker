@@ -81,34 +81,23 @@ export default function Dashboard() {
     };
   }, [showNotifications]);
 
-  // Generate real notifications from data
-  useEffect(() => {
-    if (!orders || !Array.isArray(orders)) return;
-    
-    const newNotifications: Array<{
-      id: string;
-      message: string;
-      time: string;
-      type: 'order' | 'print' | 'stock';
-      read: boolean;
-      data?: any;
-    }> = [];
+  // Generate notifications from recent data
+  React.useEffect(() => {
+    if (!orders) return;
+
+    const newNotifications: any[] = [];
 
     // Recent orders (last 24 hours)
-    const recentOrders = orders.filter((order: any) => {
+    orders.forEach((order: any) => {
       const orderDate = new Date(order.createdAt);
       const now = new Date();
       const diffHours = (now.getTime() - orderDate.getTime()) / (1000 * 60 * 60);
-      return diffHours <= 24;
-    }) || [];
 
-    recentOrders.forEach((order: any) => {
-      const orderDate = new Date(order.createdAt);
-      const now = new Date();
-      const diffMinutes = Math.floor((now.getTime() - orderDate.getTime()) / (1000 * 60));
-      let timeAgo = '';
+      if (diffHours <= 24) {
+        const diffMinutes = Math.floor(diffHours * 60);
+        let timeAgo = '';
 
-      if (diffMinutes < 60) {
+        if (diffMinutes < 60) {
         timeAgo = `${diffMinutes} minutes ago`;
       } else {
         const diffHours = Math.floor(diffMinutes / 60);
@@ -126,7 +115,7 @@ export default function Dashboard() {
     });
 
     // Completed prints (last 24 hours)
-    orders?.forEach((order: any) => {
+    orders.forEach((order: any) => {
       order.prints?.forEach((print: any) => {
         if (print.status === 'completed' && print.updatedAt) {
           const printDate = new Date(print.updatedAt);
@@ -179,7 +168,7 @@ export default function Dashboard() {
     });
 
     setNotifications(newNotifications.slice(0, 10));
-  }, [orders?.length, filamentAlerts?.length]);
+  }, [orders, filamentAlerts]);
 
   const markAllAsRead = () => {
     setNotifications(prev => prev.map(notif => ({ ...notif, read: true })));
@@ -303,7 +292,7 @@ export default function Dashboard() {
         body: JSON.stringify({ status: newStatus }),
         headers: { "Content-Type": "application/json" }
       });
-      
+
       refetchOrders();
       toast({
         title: "Success",
