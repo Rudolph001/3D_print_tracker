@@ -33,8 +33,8 @@ export function OrderCard({ order, onClick, isSelected, getStatusColor, getStatu
     >
       <div className="flex items-center justify-between mb-4">
         <div className="flex items-center space-x-4">
-          <div className="w-10 h-10 bg-primary bg-opacity-10 rounded-full flex items-center justify-center">
-            <span className="text-primary font-semibold text-sm">{order.orderNumber}</span>
+          <div className="w-12 h-12 bg-primary bg-opacity-10 rounded-full flex items-center justify-center">
+            <span className="text-primary font-semibold text-xs">#{order.id}</span>
           </div>
           <div>
             <p className="font-medium text-gray-800">{order.customer?.name}</p>
