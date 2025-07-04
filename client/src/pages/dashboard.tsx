@@ -158,16 +158,18 @@ export default function Dashboard() {
     });
 
     // Low stock alerts
-    filamentAlerts.forEach((alert: any) => {
-      newNotifications.push({
-        id: `stock-${alert.id}`,
-        message: `Low filament warning - ${alert.brand} ${alert.color}`,
-        time: alert.currentWeight <= alert.lowStockThreshold * 0.5 ? 'Critical' : 'Warning',
-        type: 'stock',
-        read: false,
-        data: alert
+    if (filamentAlerts && Array.isArray(filamentAlerts)) {
+      filamentAlerts.forEach((alert: any) => {
+        newNotifications.push({
+          id: `stock-${alert.id}`,
+          message: `Low filament warning - ${alert.brand} ${alert.color}`,
+          time: alert.currentWeight <= alert.lowStockThreshold * 0.5 ? 'Critical' : 'Warning',
+          type: 'stock',
+          read: false,
+          data: alert
+        });
       });
-    });
+    }
 
     // Sort by most recent first and limit to 10
     newNotifications.sort((a, b) => {
@@ -177,7 +179,7 @@ export default function Dashboard() {
     });
 
     setNotifications(newNotifications.slice(0, 10));
-  }, [orders, customers, products, filamentAlerts]);
+  }, [orders?.length, filamentAlerts?.length]);
 
   const markAllAsRead = () => {
     setNotifications(prev => prev.map(notif => ({ ...notif, read: true })));
@@ -211,8 +213,10 @@ export default function Dashboard() {
 
   // Update notifications when alerts change
   React.useEffect(() => {
-    setShowNotifications(filamentAlerts.length > 0);
-  }, [filamentAlerts]);
+    if (filamentAlerts && Array.isArray(filamentAlerts)) {
+      setShowNotifications(filamentAlerts.length > 0);
+    }
+  }, [filamentAlerts?.length]);
 
   // Close notifications when clicking outside
   React.useEffect(() => {
@@ -284,18 +288,26 @@ export default function Dashboard() {
 
   const handleUpdateOrder = async (orderId: number) => {
     try {
-      // For now, let's manually update the order status to 'completed' 
-      // since the SQLite binding issue is preventing proper status updates
+      const order = orders.find((o: any) => o.id === orderId);
+      if (!order) return;
+
+      let newStatus = 'completed';
+      if (order.status === 'queued') {
+        newStatus = 'in_progress';
+      } else if (order.status === 'in_progress') {
+        newStatus = 'completed';
+      }
+
       await apiRequest(`/api/orders/${orderId}/status`, {
         method: "PATCH",
-        body: JSON.stringify({ status: "completed" }),
+        body: JSON.stringify({ status: newStatus }),
         headers: { "Content-Type": "application/json" }
       });
       
       refetchOrders();
       toast({
         title: "Success",
-        description: "Order status updated to completed",
+        description: `Order status updated to ${newStatus.replace('_', ' ')}`,
       });
     } catch (error) {
       console.error('Failed to update order:', error);

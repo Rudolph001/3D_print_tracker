@@ -26,7 +26,7 @@ import type {
   WhatsappMessage,
   InsertWhatsappMessage
 } from "@shared/schema-sqlite";
-import { db } from "./db";
+import { db, sqlite } from "./db";
 import { eq, desc, asc, sql, and, lt } from "drizzle-orm";
 
 export interface IStorage {
@@ -196,11 +196,25 @@ export class DatabaseStorage implements IStorage {
   }
 
   async updateOrderStatus(id: number, status: string): Promise<Order> {
-    const [updatedOrder] = await db.update(orders)
-      .set({ status, updatedAt: new Date() })
-      .where(eq(orders.id, id))
-      .returning();
-    return updatedOrder;
+    // Use raw SQLite to bypass Drizzle ORM binding issues
+    if (sqlite) {
+      const stmt = sqlite.prepare("UPDATE orders SET status = ?, updated_at = ? WHERE id = ?");
+      stmt.run(status, new Date().toISOString(), id);
+      
+      // Get the updated order
+      const updatedOrder = await this.getOrder(id);
+      if (!updatedOrder) {
+        throw new Error(`Failed to update order status for ID ${id}`);
+      }
+      return updatedOrder;
+    } else {
+      // Fallback for PostgreSQL
+      const [updatedOrder] = await db.update(orders)
+        .set({ status, updatedAt: new Date().toISOString() })
+        .where(eq(orders.id, id))
+        .returning();
+      return updatedOrder;
+    }
   }
 
   async getProduct(id: number): Promise<Product | undefined> {
@@ -260,11 +274,17 @@ export class DatabaseStorage implements IStorage {
         throw new Error(`Print with ID ${printId} not found`);
       }
 
-      // Update the print status using a simple approach
-      await db
-        .update(prints)
-        .set({ status })
-        .where(eq(prints.id, printId));
+      // Use raw SQLite to bypass Drizzle ORM binding issues
+      if (sqlite) {
+        const stmt = sqlite.prepare("UPDATE prints SET status = ? WHERE id = ?");
+        stmt.run(status, printId);
+      } else {
+        // Fallback for PostgreSQL
+        await db
+          .update(prints)
+          .set({ status })
+          .where(eq(prints.id, printId));
+      }
 
       // Get the updated print
       const updatedPrint = await this.getPrint(printId);

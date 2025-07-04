@@ -11,10 +11,11 @@ neonConfig.webSocketConstructor = ws;
 // For migration purposes, use SQLite if no DATABASE_URL is provided
 let db: any;
 let pool: any;
+let sqlite: any;
 
 if (!process.env.DATABASE_URL) {
   console.log("DATABASE_URL not set, using SQLite for migration");
-  const sqlite = new Database('./data.db');
+  sqlite = new Database('./data.db');
   db = drizzleSQLite(sqlite, { schema: schemaSQLite });
   
   // Create tables if they don't exist
@@ -144,4 +145,4 @@ if (!process.env.DATABASE_URL) {
   db = drizzle({ client: pool, schema });
 }
 
-export { db, pool };
+export { db, pool, sqlite };

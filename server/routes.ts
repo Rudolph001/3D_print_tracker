@@ -413,12 +413,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const updatedOrder = await storage.updateOrderStatus(id, status);
       res.json(updatedOrder);
     } catch (error) {
+      console.error("Order status update error:", error);
       if (error instanceof z.ZodError) {
         res
           .status(400)
           .json({ error: "Invalid status", details: error.errors });
       } else {
-        res.status(500).json({ error: "Failed to update order status" });
+        const errorMessage = error instanceof Error ? error.message : "Failed to update order status";
+        res.status(500).json({ error: errorMessage });
       }
     }
   });
