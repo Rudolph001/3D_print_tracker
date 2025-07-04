@@ -105,6 +105,15 @@ The application is designed to be deployed on Replit but can be adapted for othe
 
 ```
 Changelog:
+- July 04, 2025. Successfully completed Replit Agent to Replit migration
+  * Fixed Select component runtime error by handling empty string values properly
+  * Select components now use "default" value instead of empty string to prevent runtime errors
+  * Updated filament selection logic to handle default material selection correctly
+  * Fixed local installation startup script to use production build instead of development mode
+  * Updated both PowerShell installer and batch startup script for proper local deployment
+  * All core functionality verified working: dashboard, orders, products, 3D visualization
+  * Database operations, file uploads, and API endpoints all functioning correctly
+  * Migration completed successfully with proper client/server separation and security practices
 - July 04, 2025. Added automated local deployment with desktop shortcuts for non-technical users
   * Created comprehensive Windows batch file installer (install-3d-print-shop.bat)
   * Added PowerShell installer alternative (install-3d-print-shop.ps1)

@@ -38,8 +38,18 @@ if %errorLevel% equ 0 (
 )
 
 :: Set environment variables
-set NODE_ENV=development
+set NODE_ENV=production
 set BASE_URL=http://localhost:5000
+
+echo Building the application...
+call npm run build
+if %errorlevel% neq 0 (
+    echo.
+    echo ERROR: Failed to build the application
+    echo Please check your installation and try again
+    pause
+    exit /b 1
+)
 
 echo.
 echo Starting application...
@@ -48,8 +58,12 @@ echo Keep this window open while using the app
 echo Press Ctrl+C to stop the app
 echo.
 
+:: Wait a moment then open browser
+timeout /t 3 /nobreak >nul
+start "" "http://localhost:5000"
+
 :: Start the application
-npm run dev
+npm start
 
 echo.
 echo Application stopped.

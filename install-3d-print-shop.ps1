@@ -116,6 +116,16 @@ title 3D Print Shop Management App
 cd /d "$InstallDir"
 echo Starting 3D Print Shop Management App...
 echo.
+echo Building the application...
+call npm run build
+if %errorlevel% neq 0 (
+    echo.
+    echo Error: Failed to build the application.
+    echo Please check your installation and try again.
+    pause
+    exit /b 1
+)
+echo.
 echo App will be available at: http://localhost:5000
 echo.
 echo Opening your web browser...
@@ -125,7 +135,7 @@ echo           Close this window to stop the server.
 echo.
 timeout /t 3 >nul
 start "" "http://localhost:5000"
-npm run dev
+npm start
 echo.
 echo App has been stopped.
 pause
