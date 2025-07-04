@@ -63,6 +63,24 @@ export default function Dashboard() {
     };
   }, [showNotifications]);
 
+  // Data queries - moved here to be available before use in effects
+  const { data: orders = [], refetch: refetchOrders } = useQuery({
+    queryKey: ["/api/orders"],
+  });
+
+  const { data: products = [], refetch: refetchProducts } = useQuery({
+    queryKey: ["/api/products"],
+  });
+
+  const { data: customers = [], refetch: refetchCustomers } = useQuery({
+    queryKey: ["/api/customers"],
+  });
+
+  const { data: filamentAlerts = [] } = useQuery({
+    queryKey: ["/api/filament-stock/alerts"],
+    refetchInterval: 30000, // Check every 30 seconds
+  });
+
   // Generate real notifications from data
   useEffect(() => {
     const newNotifications: Array<{
@@ -138,11 +156,7 @@ export default function Dashboard() {
     });
 
     // Low stock alerts
-    const { data: stockAlerts = [] } = useQuery({
-      queryKey: ["/api/filament-stock/alerts"],
-    });
-
-    stockAlerts.forEach((alert: any) => {
+    filamentAlerts.forEach((alert: any) => {
       newNotifications.push({
         id: `stock-${alert.id}`,
         message: `Low filament warning - ${alert.brand} ${alert.color}`,
@@ -161,7 +175,7 @@ export default function Dashboard() {
     });
 
     setNotifications(newNotifications.slice(0, 10));
-  }, [orders, customers, products]);
+  }, [orders, customers, products, filamentAlerts]);
 
   const markAllAsRead = () => {
     setNotifications(prev => prev.map(notif => ({ ...notif, read: true })));
@@ -193,11 +207,6 @@ export default function Dashboard() {
     }
   };
 
-  const { data: filamentAlerts = [] } = useQuery({
-    queryKey: ["/api/filament-stock/alerts"],
-    refetchInterval: 30000, // Check every 30 seconds
-  });
-
   // Update notifications when alerts change
   React.useEffect(() => {
     setShowNotifications(filamentAlerts.length > 0);
@@ -218,18 +227,6 @@ export default function Dashboard() {
       document.removeEventListener('mousedown', handleClickOutside);
     };
   }, [showNotifications]);
-
-  const { data: orders = [], refetch: refetchOrders } = useQuery({
-    queryKey: ["/api/orders"],
-  });
-
-  const { data: products = [], refetch: refetchProducts } = useQuery({
-    queryKey: ["/api/products"],
-  });
-
-  const { data: customers = [], refetch: refetchCustomers } = useQuery({
-    queryKey: ["/api/customers"],
-  });
 
   const selectedOrder = orders.find((order: any) => order.id === selectedOrderId);
 
