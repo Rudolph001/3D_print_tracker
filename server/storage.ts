@@ -252,10 +252,18 @@ export class DatabaseStorage implements IStorage {
   }
 
   async updatePrintStatus(id: number, status: string): Promise<Print> {
+    // First check if the print exists
+    const existingPrint = await db.select().from(prints).where(eq(prints.id, id));
+    
+    if (!existingPrint.length) {
+      throw new Error(`Print with ID ${id} not found`);
+    }
+    
     const [updatedPrint] = await db.update(prints)
       .set({ status, updatedAt: new Date() })
       .where(eq(prints.id, id))
       .returning();
+    
     return updatedPrint;
   }
 

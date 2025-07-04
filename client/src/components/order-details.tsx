@@ -55,6 +55,7 @@ export function OrderDetails({ order, onUpdate, onEdit, onDelete, getStatusColor
 
   const getStatusLabel = (status: string) => {
     switch (status) {
+      case "printing": return "Printing";
       case "in_progress": return "In Progress";
       case "completed": return "Completed";
       case "queued": return "Queued";
@@ -65,6 +66,7 @@ export function OrderDetails({ order, onUpdate, onEdit, onDelete, getStatusColor
   const getPrintProgress = (print: any) => {
     if (print.status === "completed") return 100;
     if (print.status === "printing") return 50;
+    if (print.status === "in_progress") return 50;
     return 0;
   };
 
@@ -166,7 +168,7 @@ export function OrderDetails({ order, onUpdate, onEdit, onDelete, getStatusColor
                       Time: {print.estimatedTime}h | Status: {getStatusLabel(print.status)}
                     </p>
                   </div>
-                  {print.status === "in_progress" && (
+                  {(print.status === "printing" || print.status === "in_progress") && (
                     <div className="mt-2">
                       <Progress value={getPrintProgress(print)} className="h-1" />
                     </div>
@@ -177,7 +179,7 @@ export function OrderDetails({ order, onUpdate, onEdit, onDelete, getStatusColor
                       </SelectTrigger>
                       <SelectContent>
                         <SelectItem value="queued">Queued</SelectItem>
-                        <SelectItem value="in_progress">In Progress</SelectItem>
+                        <SelectItem value="printing">Printing</SelectItem>
                         <SelectItem value="completed">Completed</SelectItem>
                       </SelectContent>
                     </Select>
