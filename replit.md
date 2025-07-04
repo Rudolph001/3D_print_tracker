@@ -105,10 +105,6 @@ The application is designed to be deployed on Replit but can be adapted for othe
 
 ```
 Changelog:
-- July 04, 2025. Updated server port configuration for local development
-  * Changed default port from 5000 to 3000 for local development
-  * Server now uses port 3000 by default, 5000 for production (when PORT env var is set)
-  * Updated for better compatibility with local development environments
 - July 04, 2025. Added automated local deployment with desktop shortcuts for non-technical users
   * Created comprehensive Windows batch file installer (install-3d-print-shop.bat)
   * Added PowerShell installer alternative (install-3d-print-shop.ps1)
