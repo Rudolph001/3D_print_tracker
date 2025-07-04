@@ -345,6 +345,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.post("/api/orders", async (req, res) => {
     try {
+      console.log("Creating order with data:", JSON.stringify(req.body, null, 2));
       const { customer, order, prints } = req.body;
 
       // Create or find customer
@@ -352,23 +353,32 @@ export async function registerRoutes(app: Express): Promise<Server> {
         customer.whatsappNumber,
       );
       if (!customerRecord) {
+        console.log("Creating new customer:", customer);
         const customerData = insertCustomerSchema.parse(customer);
         customerRecord = await storage.createCustomer(customerData);
+        console.log("Customer created:", customerRecord);
+      } else {
+        console.log("Customer found:", customerRecord);
       }
 
       // Create order
+      console.log("Creating order with data:", { ...order, customerId: customerRecord.id });
       const orderData = insertOrderSchema.parse({
         ...order,
         customerId: customerRecord.id,
       });
       const newOrder = await storage.createOrder(orderData);
+      console.log("Order created:", newOrder);
 
       // Create prints
-      const printPromises = prints.map((print: any) => {
+      console.log("Creating prints:", prints);
+      const printPromises = prints.map((print: any, index: number) => {
+        console.log(`Processing print ${index}:`, print);
         const printData = insertPrintSchema.parse({
           ...print,
           orderId: newOrder.id,
         });
+        console.log(`Print data for ${index}:`, printData);
         return storage.createPrint(printData);
       });
 
@@ -378,11 +388,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const orderWithDetails = await storage.getOrderWithDetails(newOrder.id);
       res.status(201).json(orderWithDetails);
     } catch (error) {
+      console.error("Order creation error:", error);
       if (error instanceof z.ZodError) {
+        console.error("Validation errors:", error.errors);
         res
           .status(400)
           .json({ error: "Invalid order data", details: error.errors });
       } else {
+        console.error("Unexpected error:", error);
         res.status(500).json({ error: "Failed to create order" });
       }
     }
