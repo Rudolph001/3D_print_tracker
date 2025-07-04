@@ -2,9 +2,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
 import { format } from "date-fns";
-import { MessageCircle, Edit, Phone, Download, Share, Trash2 } from "lucide-react";
-import { useMutation } from "@tanstack/react-query";
-import { apiRequest } from "@/lib/queryClient";
+import { Edit, Phone, Download, Trash2 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { openOrderReport } from "@/lib/whatsapp";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -24,48 +22,7 @@ export function OrderDetails({ order, onUpdate, onEdit, onDelete, getStatusColor
   const { toast } = useToast();
   const queryClient = useQueryClient();
 
-  const sendWhatsAppMutation = useMutation({
-    mutationFn: async (data: { orderId: number; message: string }) => {
-      return apiRequest("POST", "/api/whatsapp/send", data);
-    },
-    onSuccess: (response: any) => {
-      // Open WhatsApp with the generated link
-      if (response.whatsappLink) {
-        window.open(response.whatsappLink, '_blank');
-      }
-      toast({
-        title: "WhatsApp link generated",
-        description: "Opening WhatsApp to share the order report with your customer.",
-      });
-      onUpdate();
-    },
-    onError: () => {
-      toast({
-        title: "Failed to send message",
-        description: "Could not send WhatsApp message. Please try again.",
-        variant: "destructive",
-      });
-    },
-  });
 
-  const handleSendWhatsApp = () => {
-    const message = `Hello ${order.customer?.name}! Your order ${order.orderNumber} status update: ${order.status}. ${order.prints?.filter((p: any) => p.status === 'completed').length} of ${order.prints?.length} prints completed.`;
-    sendWhatsAppMutation.mutate({ orderId: order.id, message });
-  };
-
-  const handleDirectWhatsApp = () => {
-    const whatsappNumber = order.customer?.whatsappNumber;
-    if (!whatsappNumber) {
-      toast({
-        title: "Error",
-        description: "Customer has no WhatsApp number.",
-        variant: "destructive",
-      });
-      return;
-    }
-    const url = `https://wa.me/${whatsappNumber}`;
-    window.open(url, '_blank');
-  };
 
 
   const getStatusLabel = (status: string) => {
@@ -225,22 +182,7 @@ export function OrderDetails({ order, onUpdate, onEdit, onDelete, getStatusColor
             View Report
           </Button>
 
-            <Button
-              onClick={handleSendWhatsApp}
-              disabled={sendWhatsAppMutation.isPending}
-              className="bg-green-600 hover:bg-green-700"
-            >
-              <MessageCircle className="w-4 h-4 mr-2" />
-              {sendWhatsAppMutation.isPending ? "Generating..." : "Send Report"}
-            </Button>
-            <Button
-              onClick={handleDirectWhatsApp}
-              variant="outline"
-              className="border-green-600 text-green-600 hover:bg-green-50"
-            >
-              <MessageCircle className="w-4 h-4 mr-2" />
-              Quick WhatsApp
-            </Button>
+
 
 
           <div className="grid grid-cols-2 gap-2">
