@@ -53,6 +53,21 @@ export function OrderDetails({ order, onUpdate, onEdit, onDelete, getStatusColor
     sendWhatsAppMutation.mutate({ orderId: order.id, message });
   };
 
+  const handleDirectWhatsApp = () => {
+    const whatsappNumber = order.customer?.whatsappNumber;
+    if (!whatsappNumber) {
+      toast({
+        title: "Error",
+        description: "Customer has no WhatsApp number.",
+        variant: "destructive",
+      });
+      return;
+    }
+    const url = `https://wa.me/${whatsappNumber}`;
+    window.open(url, '_blank');
+  };
+
+
   const getStatusLabel = (status: string) => {
     switch (status) {
       case "printing": return "Printing";
@@ -209,6 +224,23 @@ export function OrderDetails({ order, onUpdate, onEdit, onDelete, getStatusColor
             <Download className="h-4 w-4 mr-2" />
             View Report
           </Button>
+
+            <Button
+              onClick={handleSendWhatsApp}
+              disabled={sendWhatsAppMutation.isPending}
+              className="bg-green-600 hover:bg-green-700"
+            >
+              <MessageCircle className="w-4 h-4 mr-2" />
+              {sendWhatsAppMutation.isPending ? "Generating..." : "Send Report"}
+            </Button>
+            <Button
+              onClick={handleDirectWhatsApp}
+              variant="outline"
+              className="border-green-600 text-green-600 hover:bg-green-50"
+            >
+              <MessageCircle className="w-4 h-4 mr-2" />
+              Quick WhatsApp
+            </Button>
 
 
           <div className="grid grid-cols-2 gap-2">

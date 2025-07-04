@@ -2560,6 +2560,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(404).json({ error: "Order not found" });
       }
 
+      if (!order.customer?.whatsappNumber) {
+        return res.status(400).json({ error: "Customer has no WhatsApp number" });
+      }
+
       // Create WhatsApp message record
       const whatsappMessage = await storage.createWhatsappMessage({
         orderId,
@@ -2568,23 +2572,30 @@ export async function registerRoutes(app: Express): Promise<Server> {
         status: "sent",
       });
 
-      // Return download link and WhatsApp link for manual sending
+      // Clean phone number (remove all non-numeric characters)
+      const cleanPhoneNumber = order.customer.whatsappNumber.replace(/[^0-9]/g, '');
+      
+      // Create download link and WhatsApp link
       const downloadUrl = `${req.protocol}://${req.get("host")}/api/orders/${orderId}/pdf`;
-      const whatsappLink = `https://wa.me/${order.customer.whatsappNumber.replace("+", "")}?text=${encodeURIComponent(`Hello ${order.customer.name}, here is your order update for ${order.orderNumber}. Download your order report: ${downloadUrl}`)}`;
+      const fullMessage = `${message}\n\nDownload your order report: ${downloadUrl}`;
+      const whatsappLink = `https://wa.me/${cleanPhoneNumber}?text=${encodeURIComponent(fullMessage)}`;
 
       res.json({
         success: true,
         messageId: whatsappMessage.id,
         downloadUrl,
         whatsappLink,
+        phoneNumber: cleanPhoneNumber,
+        customerName: order.customer.name,
       });
     } catch (error) {
+      console.error("WhatsApp send error:", error);
       if (error instanceof z.ZodError) {
         res
           .status(400)
           .json({ error: "Invalid message data", details: error.errors });
       } else {
-        res.status(500).json({ error: "Failed to generate download link" });
+        res.status(500).json({ error: "Failed to generate WhatsApp link" });
       }
     }
   });
