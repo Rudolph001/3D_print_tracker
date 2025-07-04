@@ -8,6 +8,9 @@ import fs from "fs";
 // Import clean report template
 import { createRequire } from 'module';
 const require = createRequire(import.meta.url);
+
+// Base URL for external access (change this to your ngrok/tunnel URL when hosting locally)
+const BASE_URL = process.env.BASE_URL || 'http://localhost:5000';
 const generateCleanReportHTML = require("../clean_report.js");
 
 import { storage } from "./storage";
