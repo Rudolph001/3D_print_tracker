@@ -470,14 +470,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
       if (isNaN(id)) {
         return res.status(400).json({ error: "Invalid print ID" });
       }
-      
+
       const { status } = updatePrintStatusSchema.parse(req.body);
       const updatedPrint = await storage.updatePrintStatus(id, status);
-      
+
       if (!updatedPrint) {
         return res.status(404).json({ error: "Print not found" });
       }
-      
+
       res.json(updatedPrint);
     } catch (error) {
       console.error("Print status update error:", error);
@@ -701,7 +701,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   <title>Order ${order.orderNumber} - Report</title>
   <style>
     @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
-            
+
             * {
               box-sizing: border-box;
               margin: 0;
@@ -891,7 +891,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
             .info-title::before {
               content: '';
-              width: 4px;
+              ```text
+width: 4px;
               height: 20px;
               background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%);
               border-radius: 2px;
@@ -1263,7 +1264,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
               <div class="footer-logo">P3D</div>
               <strong>Precision 3D Printing Services</strong>
               Your trusted partner for professional manufacturing excellence
-              
+
               <div class="footer-grid">
                 <div class="footer-item">
                   <strong>📧 Email</strong><br>
@@ -1406,7 +1407,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         estimatedCompletion,
         isCompleted
       );
-      
+
       res.setHeader("Content-Type", "text/html");
       res.send(html);
     } catch (error) {
@@ -1436,7 +1437,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
               body { margin: 0; padding: 0; }
               .no-print { display: none !important; }
             }
-            
+
             body {
               font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
               margin: 0;
@@ -1445,7 +1446,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
               line-height: 1.6;
               background: #ffffff;
             }
-            
+
             .print-instructions {
               background: #e3f2fd;
               border: 1px solid #2196f3;
@@ -1454,7 +1455,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
               margin-bottom: 30px;
               text-align: center;
             }
-            
+
             .print-button {
               background: #2196f3;
               color: white;
@@ -1465,7 +1466,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
               font-size: 16px;
               margin: 10px;
             }
-            
+
             .header {
               text-align: center;
               padding: 30px 0;
@@ -1475,56 +1476,56 @@ export async function registerRoutes(app: Express): Promise<Server> {
               color: white;
               border-radius: 12px;
             }
-            
+
             .company-name {
               font-size: 32px;
               font-weight: 800;
               margin-bottom: 10px;
             }
-            
+
             .report-title {
               font-size: 18px;
               opacity: 0.9;
             }
-            
+
             .order-info {
               display: grid;
               grid-template-columns: 1fr 1fr;
               gap: 20px;
               margin-bottom: 30px;
             }
-            
+
             .info-card {
               background: #f8fafc;
               padding: 20px;
               border-radius: 8px;
               border-left: 4px solid #667eea;
             }
-            
+
             .info-title {
               font-weight: 600;
               color: #2c3e50;
               margin-bottom: 10px;
             }
-            
+
             .prints-table {
               width: 100%;
               border-collapse: collapse;
               margin-bottom: 30px;
             }
-            
+
             .prints-table th, .prints-table td {
               padding: 12px;
               text-align: left;
               border-bottom: 1px solid #e2e8f0;
             }
-            
+
             .prints-table th {
               background: #f8fafc;
               font-weight: 600;
               color: #475569;
             }
-            
+
             .status-badge {
               padding: 4px 12px;
               border-radius: 12px;
@@ -1532,11 +1533,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
               font-weight: 600;
               text-transform: uppercase;
             }
-            
+
             .status-queued { background: #fef3c7; color: #92400e; }
             .status-in_progress { background: #dbeafe; color: #1e40af; }
             .status-completed { background: #dcfce7; color: #166534; }
-            
+
             .totals {
               background: #f8fafc;
               padding: 20px;
@@ -1837,8 +1838,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
             .stat-item {
               display: flex;
               flex-direction: column;
-            }
-
+            }```text
             .stat-value {
               font-size: 32px;
               font-weight: 700;
@@ -1867,6 +1867,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
               font-size: 18px;
               display: block;
               margin-bottom: 15px;
+              font-weight: 600;
             }
 
             .contact-grid {
@@ -2041,7 +2042,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
               size: A4;
               margin: 12mm 12mm 15mm 12mm;
             }
-            
+
             @media print {
               body { 
                 margin: 0; 
@@ -2075,11 +2076,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
                 page-break-before: avoid;
               }
             }
-            
+
             * {
               box-sizing: border-box;
             }
-            
+
             body {
               font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
               margin: 0;
@@ -2089,7 +2090,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
               background: #ffffff;
               font-size: 9pt;
             }
-            
+
             .print-instructions {
               background: #e3f2fd;
               border: 1px solid #2196f3;
@@ -2098,7 +2099,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
               margin-bottom: 30px;
               text-align: center;
             }
-            
+
             .print-button {
               background: #2196f3;
               color: white;
@@ -2109,11 +2110,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
               font-size: 16px;
               margin: 10px;
             }
-            
+
             .print-button:hover {
               background: #1976d2;
             }
-            
+
             .header {
               text-align: center;
               padding: 15pt 0;
@@ -2124,21 +2125,21 @@ export async function registerRoutes(app: Express): Promise<Server> {
               border-radius: 6pt;
               break-after: avoid;
             }
-            
+
             .company-name {
               font-size: 22pt;
               font-weight: 800;
               margin-bottom: 8pt;
               letter-spacing: 1pt;
             }
-            
+
             .company-tagline {
               font-size: 10pt;
               opacity: 0.9;
               margin-bottom: 12pt;
               font-weight: 300;
             }
-            
+
             .catalog-badge {
               display: inline-block;
               background: rgba(255,255,255,0.2);
@@ -2148,20 +2149,20 @@ export async function registerRoutes(app: Express): Promise<Server> {
               font-weight: 600;
               letter-spacing: 0.5pt;
             }
-            
+
             .intro-section {
               text-align: center;
               margin-bottom: 15pt;
               break-after: avoid;
             }
-            
+
             .intro-title {
               font-size: 18pt;
               font-weight: 700;
               color: #2c3e50;
               margin-bottom: 12pt;
             }
-            
+
             .intro-text {
               font-size: 10pt;
               color: #64748b;
@@ -2169,7 +2170,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
               margin: 0 auto;
               line-height: 1.5;
             }
-            
+
             .products-grid {
               display: grid;
               grid-template-columns: repeat(2, 1fr);
@@ -2177,7 +2178,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
               margin-bottom: 20pt;
               align-items: start;
             }
-            
+
             .product-card {
               border: 1pt solid #e9ecef;
               border-radius: 4pt;
@@ -2229,11 +2230,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
               line-height: 1.1;
               padding: 4pt;
             }
-            
+
             .product-info {
               padding: 8pt;
             }
-            
+
             .product-name {
               font-size: 10pt;
               font-weight: 600;
@@ -2244,7 +2245,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
               overflow-wrap: break-word;
               hyphens: auto;
             }
-            
+
             .product-description {
               color: #64748b;
               margin-bottom: 6pt;
@@ -2255,7 +2256,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
               hyphens: auto;
               max-height: none;
             }
-            
+
             .product-specs {
               display: grid;
               grid-template-columns: 1fr 1fr;
@@ -2265,12 +2266,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
               padding: 4pt;
               border-radius: 2pt;
             }
-            
+
             .spec-item {
               display: flex;
               flex-direction: column;
             }
-            
+
             .spec-label {
               font-size: 5pt;
               font-weight: 600;
@@ -2279,14 +2280,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
               letter-spacing: 0.1pt;
               margin-bottom: 1pt;
             }
-            
+
             .spec-value {
               font-size: 7pt;
               color: #2c3e50;
               font-weight: 600;
               word-wrap: break-word;
             }
-            
+
             .product-footer {
               text-align: center;
               padding: 4pt;
@@ -2296,13 +2297,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
               color: #667eea;
               font-weight: 600;
             }
-            
+
             .no-products {
               text-align: center;
               padding: 40pt;
               color: #94a3b8;
             }
-            
+
             .stats-section {
               background: #f8fafc;
               border: 1pt solid #e2e8f0;
@@ -2312,31 +2313,31 @@ export async function registerRoutes(app: Express): Promise<Server> {
               text-align: center;
               break-inside: avoid;
             }
-            
+
             .stats-title {
               font-size: 12pt;
               font-weight: 600;
               color: #2c3e50;
               margin-bottom: 10pt;
             }
-            
+
             .stats-grid {
               display: grid;
               grid-template-columns: repeat(3, 1fr);
               gap: 10pt;
             }
-            
+
             .stat-item {
               text-align: center;
             }
-            
+
             .stat-value {
               font-size: 16pt;
               font-weight: 700;
               color: #667eea;
               margin-bottom: 4pt;
             }
-            
+
             .stat-label {
               font-size: 7pt;
               color: #64748b;
@@ -2344,7 +2345,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
               letter-spacing: 0.3pt;
               font-weight: 600;
             }
-            
+
             .footer {
               background: linear-gradient(135deg, #2c3e50 0%, #34495e 100%);
               color: white;
@@ -2354,32 +2355,32 @@ export async function registerRoutes(app: Express): Promise<Server> {
               margin-top: 25pt;
               break-before: avoid;
             }
-            
+
             .footer-title {
               font-size: 12pt;
               font-weight: 600;
               margin-bottom: 8pt;
             }
-            
+
             .footer-subtitle {
               font-size: 8pt;
               opacity: 0.9;
               margin-bottom: 12pt;
             }
-            
+
             .footer-grid {
               display: grid;
               grid-template-columns: repeat(3, 1fr);
               gap: 10pt;
               margin-top: 12pt;
             }
-            
+
             .footer-item {
               padding: 8pt;
               background: rgba(255,255,255,0.1);
               border-radius: 4pt;
             }
-            
+
             .footer-item strong {
               display: block;
               margin-bottom: 3pt;
@@ -2387,12 +2388,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
               font-size: 8pt;
               font-weight: 600;
             }
-            
+
             .footer-item span {
               font-size: 7pt;
               opacity: 0.9;
             }
-            
+
             .page-number {
               position: fixed;
               bottom: 10mm;
@@ -2451,7 +2452,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
                 </div>
               </div>
             </div>
-            
+
             <div class="products-grid">
               ${products
                 .map(
@@ -2485,7 +2486,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
               `,
                 )
                 .join("")}</div>
-            
+
             <!-- Add page break after every 4 products for better distribution -->
             <div style="clear: both;"></div>
             </div>
@@ -2495,7 +2496,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
           <div class="footer avoid-break">
             <div class="footer-title">Precision 3D Printing Services</div>
             <div class="footer-subtitle">Your trusted partner for professional manufacturing excellence</div>
-            
+
             <div class="footer-grid">
               <div class="footer-item">
                 <strong>📧 Email</strong>
