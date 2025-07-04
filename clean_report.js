@@ -45,12 +45,12 @@ const generateCleanReportHTML = (order, totalParts, totalTime, completedPrints, 
     }
 
     .header {
-      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      background: linear-gradient(135deg, #1e293b 0%, #334155 100%);
       color: white;
-      text-align: center;
-      padding: 50px 40px;
+      padding: 60px 40px;
       position: relative;
       overflow: hidden;
+      text-align: center;
     }
 
     .header::before {
@@ -61,111 +61,147 @@ const generateCleanReportHTML = (order, totalParts, totalTime, completedPrints, 
       right: 0;
       bottom: 0;
       background: 
-        radial-gradient(circle at 20% 20%, rgba(255, 255, 255, 0.1) 0%, transparent 50%),
-        radial-gradient(circle at 80% 80%, rgba(255, 255, 255, 0.1) 0%, transparent 50%);
+        radial-gradient(circle at 30% 30%, rgba(99, 102, 241, 0.15) 0%, transparent 50%),
+        radial-gradient(circle at 70% 70%, rgba(139, 92, 246, 0.15) 0%, transparent 50%);
       z-index: 1;
     }
 
     .header-content {
       position: relative;
       z-index: 2;
+      max-width: 600px;
+      margin: 0 auto;
     }
 
-    .company-logo {
-      width: 80px;
-      height: 80px;
-      background: linear-gradient(135deg, #ffffff 0%, #e2e8f0 100%);
-      border-radius: 20px;
-      margin: 0 auto 20px;
+    .company-brand {
       display: flex;
       align-items: center;
       justify-content: center;
-      font-size: 32px;
+      gap: 20px;
+      margin-bottom: 30px;
+    }
+
+    .company-logo {
+      width: 70px;
+      height: 70px;
+      background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%);
+      border-radius: 16px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 28px;
       font-weight: 700;
-      color: #667eea;
-      box-shadow: 0 10px 25px rgba(0, 0, 0, 0.2);
+      color: white;
+      box-shadow: 0 8px 32px rgba(99, 102, 241, 0.3);
+      flex-shrink: 0;
+    }
+
+    .company-info {
+      text-align: left;
     }
 
     .company-name {
-      font-size: 42px;
+      font-size: 32px;
       font-weight: 700;
-      margin-bottom: 8px;
-      letter-spacing: -0.02em;
-      text-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+      margin-bottom: 4px;
+      letter-spacing: -0.5px;
     }
 
     .company-tagline {
-      font-size: 18px;
-      opacity: 0.9;
+      font-size: 14px;
+      opacity: 0.8;
       text-transform: uppercase;
-      letter-spacing: 2px;
-      margin-bottom: 30px;
-      font-weight: 300;
+      letter-spacing: 1.5px;
+      font-weight: 400;
+    }
+
+    .order-header {
+      margin-top: 20px;
+      padding-top: 30px;
+      border-top: 1px solid rgba(255, 255, 255, 0.2);
     }
 
     .order-badge {
       display: inline-block;
-      background: rgba(255, 255, 255, 0.2);
+      background: rgba(255, 255, 255, 0.1);
       backdrop-filter: blur(10px);
-      padding: 20px 40px;
-      border-radius: 50px;
-      margin-top: 10px;
-      font-size: 24px;
+      padding: 16px 32px;
+      border-radius: 12px;
+      font-size: 20px;
       font-weight: 600;
-      letter-spacing: 1px;
-      border: 2px solid rgba(255, 255, 255, 0.3);
-      box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+      letter-spacing: 0.5px;
+      border: 1px solid rgba(255, 255, 255, 0.2);
+      box-shadow: 0 4px 16px rgba(0, 0, 0, 0.1);
     }
 
     .status-header {
-      background: #f8fafc;
-      border-left: 6px solid #667eea;
-      padding: 30px;
-      margin: 30px;
-      border-radius: 12px;
+      background: linear-gradient(135deg, #f8fafc 0%, #ffffff 100%);
+      border: 1px solid #e2e8f0;
+      padding: 40px;
+      margin: 40px;
+      border-radius: 16px;
       text-align: center;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+      position: relative;
+    }
+
+    .status-header::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      height: 4px;
+      background: linear-gradient(90deg, #6366f1 0%, #8b5cf6 100%);
+      border-radius: 16px 16px 0 0;
     }
 
     .status-badge-large {
       display: inline-block;
-      padding: 12px 24px;
-      border-radius: 25px;
-      font-weight: 600;
-      font-size: 16px;
+      padding: 16px 32px;
+      border-radius: 12px;
+      font-weight: 700;
+      font-size: 18px;
       text-transform: uppercase;
-      letter-spacing: 1px;
-      margin-bottom: 15px;
+      letter-spacing: 1.5px;
+      margin-bottom: 20px;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
     }
 
     .status-badge-large.queued {
-      background: #fef3c7;
-      color: #d97706;
+      background: linear-gradient(135deg, #fef3c7 0%, #fde68a 100%);
+      color: #92400e;
+      border: 2px solid #f59e0b;
     }
 
     .status-badge-large.in_progress {
-      background: #dbeafe;
-      color: #2563eb;
+      background: linear-gradient(135deg, #dbeafe 0%, #bfdbfe 100%);
+      color: #1e40af;
+      border: 2px solid #3b82f6;
     }
 
     .status-badge-large.completed {
-      background: #dcfce7;
-      color: #16a34a;
+      background: linear-gradient(135deg, #dcfce7 0%, #bbf7d0 100%);
+      color: #15803d;
+      border: 2px solid #22c55e;
     }
 
     .completion-badge {
-      background: #f8fafc;
-      border: 1px solid #e2e8f0;
-      border-radius: 8px;
-      padding: 16px 24px;
-      margin: 30px;
+      background: linear-gradient(135deg, #f1f5f9 0%, #e2e8f0 100%);
+      border: 2px solid #cbd5e1;
+      border-radius: 12px;
+      padding: 20px 30px;
       text-align: center;
       color: #475569;
-      font-weight: 500;
+      font-weight: 600;
+      font-size: 16px;
+      box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.05);
     }
 
     .completion-badge::before {
       content: '📅';
-      margin-right: 8px;
+      margin-right: 12px;
+      font-size: 18px;
     }
 
     .info-section {
@@ -350,10 +386,16 @@ const generateCleanReportHTML = (order, totalParts, totalTime, completedPrints, 
     <!-- HEADER -->
     <div class="header">
       <div class="header-content">
-        <div class="company-logo">P3D</div>
-        <div class="company-name">PRECISION 3D PRINT</div>
-        <div class="company-tagline">Professional Manufacturing Excellence</div>
-        <div class="order-badge">Order #${order.orderNumber || 'ORD-' + order.id.toString().padStart(6, '0')}</div>
+        <div class="company-brand">
+          <div class="company-logo">P3D</div>
+          <div class="company-info">
+            <div class="company-name">PRECISION 3D PRINT</div>
+            <div class="company-tagline">Professional Manufacturing Excellence</div>
+          </div>
+        </div>
+        <div class="order-header">
+          <div class="order-badge">Order #${order.orderNumber || 'ORD-' + order.id.toString().padStart(6, '0')}</div>
+        </div>
       </div>
     </div>
 
@@ -446,3 +488,5 @@ const generateCleanReportHTML = (order, totalParts, totalTime, completedPrints, 
 </html>
   `;
 };
+
+module.exports = generateCleanReportHTML;

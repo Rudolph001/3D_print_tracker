@@ -5,6 +5,11 @@ import path from "path";
 import fs from "fs";
 // Removed puppeteer - using browser-native printing instead
 
+// Import clean report template
+import { createRequire } from 'module';
+const require = createRequire(import.meta.url);
+const generateCleanReportHTML = require("../clean_report.js");
+
 import { storage } from "./storage";
 import {
   insertCustomerSchema,
@@ -1342,7 +1347,55 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.get("/api/orders/:id/report", async (req, res) => {
     try {
       const id = parseInt(req.params.id);
-      const html = await generateReportHTML(id);
+      const order = await storage.getOrderWithDetails(id);
+
+      if (!order) {
+        return res.status(404).json({ error: "Order not found" });
+      }
+
+      // Calculate totals for clean report
+      const totalParts = order.prints.reduce(
+        (sum: number, print: any) => sum + print.quantity,
+        0,
+      );
+      const totalTime = order.prints.reduce(
+        (sum: number, print: any) =>
+          sum + parseFloat(print.estimatedTime) * print.quantity,
+        0,
+      );
+      const completedPrints = order.prints.filter(
+        (print: any) => print.status === "completed",
+      ).length;
+      const progressPercentage =
+        order.prints.length > 0
+          ? Math.round((completedPrints / order.prints.length) * 100)
+          : 0;
+      const remainingTime = order.prints
+        .filter((print: any) => print.status !== "completed")
+        .reduce(
+          (sum: number, print: any) =>
+            sum + parseFloat(print.estimatedTime) * print.quantity,
+          0,
+        );
+
+      // Calculate estimated completion date
+      const now = new Date();
+      const estimatedCompletion = new Date(
+        now.getTime() + remainingTime * 60 * 60 * 1000,
+      );
+      const isCompleted = order.status === "completed";
+
+      const html = generateCleanReportHTML(
+        order,
+        totalParts,
+        totalTime,
+        completedPrints,
+        progressPercentage,
+        remainingTime,
+        estimatedCompletion,
+        isCompleted
+      );
+      
       res.setHeader("Content-Type", "text/html");
       res.send(html);
     } catch (error) {
