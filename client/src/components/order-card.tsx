@@ -13,9 +13,10 @@ interface OrderCardProps {
   getStatusBgColor: (status: string) => string;
   onEdit?: (orderId: number) => void;
   onDelete?: (orderId: number) => void;
+  onUpdate?: (orderId: number) => void;
 }
 
-export function OrderCard({ order, onClick, isSelected, getStatusColor, getStatusBgColor, onEdit, onDelete }: OrderCardProps) {
+export function OrderCard({ order, onClick, isSelected, getStatusColor, getStatusBgColor, onEdit, onDelete, onUpdate }: OrderCardProps) {
   const completedPrints = order.prints?.filter((print: any) => print.status === "completed").length || 0;
   const totalPrints = order.prints?.length || 0;
   const progress = totalPrints > 0 ? (completedPrints / totalPrints) * 100 : 0;
@@ -110,6 +111,12 @@ export function OrderCard({ order, onClick, isSelected, getStatusColor, getStatu
           <Button 
             size="sm" 
             className={`${order.status === 'completed' ? 'bg-success hover:bg-green-600' : 'bg-primary hover:bg-blue-700'} text-white`}
+            onClick={(e) => {
+              e.stopPropagation();
+              if (onUpdate && order.status !== 'completed') {
+                onUpdate(order.id);
+              }
+            }}
           >
             <MessageCircle className="h-4 w-4 mr-1" />
             {order.status === 'completed' ? 'Notified' : 'Update'}

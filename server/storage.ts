@@ -254,27 +254,21 @@ export class DatabaseStorage implements IStorage {
   async updatePrintStatus(printId: number, status: string) {
     try {
       // First check if the print exists
-      const existingPrint = await db
-        .select()
-        .from(prints)
-        .where(eq(prints.id, printId))
-        .then((result) => result[0]);
+      const existingPrint = await this.getPrint(printId);
 
       if (!existingPrint) {
         throw new Error(`Print with ID ${printId} not found`);
       }
 
-      // Update the print status
-      const updatedPrint = await db
+      // Update the print status using a simple approach
+      await db
         .update(prints)
-        .set({ 
-          status, 
-          updatedAt: new Date().toISOString() 
-        })
-        .where(eq(prints.id, printId))
-        .returning()
-        .then((result) => result[0]);
+        .set({ status })
+        .where(eq(prints.id, printId));
 
+      // Get the updated print
+      const updatedPrint = await this.getPrint(printId);
+      
       if (!updatedPrint) {
         throw new Error(`Failed to update print status for ID ${printId}`);
       }
@@ -282,12 +276,12 @@ export class DatabaseStorage implements IStorage {
       const allPrints = await this.getPrintsByOrder(updatedPrint.orderId);
 
       const allCompleted = allPrints.every(print => print.status === 'completed');
-      const hasInProgress = allPrints.some(print => print.status === 'in_progress');
+      const hasInProgress = allPrints.some(print => print.status === 'in_progress' || print.status === 'printing');
 
       let newOrderStatus = 'queued';
       if (allCompleted) {
         newOrderStatus = 'completed';
-      } else if (hasInProgress || status === 'in_progress') {
+      } else if (hasInProgress || status === 'in_progress' || status === 'printing') {
         newOrderStatus = 'in_progress';
       }
 

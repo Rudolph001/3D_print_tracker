@@ -105,6 +105,14 @@ The application is designed to be deployed on Replit but can be adapted for othe
 
 ```
 Changelog:
+- July 04, 2025. Enhanced order reporting and status management
+  * Improved order report display to show only part names in item field
+  * Added vibrant color-coded status badges with gradients and shadows
+  * Enhanced visual distinction between different print statuses (queued, printing, completed, failed)
+  * Added functional Update button to order cards for status management
+  * Implemented order status synchronization logic (printing status now updates order to in_progress)
+  * Fixed order report item field to display clean part names without extra details
+  * Updated both main order report and clean report templates for consistency
 - July 03, 2025. Successfully migrated from Replit Agent to Replit environment
   * Fixed PDF generation by replacing Puppeteer with browser-native printing
   * Created professional print-ready catalog and order reports

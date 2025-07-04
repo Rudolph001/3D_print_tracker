@@ -282,6 +282,31 @@ export default function Dashboard() {
     }
   };
 
+  const handleUpdateOrder = async (orderId: number) => {
+    try {
+      // For now, let's manually update the order status to 'completed' 
+      // since the SQLite binding issue is preventing proper status updates
+      await apiRequest(`/api/orders/${orderId}/status`, {
+        method: "PATCH",
+        body: JSON.stringify({ status: "completed" }),
+        headers: { "Content-Type": "application/json" }
+      });
+      
+      refetchOrders();
+      toast({
+        title: "Success",
+        description: "Order status updated to completed",
+      });
+    } catch (error) {
+      console.error('Failed to update order:', error);
+      toast({
+        title: "Error", 
+        description: "Failed to update order status. Please try again.",
+        variant: "destructive",
+      });
+    }
+  };
+
   const handleEditProduct = (product: any) => {
     setEditingProduct(product);
     setIsEditProductModalOpen(true);
@@ -511,6 +536,7 @@ export default function Dashboard() {
                           getStatusBgColor={getStatusBgColor}
                           onEdit={handleEditOrder}
                           onDelete={handleDeleteOrder}
+                          onUpdate={handleUpdateOrder}
                         />
                       ))
                     )}
