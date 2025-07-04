@@ -1,7 +1,8 @@
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
-import { Box, Clock, MessageCircle, MoreVertical } from "lucide-react";
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
+import { Box, Clock, MessageCircle, MoreVertical, Edit, Trash2, Eye } from "lucide-react";
 import { format } from "date-fns";
 
 interface OrderCardProps {
@@ -10,9 +11,11 @@ interface OrderCardProps {
   isSelected: boolean;
   getStatusColor: (status: string) => string;
   getStatusBgColor: (status: string) => string;
+  onEdit?: (orderId: number) => void;
+  onDelete?: (orderId: number) => void;
 }
 
-export function OrderCard({ order, onClick, isSelected, getStatusColor, getStatusBgColor }: OrderCardProps) {
+export function OrderCard({ order, onClick, isSelected, getStatusColor, getStatusBgColor, onEdit, onDelete }: OrderCardProps) {
   const completedPrints = order.prints?.filter((print: any) => print.status === "completed").length || 0;
   const totalPrints = order.prints?.length || 0;
   const progress = totalPrints > 0 ? (completedPrints / totalPrints) * 100 : 0;
@@ -47,9 +50,40 @@ export function OrderCard({ order, onClick, isSelected, getStatusColor, getStatu
           <Badge className={`${getStatusBgColor(order.status)} ${getStatusColor(order.status)} font-medium`}>
             {getStatusLabel(order.status)}
           </Badge>
-          <Button variant="ghost" size="sm">
-            <MoreVertical className="h-4 w-4" />
-          </Button>
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button variant="ghost" size="sm">
+                <MoreVertical className="h-4 w-4" />
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end">
+              <DropdownMenuItem onClick={() => onClick()}>
+                <Eye className="h-4 w-4 mr-2" />
+                View Details
+              </DropdownMenuItem>
+              {onEdit && (
+                <DropdownMenuItem onClick={(e) => {
+                  e.stopPropagation();
+                  onEdit(order.id);
+                }}>
+                  <Edit className="h-4 w-4 mr-2" />
+                  Edit Order
+                </DropdownMenuItem>
+              )}
+              {onDelete && (
+                <DropdownMenuItem 
+                  className="text-red-600"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    onDelete(order.id);
+                  }}
+                >
+                  <Trash2 className="h-4 w-4 mr-2" />
+                  Delete Order
+                </DropdownMenuItem>
+              )}
+            </DropdownMenuContent>
+          </DropdownMenu>
         </div>
       </div>
 

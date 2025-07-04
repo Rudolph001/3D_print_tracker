@@ -50,20 +50,7 @@ export default function Dashboard() {
   // Close notifications when clicking outside
   const notificationRef = useRef<HTMLDivElement>(null);
 
-  useEffect(() => {
-    const handleClickOutside = (event: MouseEvent) => {
-      if (notificationRef.current && !notificationRef.current.contains(event.target as Node)) {
-        setShowNotifications(false);
-      }
-    };
-
-    document.addEventListener('mousedown', handleClickOutside);
-    return () => {
-      document.removeEventListener('mousedown', handleClickOutside);
-    };
-  }, [showNotifications]);
-
-  // Data queries - moved here to be available before use in effects
+  // Data queries - moved to top to be available before use in effects
   const { data: orders = [], refetch: refetchOrders } = useQuery({
     queryKey: ["/api/orders"],
   });
@@ -80,6 +67,19 @@ export default function Dashboard() {
     queryKey: ["/api/filament-stock/alerts"],
     refetchInterval: 30000, // Check every 30 seconds
   });
+
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (notificationRef.current && !notificationRef.current.contains(event.target as Node)) {
+        setShowNotifications(false);
+      }
+    };
+
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, [showNotifications]);
 
   // Generate real notifications from data
   useEffect(() => {
@@ -507,6 +507,8 @@ export default function Dashboard() {
                           isSelected={selectedOrderId === order.id}
                           getStatusColor={getStatusColor}
                           getStatusBgColor={getStatusBgColor}
+                          onEdit={handleEditOrder}
+                          onDelete={handleDeleteOrder}
                         />
                       ))
                     )}
