@@ -204,7 +204,7 @@ export function NewOrderModal({ isOpen, onClose, onSuccess }: NewOrderModalProps
         invoiceNumber: data.invoiceNumber,
         referenceNumber: data.referenceNumber,
         notes: data.notes,
-        totalEstimatedTime: totalEstimatedTime.toString(),
+        totalEstimatedTime: totalEstimatedTime,
       },
       prints: validPrints.map(print => {
         const product = getSelectedProduct(print.productId);
@@ -216,7 +216,7 @@ export function NewOrderModal({ isOpen, onClose, onSuccess }: NewOrderModalProps
           name: `${product?.name} (${print.quantityNeeded} pieces, ${plates} plates)`,
           quantity: print.quantityNeeded,
           material: product?.material || "PLA",
-          estimatedTime: totalTime.toString(),
+          estimatedTime: totalTime,
           stlFileName: product?.stlFileName,
           stlFileUrl: product?.stlFileUrl,
         };
