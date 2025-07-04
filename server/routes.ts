@@ -885,14 +885,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
               letter-spacing: 1px;
               margin-bottom: 16px;
               display: flex;
-              align-items: center;
+              align-items<replit_final_file>
+: center;
               gap: 8px;
             }
 
             .info-title::before {
               content: '';
-              ```text
-width: 4px;
+              width: 4px;
               height: 20px;
               background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%);
               border-radius: 2px;
@@ -1838,7 +1838,8 @@ width: 4px;
             .stat-item {
               display: flex;
               flex-direction: column;
-            }```text
+            }
+
             .stat-value {
               font-size: 32px;
               font-weight: 700;
