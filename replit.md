@@ -113,6 +113,11 @@ Changelog:
   * Implemented order status synchronization logic (printing status now updates order to in_progress)
   * Fixed order report item field to display clean part names without extra details
   * Updated both main order report and clean report templates for consistency
+  * FIXED: Resolved SQLite binding issues in order status updates using raw SQL queries
+  * FIXED: Eliminated infinite loop causing maximum update depth warnings in dashboard
+  * FIXED: Order status updates now work properly with Update buttons on order cards
+  * FIXED: Proper dependency management in useEffect hooks prevents console errors
+  * COMPLETED: All order status functionality now working correctly with real-time updates
 - July 03, 2025. Successfully migrated from Replit Agent to Replit environment
   * Fixed PDF generation by replacing Puppeteer with browser-native printing
   * Created professional print-ready catalog and order reports
