@@ -14,8 +14,16 @@ A comprehensive web application for managing a 3D print shop with order tracking
    ```
 
 4. **Start the application**:
+   
+   **Windows:**
+   ```cmd
+   start.bat
+   ```
+   
+   **Mac/Linux:**
    ```bash
-   npm run dev
+   chmod +x start.sh
+   ./start.sh
    ```
 
 5. **Open your browser** and go to: `http://localhost:5000`

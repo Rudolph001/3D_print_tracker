@@ -34,6 +34,19 @@ NODE_ENV=development
 ```
 
 ### 4. Start the Application
+
+**For Windows:**
+```cmd
+start.bat
+```
+
+**For Mac/Linux:**
+```bash
+chmod +x start.sh
+./start.sh
+```
+
+**Or using npm (may not work on Windows):**
 ```bash
 npm run dev
 ```
