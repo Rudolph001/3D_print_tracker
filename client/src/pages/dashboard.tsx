@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useRef, useEffect } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Link } from "wouter";
 import { Plus, Users, Clock, Package, TrendingUp, Box, Download, Bell, Edit, Trash2, Phone, Mail, MapPin, User, Palette } from "lucide-react";
@@ -38,6 +38,160 @@ export default function Dashboard() {
   const [editingCustomer, setEditingCustomer] = useState<any | null>(null);
   const [isFilamentStockModalOpen, setIsFilamentStockModalOpen] = useState(false);
   const [showNotifications, setShowNotifications] = useState(false);
+  const [notifications, setNotifications] = useState<Array<{
+    id: string;
+    message: string;
+    time: string;
+    type: 'order' | 'print' | 'stock';
+    read: boolean;
+    data?: any;
+  }>>([]);
+
+  // Close notifications when clicking outside
+  const notificationRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (notificationRef.current && !notificationRef.current.contains(event.target as Node)) {
+        setShowNotifications(false);
+      }
+    };
+
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, [showNotifications]);
+
+  // Generate real notifications from data
+  useEffect(() => {
+    const newNotifications: Array<{
+      id: string;
+      message: string;
+      time: string;
+      type: 'order' | 'print' | 'stock';
+      read: boolean;
+      data?: any;
+    }> = [];
+
+    // Recent orders (last 24 hours)
+    const recentOrders = orders?.filter((order: any) => {
+      const orderDate = new Date(order.createdAt);
+      const now = new Date();
+      const diffHours = (now.getTime() - orderDate.getTime()) / (1000 * 60 * 60);
+      return diffHours <= 24;
+    }) || [];
+
+    recentOrders.forEach((order: any) => {
+      const orderDate = new Date(order.createdAt);
+      const now = new Date();
+      const diffMinutes = Math.floor((now.getTime() - orderDate.getTime()) / (1000 * 60));
+      let timeAgo = '';
+
+      if (diffMinutes < 60) {
+        timeAgo = `${diffMinutes} minutes ago`;
+      } else {
+        const diffHours = Math.floor(diffMinutes / 60);
+        timeAgo = `${diffHours} hour${diffHours > 1 ? 's' : ''} ago`;
+      }
+
+      newNotifications.push({
+        id: `order-${order.id}`,
+        message: `New order received from ${order.customer?.name || 'Customer'}`,
+        time: timeAgo,
+        type: 'order',
+        read: false,
+        data: order
+      });
+    });
+
+    // Completed prints (last 24 hours)
+    orders?.forEach((order: any) => {
+      order.prints?.forEach((print: any) => {
+        if (print.status === 'completed' && print.updatedAt) {
+          const printDate = new Date(print.updatedAt);
+          const now = new Date();
+          const diffHours = (now.getTime() - printDate.getTime()) / (1000 * 60 * 60);
+
+          if (diffHours <= 24) {
+            const diffMinutes = Math.floor(diffHours * 60);
+            let timeAgo = '';
+
+            if (diffMinutes < 60) {
+              timeAgo = `${diffMinutes} minutes ago`;
+            } else {
+              const hours = Math.floor(diffMinutes / 60);
+              timeAgo = `${hours} hour${hours > 1 ? 's' : ''} ago`;
+            }
+
+            newNotifications.push({
+              id: `print-${print.id}`,
+              message: `Print "${print.name}" completed successfully`,
+              time: timeAgo,
+              type: 'print',
+              read: false,
+              data: { print, order }
+            });
+          }
+        }
+      });
+    });
+
+    // Low stock alerts
+    const { data: stockAlerts = [] } = useQuery({
+      queryKey: ["/api/filament-stock/alerts"],
+    });
+
+    stockAlerts.forEach((alert: any) => {
+      newNotifications.push({
+        id: `stock-${alert.id}`,
+        message: `Low filament warning - ${alert.brand} ${alert.color}`,
+        time: alert.currentWeight <= alert.lowStockThreshold * 0.5 ? 'Critical' : 'Warning',
+        type: 'stock',
+        read: false,
+        data: alert
+      });
+    });
+
+    // Sort by most recent first and limit to 10
+    newNotifications.sort((a, b) => {
+      if (a.type === 'stock' && b.type !== 'stock') return -1;
+      if (b.type === 'stock' && a.type !== 'stock') return 1;
+      return 0;
+    });
+
+    setNotifications(newNotifications.slice(0, 10));
+  }, [orders, customers, products]);
+
+  const markAllAsRead = () => {
+    setNotifications(prev => prev.map(notif => ({ ...notif, read: true })));
+  };
+
+  const markAsRead = (notificationId: string) => {
+    setNotifications(prev => 
+      prev.map(notif => 
+        notif.id === notificationId ? { ...notif, read: true } : notif
+      )
+    );
+  };
+
+  const getNotificationIcon = (type: string) => {
+    switch (type) {
+      case 'order': return '📋';
+      case 'print': return '✅';
+      case 'stock': return '⚠️';
+      default: return '📢';
+    }
+  };
+
+  const getNotificationColor = (type: string) => {
+    switch (type) {
+      case 'order': return 'bg-blue-500';
+      case 'print': return 'bg-green-500';
+      case 'stock': return 'bg-orange-500';
+      default: return 'bg-gray-500';
+    }
+  };
 
   const { data: filamentAlerts = [] } = useQuery({
     queryKey: ["/api/filament-stock/alerts"],
@@ -220,53 +374,66 @@ export default function Dashboard() {
                 >
                   <Bell className="h-5 w-5 text-slate-600" />
                 </Button>
-                <span className="absolute -top-1 -right-1 bg-gradient-to-r from-red-500 to-pink-500 text-white text-xs rounded-full w-5 h-5 flex items-center justify-center font-medium shadow-lg">
-                  3
-                </span>
+                {notifications.filter(n => !n.read).length > 0 && (
+                  <span className="absolute -top-1 -right-1 bg-gradient-to-r from-red-500 to-pink-500 text-white text-xs rounded-full w-5 h-5 flex items-center justify-center font-medium shadow-lg">
+                    {notifications.filter(n => !n.read).length}
+                  </span>
+                )}
                 {showNotifications && (
-                  <div className="absolute right-0 top-12 w-80 bg-white rounded-lg shadow-xl border border-gray-200 z-50">
-                    <div className="p-4 border-b border-gray-100">
+                  <div ref={notificationRef} className="absolute right-0 top-12 w-80 bg-white rounded-lg shadow-xl border border-gray-200 z-50">
+                    <div className="p-4 border-b border-gray-100 flex justify-between items-center">
                       <h3 className="font-semibold text-gray-900">Notifications</h3>
+                      {notifications.filter(n => !n.read).length > 0 && (
+                        <span className="text-xs text-gray-500">
+                          {notifications.filter(n => !n.read).length} unread
+                        </span>
+                      )}
                     </div>
-                    <div className="max-h-64 overflow-y-auto">
-                      <div className="p-3 border-b border-gray-50 hover:bg-gray-50 transition-colors">
-                        <div className="flex items-start space-x-3">
-                          <div className="w-2 h-2 bg-blue-500 rounded-full mt-2 flex-shrink-0"></div>
-                          <div className="flex-1">
-                            <p className="text-sm text-gray-800">New order received from Von Beneke</p>
-                            <p className="text-xs text-gray-500 mt-1">2 minutes ago</p>
-                          </div>
+                    <div className="max-h-80 overflow-y-auto">
+                      {notifications.length === 0 ? (
+                        <div className="p-6 text-center text-gray-500">
+                          <div className="text-2xl mb-2">🔔</div>
+                          <p className="text-sm">No notifications yet</p>
                         </div>
-                      </div>
-                      <div className="p-3 border-b border-gray-50 hover:bg-gray-50 transition-colors">
-                        <div className="flex items-start space-x-3">
-                          <div className="w-2 h-2 bg-green-500 rounded-full mt-2 flex-shrink-0"></div>
-                          <div className="flex-1">
-                            <p className="text-sm text-gray-800">Print job completed successfully</p>
-                            <p className="text-xs text-gray-500 mt-1">15 minutes ago</p>
+                      ) : (
+                        notifications.map((notification) => (
+                          <div
+                            key={notification.id}
+                            className={`p-3 border-b border-gray-50 hover:bg-gray-50 transition-colors cursor-pointer ${
+                              notification.read ? 'opacity-60' : ''
+                            }`}
+                            onClick={() => markAsRead(notification.id)}
+                          >
+                            <div className="flex items-start space-x-3">
+                              <div className="flex-shrink-0 mt-1">
+                                <span className="text-lg">{getNotificationIcon(notification.type)}</span>
+                              </div>
+                              <div className="flex-1 min-w-0">
+                                <p className={`text-sm ${notification.read ? 'text-gray-600' : 'text-gray-800 font-medium'}`}>
+                                  {notification.message}
+                                </p>
+                                <p className="text-xs text-gray-500 mt-1">{notification.time}</p>
+                              </div>
+                              {!notification.read && (
+                                <div className={`w-2 h-2 rounded-full mt-2 flex-shrink-0 ${getNotificationColor(notification.type)}`}></div>
+                              )}
+                            </div>
                           </div>
-                        </div>
-                      </div>
-                      <div className="p-3 border-b border-gray-50 hover:bg-gray-50 transition-colors">
-                        <div className="flex items-start space-x-3">
-                          <div className="w-2 h-2 bg-yellow-500 rounded-full mt-2 flex-shrink-0"></div>
-                          <div className="flex-1">
-                            <p className="text-sm text-gray-800">Low filament warning - PLA White</p>
-                            <p className="text-xs text-gray-500 mt-1">1 hour ago</p>
-                          </div>
-                        </div>
-                      </div>
+                        ))
+                      )}
                     </div>
-                    <div className="p-3 border-t border-gray-100">
-                      <Button 
-                        variant="ghost" 
-                        size="sm" 
-                        className="w-full text-center text-blue-600 hover:bg-blue-50"
-                        onClick={() => setShowNotifications(false)}
-                      >
-                        Mark all as read
-                      </Button>
-                    </div>
+                    {notifications.filter(n => !n.read).length > 0 && (
+                      <div className="p-3 border-t border-gray-100">
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          className="w-full text-blue-600 hover:text-blue-700 hover:bg-blue-50"
+                          onClick={markAllAsRead}
+                        >
+                          Mark all as read
+                        </Button>
+                      </div>
+                    )}
                   </div>
                 )}
               </div>
