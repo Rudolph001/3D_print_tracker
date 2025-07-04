@@ -224,7 +224,7 @@ export default function Dashboard() {
     };
   }, [showNotifications]);
 
-  const selectedOrder = orders.find((order: any) => order.id === selectedOrderId);
+  const selectedOrder = (orders as any[]).find((order: any) => order.id === selectedOrderId);
 
   const getStatusColor = (status: string) => {
     switch (status) {
@@ -246,7 +246,7 @@ export default function Dashboard() {
 
   // Placeholder functions for edit and delete
   const handleEditOrder = (orderId: number) => {
-    const orderToEdit = orders.find((order: any) => order.id === orderId);
+    const orderToEdit = (orders as any[]).find((order: any) => order.id === orderId);
     if (orderToEdit) {
       setEditingOrder(orderToEdit);
       setIsEditOrderModalOpen(true);
@@ -281,6 +281,12 @@ export default function Dashboard() {
       const order = orders.find((o: any) => o.id === orderId);
       if (!order) return;
 
+      // If order is completed, send WhatsApp notification
+      if (order.status === 'completed') {
+        await handleSendWhatsAppNotification(orderId);
+        return;
+      }
+
       let newStatus = 'completed';
       if (order.status === 'queued') {
         newStatus = 'in_progress';
@@ -304,6 +310,66 @@ export default function Dashboard() {
       toast({
         title: "Error", 
         description: "Failed to update order status. Please try again.",
+        variant: "destructive",
+      });
+    }
+  };
+
+  const handleSendWhatsAppNotification = async (orderId: number) => {
+    try {
+      const order = orders.find((o: any) => o.id === orderId);
+      if (!order) return;
+
+      if (!order.customer?.whatsappNumber) {
+        toast({
+          title: "Error",
+          description: "Customer has no WhatsApp number.",
+          variant: "destructive",
+        });
+        return;
+      }
+
+      // Generate status message
+      const completedPrints = order.prints?.filter((p: any) => p.status === 'completed').length || 0;
+      const totalPrints = order.prints?.length || 0;
+      
+      let message = `Hello ${order.customer.name}! 👋\n\n`;
+      message += `Order Update: ${order.orderNumber}\n`;
+      message += `Status: ${order.status.charAt(0).toUpperCase() + order.status.slice(1).replace('_', ' ')}\n`;
+      message += `Progress: ${completedPrints}/${totalPrints} prints completed\n\n`;
+
+      if (order.status === 'completed') {
+        message += `🎉 Great news! Your order is now complete and ready for pickup.\n\n`;
+      } else if (order.status === 'in_progress') {
+        message += `🔄 Your order is currently being printed. We'll keep you updated!\n\n`;
+      } else if (order.status === 'queued') {
+        message += `⏳ Your order is in our queue and will start printing soon.\n\n`;
+      }
+
+      message += `Thank you for choosing our 3D printing service! 🚀`;
+
+      // Send WhatsApp message
+      const response = await apiRequest("POST", "/api/whatsapp/send", {
+        orderId: orderId,
+        message: message
+      });
+
+      // Open WhatsApp with the generated link
+      if (response.whatsappLink) {
+        window.open(response.whatsappLink, '_blank');
+      }
+
+      toast({
+        title: "WhatsApp notification sent!",
+        description: "Opening WhatsApp to share the order update with your customer.",
+      });
+
+      refetchOrders();
+    } catch (error) {
+      console.error('Failed to send WhatsApp notification:', error);
+      toast({
+        title: "Failed to send notification",
+        description: "Could not send WhatsApp message. Please try again.",
         variant: "destructive",
       });
     }
