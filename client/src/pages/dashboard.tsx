@@ -349,9 +349,15 @@ export default function Dashboard() {
       message += `Thank you for choosing our 3D printing service! 🚀`;
 
       // Send WhatsApp message
-      const response = await apiRequest("POST", "/api/whatsapp/send", {
-        orderId: orderId,
-        message: message
+      const response = await apiRequest("/api/whatsapp/send", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          orderId: orderId,
+          message: message
+        })
       });
 
       // Open WhatsApp with the generated link
