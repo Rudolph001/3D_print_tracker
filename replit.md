@@ -119,6 +119,9 @@ Changelog:
   * Removed price display from product catalog interface
   * Product code field added to both add and edit product forms
   * Database updated with product_code column migration
+  * Added local development setup files (LOCAL_SETUP.md, README.md, .env.example)
+  * Configured project for easy local machine deployment
+  * Removed Replit-specific dependencies for local development
 - July 02, 2025. Initial setup
 ```
 
