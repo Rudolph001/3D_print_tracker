@@ -283,7 +283,7 @@ export function EditOrderModal({ isOpen, onClose, onSuccess, order }: EditOrderM
                     <div className="md:col-span-2">
                       <Label>Select Product</Label>
                       <Select
-                        value={print.productId.toString()}
+                        value={print.productId > 0 ? print.productId.toString() : ""}
                         onValueChange={(value) => updatePrint(index, "productId", parseInt(value))}
                       >
                         <SelectTrigger>
