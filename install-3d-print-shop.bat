@@ -1,182 +1,110 @@
 @echo off
-setlocal EnableDelayedExpansion
+setlocal enabledelayedexpansion
 
-:: 3D Print Shop Management App - Automated Installer
-:: This script automatically installs all dependencies and creates desktop shortcuts
-
-echo =========================================
-echo   3D Print Shop Management App
-echo   Automated Installation Script
-echo =========================================
+echo ==========================================
+echo 3D Print Shop Management App Installer
+echo ==========================================
 echo.
 
 :: Check if running as administrator
 net session >nul 2>&1
 if %errorLevel% neq 0 (
-    echo This installer needs administrator privileges to install Node.js.
-    echo Please run as administrator or install Node.js manually.
-    echo.
+    echo ERROR: This script must be run as Administrator
+    echo Right-click on install-3d-print-shop.bat and select "Run as administrator"
     pause
     exit /b 1
 )
 
-:: Set installation directory
-set "INSTALL_DIR=%~dp0"
-set "APP_NAME=3D Print Shop Manager"
-
-echo Installing to: %INSTALL_DIR%
-echo.
-
-:: Check if Node.js is installed
 echo [1/6] Checking Node.js installation...
 node --version >nul 2>&1
 if %errorLevel% neq 0 (
     echo Node.js not found. Installing Node.js...
-    
-    :: Download Node.js installer
     echo Downloading Node.js installer...
-    powershell -Command "& {Invoke-WebRequest -Uri 'https://nodejs.org/dist/v20.11.0/node-v20.11.0-x64.msi' -OutFile '%TEMP%\node-installer.msi'}"
-    
-    if exist "%TEMP%\node-installer.msi" (
-        echo Installing Node.js (this may take a few minutes)...
-        msiexec /i "%TEMP%\node-installer.msi" /quiet /norestart
-        
-        :: Add Node.js to PATH for current session
-        set "PATH=%PATH%;%ProgramFiles%\nodejs"
-        
-        :: Clean up installer
-        del "%TEMP%\node-installer.msi"
-        
-        echo Node.js installed successfully!
+
+    :: Download Node.js installer
+    powershell -Command "& {Invoke-WebRequest -Uri 'https://nodejs.org/dist/v20.11.0/node-v20.11.0-x64.msi' -OutFile 'nodejs_installer.msi'}"
+
+    if exist nodejs_installer.msi (
+        echo Installing Node.js...
+        msiexec /i nodejs_installer.msi /quiet /norestart
+
+        :: Wait for installation
+        timeout /t 30 /nobreak >nul
+
+        :: Clean up
+        del nodejs_installer.msi
+
+        echo Node.js installation completed.
+        echo Please restart your command prompt and run this installer again.
+        pause
+        exit /b 0
     ) else (
-        echo Failed to download Node.js installer.
-        echo Please install Node.js manually from https://nodejs.org
+        echo ERROR: Failed to download Node.js installer
+        echo Please manually install Node.js from https://nodejs.org
         pause
         exit /b 1
     )
 ) else (
-    echo Node.js is already installed.
+    echo Node.js found: 
+    node --version
 )
 
-:: Verify Node.js installation
-echo [2/6] Verifying Node.js installation...
-node --version >nul 2>&1
-if %errorLevel% neq 0 (
-    echo Node.js installation failed or not in PATH.
-    echo Please restart your computer and try again.
-    pause
-    exit /b 1
-)
-
-:: Check if npm is available
-npm --version >nul 2>&1
-if %errorLevel% neq 0 (
-    echo npm is not available. Please reinstall Node.js.
-    pause
-    exit /b 1
-)
-
-echo Node.js and npm are ready!
 echo.
+echo [2/6] Checking for existing processes on port 5000...
+netstat -ano | findstr :5000 >nul 2>&1
+if %errorLevel% equ 0 (
+    echo Warning: Port 5000 is in use. Attempting to free it...
+    for /f "tokens=5" %%a in ('netstat -ano ^| findstr :5000') do (
+        taskkill /PID %%a /F >nul 2>&1
+    )
+    timeout /t 3 /nobreak >nul
+)
 
-:: Install project dependencies
-echo [3/6] Installing project dependencies...
-echo This may take several minutes...
-npm install --silent
-
-if %errorLevel% neq 0 (
-    echo Failed to install dependencies.
-    echo Please check your internet connection and try again.
+echo.
+echo [3/6] Installing application dependencies...
+if not exist package.json (
+    echo ERROR: package.json not found. Make sure you're in the correct directory.
     pause
     exit /b 1
 )
 
-echo Dependencies installed successfully!
-echo.
+call npm install
+if %errorLevel% neq 0 (
+    echo ERROR: Failed to install dependencies
+    echo Trying with --force flag...
+    call npm install --force
+    if %errorLevel% neq 0 (
+        echo ERROR: Still failed to install dependencies
+        pause
+        exit /b 1
+    )
+)
 
-:: Create environment file
-echo [4/6] Setting up environment configuration...
-if not exist ".env" (
+echo.
+echo [4/6] Setting up environment...
+if not exist .env (
     echo Creating .env file...
-    echo NODE_ENV=production> .env
-    echo PORT=5000>> .env
-    echo DATABASE_URL=sqlite:./data.db>> .env
+    echo NODE_ENV=development > .env
+    echo BASE_URL=http://localhost:5000 >> .env
 )
 
-:: Create startup script
-echo [5/6] Creating startup script...
-(
-echo @echo off
-echo cd /d "%INSTALL_DIR%"
-echo echo Starting 3D Print Shop Management App...
-echo echo.
-echo echo App will be available at: http://localhost:5000
-echo echo.
-echo echo Press Ctrl+C to stop the server
-echo echo.
-echo start "" "http://localhost:5000"
-echo npm run dev
-echo pause
-) > "start-3d-print-shop.bat"
-
-:: Create desktop shortcut
-echo [6/6] Creating desktop shortcut...
-set "DESKTOP=%USERPROFILE%\Desktop"
-set "SHORTCUT_PATH=%DESKTOP%\%APP_NAME%.lnk"
-
-:: Create VBS script to create shortcut
-(
-echo Set WshShell = CreateObject^("WScript.Shell"^)
-echo Set oShellLink = WshShell.CreateShortcut^("%SHORTCUT_PATH%"^)
-echo oShellLink.TargetPath = "%INSTALL_DIR%start-3d-print-shop.bat"
-echo oShellLink.WorkingDirectory = "%INSTALL_DIR%"
-echo oShellLink.Description = "3D Print Shop Management Application"
-echo oShellLink.IconLocation = "%SystemRoot%\System32\shell32.dll,43"
-echo oShellLink.Save
-) > "%TEMP%\create_shortcut.vbs"
-
-cscript //nologo "%TEMP%\create_shortcut.vbs"
-del "%TEMP%\create_shortcut.vbs"
-
-:: Create Start Menu shortcut
-echo Creating Start Menu shortcut...
-set "STARTMENU=%APPDATA%\Microsoft\Windows\Start Menu\Programs"
-set "STARTMENU_SHORTCUT=%STARTMENU%\%APP_NAME%.lnk"
-
-(
-echo Set WshShell = CreateObject^("WScript.Shell"^)
-echo Set oShellLink = WshShell.CreateShortcut^("%STARTMENU_SHORTCUT%"^)
-echo oShellLink.TargetPath = "%INSTALL_DIR%start-3d-print-shop.bat"
-echo oShellLink.WorkingDirectory = "%INSTALL_DIR%"
-echo oShellLink.Description = "3D Print Shop Management Application"
-echo oShellLink.IconLocation = "%SystemRoot%\System32\shell32.dll,43"
-echo oShellLink.Save
-) > "%TEMP%\create_startmenu_shortcut.vbs"
-
-cscript //nologo "%TEMP%\create_startmenu_shortcut.vbs"
-del "%TEMP%\create_startmenu_shortcut.vbs"
+echo.
+echo [5/6] Creating shortcuts...
+call create-shortcut.bat >nul 2>&1
 
 echo.
-echo =========================================
-echo   Installation Complete!
-echo =========================================
+echo [6/6] Starting the application...
 echo.
-echo The 3D Print Shop Management App has been installed successfully!
+echo ==========================================
+echo Installation completed successfully!
+echo ==========================================
 echo.
-echo You can now run the app in these ways:
-echo   1. Double-click the "%APP_NAME%" shortcut on your desktop
-echo   2. Find "%APP_NAME%" in your Start Menu
-echo   3. Run "start-3d-print-shop.bat" from this folder
+echo The app will start automatically.
+echo Keep this window open while using the app.
+echo Close this window to stop the app.
 echo.
-echo The app will open automatically in your web browser at:
-echo http://localhost:5000
-echo.
-echo Note: Keep the command window open while using the app.
-echo       Close it to stop the server.
-echo.
-echo Press any key to start the app now...
-pause >nul
 
-:: Start the app
-echo Starting 3D Print Shop Management App...
-call "start-3d-print-shop.bat"
+:: Start the application
+call npm run dev
+
+pause

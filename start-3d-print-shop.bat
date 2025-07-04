@@ -1,60 +1,56 @@
+
 @echo off
-title 3D Print Shop Management App
+setlocal enabledelayedexpansion
 
-echo =========================================
-echo   3D Print Shop Management App
-echo =========================================
+echo ==========================================
+echo Starting 3D Print Shop Management App
+echo ==========================================
 echo.
-
-:: Change to the directory where the script is located
-cd /d "%~dp0"
 
 :: Check if Node.js is installed
 node --version >nul 2>&1
 if %errorLevel% neq 0 (
-    echo ERROR: Node.js is not installed or not in PATH.
-    echo Please run "install-3d-print-shop.bat" first to install dependencies.
-    echo.
+    echo ERROR: Node.js is not installed
+    echo Please run install-3d-print-shop.bat first
     pause
     exit /b 1
 )
 
-:: Check if node_modules exists
-if not exist "node_modules" (
-    echo Installing dependencies...
-    npm install
-    if %errorLevel% neq 0 (
-        echo Failed to install dependencies.
-        echo Please check your internet connection and try again.
-        pause
-        exit /b 1
+:: Check if we're in the right directory
+if not exist package.json (
+    echo ERROR: package.json not found
+    echo Make sure you're running this from the app directory
+    pause
+    exit /b 1
+)
+
+:: Check for existing processes on port 5000
+echo Checking port 5000...
+netstat -ano | findstr :5000 >nul 2>&1
+if %errorLevel% equ 0 (
+    echo Warning: Port 5000 is already in use
+    echo Attempting to stop existing processes...
+    for /f "tokens=5" %%a in ('netstat -ano ^| findstr :5000') do (
+        echo Stopping process %%a...
+        taskkill /PID %%a /F >nul 2>&1
     )
+    timeout /t 3 /nobreak >nul
 )
 
-:: Create .env file if it doesn't exist
-if not exist ".env" (
-    echo NODE_ENV=production> .env
-    echo PORT=5000>> .env
-    echo DATABASE_URL=sqlite:./data.db>> .env
-)
+:: Set environment variables
+set NODE_ENV=development
+set BASE_URL=http://localhost:5000
 
-echo Starting 3D Print Shop Management App...
 echo.
-echo App will be available at: http://localhost:5000
+echo Starting application...
+echo The app will open in your browser at http://localhost:5000
+echo Keep this window open while using the app
+echo Press Ctrl+C to stop the app
 echo.
-echo Opening your web browser...
-echo.
-echo IMPORTANT: Keep this window open while using the app.
-echo           Close this window to stop the server.
-echo.
-
-:: Wait 3 seconds then open browser
-timeout /t 3 >nul
-start "" "http://localhost:5000"
 
 :: Start the application
 npm run dev
 
 echo.
-echo App has been stopped.
+echo Application stopped.
 pause
