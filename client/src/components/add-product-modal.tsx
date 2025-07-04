@@ -24,6 +24,7 @@ const productSchema = z.object({
   estimatedPrintTime: z.number().min(0.0003, "Print time must be at least 1 second"),
   filamentLengthMeters: z.number().min(0, "Filament length must be positive").optional(),
   filamentWeightGrams: z.number().min(0, "Filament weight must be positive").optional(),
+  price: z.number().min(0, "Price must be positive").optional(),
 });
 
 interface AddProductModalProps {
@@ -48,6 +49,7 @@ export function AddProductModal({ isOpen, onClose, onSuccess }: AddProductModalP
       estimatedPrintTime: 4,
       filamentLengthMeters: 0,
       filamentWeightGrams: 0,
+      price: 0,
     },
   });
 
@@ -151,6 +153,22 @@ export function AddProductModal({ isOpen, onClose, onSuccess }: AddProductModalP
                 placeholder="e.g. Tools, Toys, Art"
               />
             </div>
+            <div>
+              <Label htmlFor="material">Material</Label>
+              <Select onValueChange={(value) => form.setValue("material", value)} defaultValue="PLA">
+                <SelectTrigger>
+                  <SelectValue placeholder="Select material" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="PLA">PLA</SelectItem>
+                  <SelectItem value="PETG">PETG</SelectItem>
+                  <SelectItem value="ABS">ABS</SelectItem>
+                  <SelectItem value="TPU">TPU</SelectItem>
+                  <SelectItem value="WOOD">Wood Fill</SelectItem>
+                  <SelectItem value="METAL">Metal Fill</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
           </div>
           
           <div>
@@ -239,6 +257,21 @@ export function AddProductModal({ isOpen, onClose, onSuccess }: AddProductModalP
             </div>
             <p className="text-xs text-blue-600 mt-2">
               💡 You can get these values from your slicer software (Cura, PrusaSlicer, etc.)
+            </p>
+          </div>
+          
+          <div>
+            <Label htmlFor="price">Price (optional)</Label>
+            <Input
+              id="price"
+              type="number"
+              step="0.01"
+              min="0"
+              {...form.register("price", { valueAsNumber: true })}
+              placeholder="e.g. 15.99"
+            />
+            <p className="text-xs text-gray-500 mt-1">
+              Selling price for this product
             </p>
           </div>
           
