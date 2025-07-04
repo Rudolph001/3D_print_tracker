@@ -7,6 +7,9 @@ echo Starting 3D Print Shop Management App
 echo ==========================================
 echo.
 
+:: Navigate to the script's directory
+cd /d "%~dp0"
+
 :: Check if Node.js is installed
 node --version >nul 2>&1
 if %errorLevel% neq 0 (
@@ -19,7 +22,9 @@ if %errorLevel% neq 0 (
 :: Check if we're in the right directory
 if not exist package.json (
     echo ERROR: package.json not found
-    echo Make sure you're running this from the app directory
+    echo Current directory: %CD%
+    echo Make sure the app files are in the same directory as this script
+    echo Try running the installer again
     pause
     exit /b 1
 )
