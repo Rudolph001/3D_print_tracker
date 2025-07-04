@@ -2579,15 +2579,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const cleanReportUrl = `${req.protocol}://${req.get("host")}/api/orders/${orderId}/report`;
       
       const fullMessage = `${message}\n\n📄 *ORDER REPORT READY*\n` +
-                         `Your detailed order report is ready for download!\n\n` +
-                         `🔗 Quick Access Links:\n` +
-                         `• View Report: ${cleanReportUrl}\n` +
-                         `• Download PDF: ${downloadUrl}\n\n` +
+                         `Your detailed order report is ready for viewing!\n\n` +
+                         `🔗 View Report: ${cleanReportUrl}\n\n` +
                          `📱 *How to save the report:*\n` +
-                         `1. Click the PDF link above\n` +
+                         `1. Click the link above\n` +
                          `2. The report will open in your browser\n` +
                          `3. Save or print directly from there\n\n` +
-                         `Note: Due to WhatsApp limitations, reports cannot be sent as file attachments. The links above provide instant access to your complete order details.`;
+                         `Thank you for choosing our 3D printing service!`;
       
       const whatsappLink = `https://wa.me/${cleanPhoneNumber}?text=${encodeURIComponent(fullMessage)}`;
 
