@@ -83,7 +83,7 @@ export default function Dashboard() {
 
   // Generate notifications from recent data
   React.useEffect(() => {
-    if (!orders) return;
+    if (!orders || !Array.isArray(orders)) return;
 
     const newNotifications: any[] = [];
 
@@ -105,13 +105,14 @@ export default function Dashboard() {
       }
 
       newNotifications.push({
-        id: `order-${order.id}`,
-        message: `New order received from ${order.customer?.name || 'Customer'}`,
-        time: timeAgo,
-        type: 'order',
-        read: false,
-        data: order
-      });
+          id: `order-${order.id}`,
+          message: `New order received from ${order.customer?.name || 'Customer'}`,
+          time: timeAgo,
+          type: 'order',
+          read: false,
+          data: order
+        });
+      }
     });
 
     // Completed prints (last 24 hours)
@@ -168,7 +169,7 @@ export default function Dashboard() {
     });
 
     setNotifications(newNotifications.slice(0, 10));
-  }, [orders, filamentAlerts]);
+  }, [orders?.length, filamentAlerts?.length]);
 
   const markAllAsRead = () => {
     setNotifications(prev => prev.map(notif => ({ ...notif, read: true })));
