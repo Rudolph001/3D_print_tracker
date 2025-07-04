@@ -45,7 +45,8 @@ export function NewOrderModal({ isOpen, onClose, onSuccess }: NewOrderModalProps
     { 
       productId: 0,
       quantityNeeded: 1,
-      quantityPerPlate: 1
+      quantityPerPlate: 1,
+      filamentStockId: null
     }
   ]);
 
@@ -55,6 +56,10 @@ export function NewOrderModal({ isOpen, onClose, onSuccess }: NewOrderModalProps
 
   const { data: customers = [] } = useQuery({
     queryKey: ["/api/customers"],
+  });
+
+  const { data: filamentStock = [] } = useQuery({
+    queryKey: ["/api/filament-stock"],
   });
 
   const form = useForm({
@@ -113,7 +118,8 @@ export function NewOrderModal({ isOpen, onClose, onSuccess }: NewOrderModalProps
       setPrints([{ 
         productId: 0,
         quantityNeeded: 1,
-        quantityPerPlate: 1
+        quantityPerPlate: 1,
+        filamentStockId: null
       }]);
     },
     onError: () => {
@@ -129,7 +135,8 @@ export function NewOrderModal({ isOpen, onClose, onSuccess }: NewOrderModalProps
     setPrints([...prints, { 
       productId: 0,
       quantityNeeded: 1,
-      quantityPerPlate: 1
+      quantityPerPlate: 1,
+      filamentStockId: null
     }]);
   };
 
@@ -144,7 +151,8 @@ export function NewOrderModal({ isOpen, onClose, onSuccess }: NewOrderModalProps
     setPrints([{ 
       productId: 0,
       quantityNeeded: 1,
-      quantityPerPlate: 1
+      quantityPerPlate: 1,
+      filamentStockId: null
     }]);
   };
 
@@ -219,6 +227,7 @@ export function NewOrderModal({ isOpen, onClose, onSuccess }: NewOrderModalProps
           estimatedTime: totalTime,
           stlFileName: product?.stlFileName,
           stlFileUrl: product?.stlFileUrl,
+          filamentStockId: print.filamentStockId,
         };
       }),
     };
@@ -404,6 +413,34 @@ export function NewOrderModal({ isOpen, onClose, onSuccess }: NewOrderModalProps
                       />
                     </div>
                   </div>
+                  
+                  {/* Filament Selection */}
+                  {print.productId > 0 && (
+                    <div className="mt-4">
+                      <Label>Choose Filament (Optional)</Label>
+                      <Select
+                        value={print.filamentStockId?.toString() || ""}
+                        onValueChange={(value) => updatePrint(index, "filamentStockId", value ? parseInt(value) : null)}
+                      >
+                        <SelectTrigger>
+                          <SelectValue placeholder="Use product default material or choose specific filament" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="">Use product default material</SelectItem>
+                          {filamentStock
+                            .filter((stock: any) => stock.material === getSelectedProduct(print.productId)?.material)
+                            .map((stock: any) => (
+                              <SelectItem key={stock.id} value={stock.id.toString()}>
+                                {stock.material} - {stock.color} ({stock.brand || 'Generic'}) - {stock.currentWeightGrams}g available
+                              </SelectItem>
+                            ))}
+                        </SelectContent>
+                      </Select>
+                      <p className="text-xs text-gray-500 mt-1">
+                        Choose a specific filament spool or leave empty to use any {getSelectedProduct(print.productId)?.material} filament
+                      </p>
+                    </div>
+                  )}
                   
                   {print.productId > 0 && (
                     <div className="mt-4 p-4 bg-gray-50 rounded-lg">
