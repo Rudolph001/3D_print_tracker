@@ -419,14 +419,14 @@ export function NewOrderModal({ isOpen, onClose, onSuccess }: NewOrderModalProps
                     <div className="mt-4">
                       <Label>Choose Filament (Optional)</Label>
                       <Select
-                        value={print.filamentStockId?.toString() || ""}
-                        onValueChange={(value) => updatePrint(index, "filamentStockId", value ? parseInt(value) : null)}
+                        value={print.filamentStockId?.toString() || "default"}
+                        onValueChange={(value) => updatePrint(index, "filamentStockId", value === "default" ? null : parseInt(value))}
                       >
                         <SelectTrigger>
                           <SelectValue placeholder="Use product default material or choose specific filament" />
                         </SelectTrigger>
                         <SelectContent>
-                          <SelectItem value="">Use product default material</SelectItem>
+                          <SelectItem value="default">Use product default material</SelectItem>
                           {filamentStock
                             .filter((stock: any) => stock.material === getSelectedProduct(print.productId)?.material)
                             .map((stock: any) => (
