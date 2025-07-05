@@ -26,6 +26,7 @@ const filamentStockSchema = z.object({
   lowStockThresholdGrams: z.number().min(1, "Threshold must be positive"),
   costPerKg: z.number().min(0, "Cost must be positive").optional(),
   supplierInfo: z.string().optional(),
+  quantity: z.number().min(1, "Quantity must be at least 1").optional(),
 });
 
 interface FilamentStockModalProps {
@@ -160,21 +161,47 @@ export function FilamentStockModal({ isOpen, onClose }: FilamentStockModalProps)
 
   const createStockMutation = useMutation({
     mutationFn: async (data: any) => {
-      return apiRequest("/api/filament-stock", {
-        method: "POST",
-        body: JSON.stringify(data),
-        headers: { "Content-Type": "application/json" },
-      });
+      const quantity = data.quantity || 1;
+      
+      if (quantity === 1) {
+        // Single roll creation
+        const { quantity: _, ...stockData } = data;
+        return apiRequest("/api/filament-stock", {
+          method: "POST",
+          body: JSON.stringify(stockData),
+          headers: { "Content-Type": "application/json" },
+        });
+      } else {
+        // Bulk creation - create multiple rolls
+        const { quantity: _, ...stockData } = data;
+        const promises = [];
+        
+        for (let i = 0; i < quantity; i++) {
+          promises.push(
+            apiRequest("/api/filament-stock", {
+              method: "POST",
+              body: JSON.stringify(stockData),
+              headers: { "Content-Type": "application/json" },
+            })
+          );
+        }
+        
+        return Promise.all(promises);
+      }
     },
-    onSuccess: () => {
+    onSuccess: (_, variables) => {
       queryClient.invalidateQueries({ queryKey: ["/api/filament-stock"] });
       queryClient.invalidateQueries({ queryKey: ["/api/filament-stock/alerts"] });
       queryClient.invalidateQueries({ queryKey: ["/api/dashboard/stats"] });
       setIsAddingStock(false);
       form.reset();
+      
+      const quantity = variables.quantity || 1;
       toast({
         title: "Success",
-        description: "Filament stock added successfully",
+        description: quantity === 1 
+          ? "Filament stock added successfully" 
+          : `${quantity} filament rolls added successfully`,
       });
     },
     onError: () => {
@@ -468,7 +495,19 @@ export function FilamentStockModal({ isOpen, onClose }: FilamentStockModalProps)
                   </div>
                 </div>
 
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                  <div>
+                    <Label htmlFor="quantity">Quantity (Number of Rolls)</Label>
+                    <Input
+                      type="number"
+                      {...form.register("quantity", { valueAsNumber: true })}
+                      placeholder="1"
+                      min="1"
+                      max="50"
+                      defaultValue={1}
+                    />
+                    <p className="text-xs text-gray-500 mt-1">Add multiple rolls of the same type at once</p>
+                  </div>
                   <div>
                     <Label htmlFor="costPerKg">Cost per KG (optional)</Label>
                     <Input
