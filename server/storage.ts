@@ -6,25 +6,27 @@ import {
   whatsappMessages,
   filamentStock,
   filamentUsage,
-  insertCustomerSchema,
-  insertOrderSchema,
-  insertProductSchema,
-  insertPrintSchema,
-  insertWhatsappMessageSchema,
+  type Customer, 
+  type InsertCustomer,
+  type Order,
+  type InsertOrder,
+  type Product,
+  type InsertProduct,
+  type Print,
+  type InsertPrint,
+  type WhatsappMessage,
+  type InsertWhatsappMessage,
   insertFilamentStockSchema,
-  insertFilamentUsageSchema,
+  type InsertFilamentStock,
 } from "@shared/schema-sqlite";
 import type { 
-  Customer, 
-  InsertCustomer,
-  Order,
-  InsertOrder,
-  Product,
-  InsertProduct,
-  Print,
-  InsertPrint,
-  WhatsappMessage,
-  InsertWhatsappMessage
+  InsertCustomerSchema,
+  InsertOrderSchema,
+  InsertProductSchema,
+  InsertPrintSchema,
+  InsertWhatsappMessageSchema,
+  InsertFilamentStockSchema,
+  InsertFilamentUsageSchema,
 } from "@shared/schema-sqlite";
 import { db, sqlite } from "./db";
 import { eq, desc, asc, sql, and, lt, gt } from "drizzle-orm";
@@ -187,6 +189,14 @@ export class DatabaseStorage implements IStorage {
   }
 
   async deleteOrder(id: number): Promise<void> {
+    // Get the prints associated with the order
+    const relatedPrints = await db.select().from(prints).where(eq(prints.orderId, id));
+
+    // Delete filament usage records associated with the prints
+    for (const print of relatedPrints) {
+      await db.delete(filamentUsage).where(eq(filamentUsage.printId, print.id));
+    }
+    
     // Delete prints first (foreign key constraint)
     await db.delete(prints).where(eq(prints.orderId, id));
 
@@ -202,7 +212,7 @@ export class DatabaseStorage implements IStorage {
     if (sqlite) {
       const stmt = sqlite.prepare("UPDATE orders SET status = ?, updated_at = ? WHERE id = ?");
       stmt.run(status, new Date().toISOString(), id);
-      
+
       // Get the updated order
       const updatedOrder = await this.getOrder(id);
       if (!updatedOrder) {
@@ -290,7 +300,7 @@ export class DatabaseStorage implements IStorage {
 
       // Get the updated print
       const updatedPrint = await this.getPrint(printId);
-      
+
       if (!updatedPrint) {
         throw new Error(`Failed to update print status for ID ${printId}`);
       }
@@ -464,7 +474,7 @@ export class DatabaseStorage implements IStorage {
 
           const availableWeight = roll.currentWeightGrams;
           const weightToDeduct = Math.min(availableWeight, remainingWeight);
-          
+
           // Calculate proportional length based on weight
           const lengthToDeduct = remainingLength * (weightToDeduct / remainingWeight);
 
