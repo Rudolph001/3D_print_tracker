@@ -477,10 +477,71 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
 
       const { status } = updatePrintStatusSchema.parse(req.body);
+      
+      // Get the current print to check its status before updating
+      const currentPrint = await storage.getPrint(id);
+      if (!currentPrint) {
+        return res.status(404).json({ error: "Print not found" });
+      }
+
       const updatedPrint = await storage.updatePrintStatus(id, status);
 
       if (!updatedPrint) {
         return res.status(404).json({ error: "Print not found" });
+      }
+
+      // Auto-deduct filament when print status changes to "printing"
+      if (status === "printing" && currentPrint.status !== "printing") {
+        try {
+          console.log(`Print ${id} started printing, deducting filament from inventory...`);
+          
+          // Calculate filament needed for this specific print
+          const product = await storage.getProduct(updatedPrint.productId);
+          if (product && product.filamentWeightGrams && product.filamentLengthMeters) {
+            const weightNeeded = product.filamentWeightGrams * updatedPrint.quantity;
+            const lengthNeeded = product.filamentLengthMeters * updatedPrint.quantity;
+            
+            console.log(`Deducting ${weightNeeded}g of ${updatedPrint.material} filament for print ${id}`);
+            
+            // Find available rolls of the required material
+            const availableRolls = await storage.getFilamentStock();
+            const matchingRolls = availableRolls.filter((roll: any) => 
+              roll.material === updatedPrint.material && roll.currentWeightGrams > 0
+            ).sort((a: any, b: any) => a.currentWeightGrams - b.currentWeightGrams); // Use smallest rolls first
+            
+            let remainingWeight = weightNeeded;
+            let remainingLength = lengthNeeded;
+            
+            for (const roll of matchingRolls) {
+              if (remainingWeight <= 0) break;
+              
+              const weightToDeduct = Math.min(roll.currentWeightGrams, remainingWeight);
+              const lengthToDeduct = remainingLength * (weightToDeduct / remainingWeight);
+              
+              // Update the filament roll
+              await storage.updateFilamentStock(roll.id, {
+                currentWeightGrams: roll.currentWeightGrams - weightToDeduct
+              });
+              
+              // Record the usage
+              await storage.updateFilamentUsage(id, roll.id, weightToDeduct, lengthToDeduct);
+              
+              remainingWeight -= weightToDeduct;
+              remainingLength -= lengthToDeduct;
+              
+              console.log(`Deducted ${weightToDeduct}g from roll ${roll.id} (${roll.color} ${roll.material}), remaining: ${roll.currentWeightGrams - weightToDeduct}g`);
+            }
+            
+            if (remainingWeight > 0) {
+              console.warn(`Warning: Insufficient filament! Still need ${remainingWeight}g of ${updatedPrint.material}`);
+            } else {
+              console.log(`Successfully deducted all required filament for print ${id}`);
+            }
+          }
+        } catch (filamentError) {
+          console.error("Error deducting filament:", filamentError);
+          // Continue with the status update even if filament deduction fails
+        }
       }
 
       res.json(updatedPrint);

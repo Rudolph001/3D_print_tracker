@@ -27,7 +27,7 @@ import type {
   InsertWhatsappMessage
 } from "@shared/schema-sqlite";
 import { db, sqlite } from "./db";
-import { eq, desc, asc, sql, and, lt } from "drizzle-orm";
+import { eq, desc, asc, sql, and, lt, gt } from "drizzle-orm";
 
 export interface IStorage {
   // Customer operations
@@ -74,6 +74,8 @@ export interface IStorage {
   updateFilamentUsage(printId: number, filamentStockId: number, weightUsed: number, lengthUsed: number): Promise<void>;
   getFilamentUsageByPrint(printId: number): Promise<any>;
   calculateOrderFilamentRequirements(orderId: number): Promise<any>;
+  deductFilamentFromInventory(orderId: number): Promise<any>;
+  checkFilamentAvailability(orderId: number): Promise<any>;
 }
 
 export class DatabaseStorage implements IStorage {
@@ -427,6 +429,122 @@ export class DatabaseStorage implements IStorage {
     }
 
     return requirements;
+  }
+
+  // Deduct filament from inventory when order is processed
+  async deductFilamentFromInventory(orderId: number) {
+    const order = await this.getOrderWithDetails(orderId);
+    if (!order) throw new Error('Order not found');
+
+    const deductions = [];
+
+    for (const print of order.prints) {
+      const product = await this.getProduct(print.productId);
+      if (product && product.filamentWeightGrams && product.filamentLengthMeters) {
+        const totalWeightNeeded = product.filamentWeightGrams * print.quantity;
+        const totalLengthNeeded = product.filamentLengthMeters * print.quantity;
+
+        // Find available rolls of this material and color
+        const availableRolls = await db
+          .select()
+          .from(filamentStock)
+          .where(
+            and(
+              eq(filamentStock.material, print.material),
+              gt(filamentStock.currentWeightGrams, 0)
+            )
+          )
+          .orderBy(asc(filamentStock.currentWeightGrams)); // Use rolls with less material first
+
+        let remainingWeight = totalWeightNeeded;
+        let remainingLength = totalLengthNeeded;
+
+        for (const roll of availableRolls) {
+          if (remainingWeight <= 0) break;
+
+          const availableWeight = roll.currentWeightGrams;
+          const weightToDeduct = Math.min(availableWeight, remainingWeight);
+          
+          // Calculate proportional length based on weight
+          const lengthToDeduct = remainingLength * (weightToDeduct / remainingWeight);
+
+          // Update the roll
+          const newWeight = roll.currentWeightGrams - weightToDeduct;
+          await db
+            .update(filamentStock)
+            .set({
+              currentWeightGrams: newWeight,
+              updatedAt: new Date()
+            })
+            .where(eq(filamentStock.id, roll.id));
+
+          // Record the usage
+          await db.insert(filamentUsage).values({
+            printId: print.id,
+            filamentStockId: roll.id,
+            weightUsed: weightToDeduct,
+            lengthUsed: lengthToDeduct,
+            createdAt: new Date()
+          });
+
+          remainingWeight -= weightToDeduct;
+          remainingLength -= lengthToDeduct;
+
+          deductions.push({
+            rollId: roll.id,
+            material: roll.material,
+            color: roll.color,
+            weightDeducted: weightToDeduct,
+            lengthDeducted: lengthToDeduct,
+            remainingWeight: newWeight
+          });
+        }
+
+        if (remainingWeight > 0) {
+          throw new Error(`Insufficient ${print.material} filament available. Need ${remainingWeight}g more.`);
+        }
+      }
+    }
+
+    return deductions;
+  }
+
+  // Helper method to check if there's enough filament for an order
+  async checkFilamentAvailability(orderId: number) {
+    const requirements = await this.calculateOrderFilamentRequirements(orderId);
+    if (!requirements) return { available: false, details: [] };
+
+    const availabilityDetails = [];
+
+    for (const [material, needed] of Object.entries(requirements)) {
+      const availableRolls = await db
+        .select()
+        .from(filamentStock)
+        .where(
+          and(
+            eq(filamentStock.material, material),
+            gt(filamentStock.currentWeightGrams, 0)
+          )
+        );
+
+      const totalAvailable = availableRolls.reduce((sum, roll) => sum + roll.currentWeightGrams, 0);
+      const isAvailable = totalAvailable >= needed.weight;
+
+      availabilityDetails.push({
+        material,
+        needed: needed.weight,
+        available: totalAvailable,
+        sufficient: isAvailable,
+        rolls: availableRolls.length
+      });
+    }
+
+    const allAvailable = availabilityDetails.every(detail => detail.sufficient);
+
+    return {
+      available: allAvailable,
+      details: availabilityDetails
+    };
   }
 }
 

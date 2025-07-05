@@ -105,6 +105,16 @@ The application is designed to be deployed on Replit but can be adapted for othe
 
 ```
 Changelog:
+- July 05, 2025. Implemented automated filament inventory deduction system
+  * Added automatic filament deduction when print status changes to "printing" 
+  * System intelligently selects from multiple rolls of same material/color
+  * Uses smallest rolls first to optimize inventory management
+  * Records detailed filament usage tracking for each print
+  * Provides comprehensive logging of deduction process
+  * Enhanced filament dashboard with visual 3D roll indicators and KPI metrics
+  * Material grouping shows aggregate statistics per filament type
+  * Real-time inventory updates reflect actual usage automatically
+  * Supports multiple 1kg rolls per material type as requested by user
 - July 04, 2025. Successfully completed Replit Agent to Replit migration
   * Fixed Select component runtime error by handling empty string values properly
   * Select components now use "default" value instead of empty string to prevent runtime errors
