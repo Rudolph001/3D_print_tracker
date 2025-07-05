@@ -343,6 +343,52 @@ export function FilamentStockModal({ isOpen, onClose }: FilamentStockModalProps)
           </DialogTitle>
         </DialogHeader>
 
+        {/* Quick Restock Section */}
+        <div className="bg-gradient-to-r from-green-50 to-blue-50 border border-green-200 rounded-lg p-4 mb-6">
+          <div className="flex items-center justify-between mb-3">
+            <div className="flex items-center gap-2">
+              <div className="w-8 h-8 bg-green-500 rounded-full flex items-center justify-center">
+                <Plus className="h-4 w-4 text-white" />
+              </div>
+              <div>
+                <h3 className="font-semibold text-green-800">Quick Restock</h3>
+                <p className="text-xs text-green-600">Add multiple rolls efficiently</p>
+              </div>
+            </div>
+            <Button
+              onClick={() => {
+                setIsAddingStock(true);
+                setEditingStock(null);
+                form.reset({ quantity: 10 }); // Default to 10 for bulk operations
+              }}
+              className="bg-green-600 hover:bg-green-700 text-white"
+              size="sm"
+            >
+              <Package className="h-4 w-4 mr-2" />
+              Bulk Add Rolls
+            </Button>
+          </div>
+          
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-3 text-center">
+            <div className="bg-white rounded-lg p-3 border border-green-100">
+              <div className="text-lg font-bold text-green-600">💰</div>
+              <div className="text-xs text-gray-600">Cost Efficient</div>
+            </div>
+            <div className="bg-white rounded-lg p-3 border border-green-100">
+              <div className="text-lg font-bold text-blue-600">⚡</div>
+              <div className="text-xs text-gray-600">Fast Entry</div>
+            </div>
+            <div className="bg-white rounded-lg p-3 border border-green-100">
+              <div className="text-lg font-bold text-purple-600">📦</div>
+              <div className="text-xs text-gray-600">Bulk Orders</div>
+            </div>
+            <div className="bg-white rounded-lg p-3 border border-green-100">
+              <div className="text-lg font-bold text-orange-600">📊</div>
+              <div className="text-xs text-gray-600">Auto Tracking</div>
+            </div>
+          </div>
+        </div>
+
         {/* KPI Cards */}
         <div className="grid grid-cols-2 md:grid-cols-5 gap-4 mb-6">
           <Card className="bg-gradient-to-br from-blue-50 to-blue-100">
@@ -416,18 +462,23 @@ export function FilamentStockModal({ isOpen, onClose }: FilamentStockModalProps)
 
         {/* Actions */}
         <div className="flex justify-between items-center mb-6">
-          <h3 className="text-lg font-semibold">Filament Inventory</h3>
-          <Button
-            onClick={() => {
-              setIsAddingStock(true);
-              setEditingStock(null);
-              form.reset();
-            }}
-            className="bg-blue-600 hover:bg-blue-700"
-          >
-            <Plus className="h-4 w-4 mr-2" />
-            Add Filament Roll
-          </Button>
+          <div>
+            <h3 className="text-lg font-semibold">Filament Inventory</h3>
+            <p className="text-sm text-gray-500">Manage individual rolls and bulk operations</p>
+          </div>
+          <div className="flex gap-2">
+            <Button
+              onClick={() => {
+                setIsAddingStock(true);
+                setEditingStock(null);
+                form.reset();
+              }}
+              className="bg-blue-600 hover:bg-blue-700"
+            >
+              <Plus className="h-4 w-4 mr-2" />
+              Add Filament Roll(s)
+            </Button>
+          </div>
         </div>
 
         {/* Add/Edit Form */}
@@ -496,17 +547,25 @@ export function FilamentStockModal({ isOpen, onClose }: FilamentStockModalProps)
                 </div>
 
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                  <div>
-                    <Label htmlFor="quantity">Quantity (Number of Rolls)</Label>
+                  <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+                    <Label htmlFor="quantity" className="text-blue-800 font-semibold">🎯 Bulk Add Quantity</Label>
                     <Input
                       type="number"
                       {...form.register("quantity", { valueAsNumber: true })}
                       placeholder="1"
                       min="1"
-                      max="50"
+                      max="100"
                       defaultValue={1}
+                      className="mt-2 border-blue-300 focus:border-blue-500"
                     />
-                    <p className="text-xs text-gray-500 mt-1">Add multiple rolls of the same type at once</p>
+                    <div className="bg-blue-100 rounded-md p-2 mt-2">
+                      <p className="text-xs text-blue-700 font-medium">
+                        💡 Add up to 100 rolls of the same material/color at once
+                      </p>
+                      <p className="text-xs text-blue-600 mt-1">
+                        Each roll will be created as a separate inventory item for individual tracking
+                      </p>
+                    </div>
                   </div>
                   <div>
                     <Label htmlFor="costPerKg">Cost per KG (optional)</Label>
@@ -523,9 +582,43 @@ export function FilamentStockModal({ isOpen, onClose }: FilamentStockModalProps)
                   </div>
                 </div>
 
+                {/* Quick Quantity Presets */}
+                {!editingStock && (
+                  <div className="border-t pt-4">
+                    <Label className="text-sm font-medium text-gray-700 mb-2 block">Quick Bulk Presets:</Label>
+                    <div className="flex flex-wrap gap-2 mb-4">
+                      {[1, 5, 10, 20, 50].map((preset) => (
+                        <Button
+                          key={preset}
+                          type="button"
+                          variant="outline"
+                          size="sm"
+                          onClick={() => form.setValue("quantity", preset)}
+                          className="bg-blue-50 border-blue-200 hover:bg-blue-100 text-blue-700"
+                        >
+                          {preset} roll{preset > 1 ? 's' : ''}
+                        </Button>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
                 <div className="flex gap-2">
-                  <Button type="submit" disabled={createStockMutation.isPending || updateStockMutation.isPending}>
-                    {editingStock ? "Update" : "Add"} Stock
+                  <Button 
+                    type="submit" 
+                    disabled={createStockMutation.isPending || updateStockMutation.isPending}
+                    className="bg-blue-600 hover:bg-blue-700"
+                  >
+                    {createStockMutation.isPending ? (
+                      <>
+                        <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
+                        {form.watch("quantity") > 1 ? `Adding ${form.watch("quantity")} Rolls...` : "Adding Roll..."}
+                      </>
+                    ) : (
+                      <>
+                        {editingStock ? "Update" : "Add"} {form.watch("quantity") > 1 ? `${form.watch("quantity")} Rolls` : "Roll"}
+                      </>
+                    )}
                   </Button>
                   <Button
                     type="button"
