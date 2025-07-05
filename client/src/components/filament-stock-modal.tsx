@@ -81,19 +81,26 @@ const FilamentRoll = ({
     <div className="flex flex-col items-center space-y-2">
       {/* Roll Visual */}
       <div className="relative w-16 h-20 flex items-end justify-center">
-        {/* Roll Base */}
-        <div className="w-14 h-16 bg-gray-200 rounded-lg border-2 border-gray-300 relative overflow-hidden shadow-md">
-          {/* Filament Fill */}
+        {/* Roll Base - Now matches filament color */}
+        <div 
+          className="w-14 h-16 rounded-lg border-2 relative overflow-hidden shadow-md"
+          style={{
+            backgroundColor: filamentColor,
+            borderColor: filamentColor === '#f8fafc' ? '#e2e8f0' : filamentColor
+          }}
+        >
+          {/* Filament Fill - Darker shade for fill level */}
           <div 
             className="absolute bottom-0 left-0 right-0 rounded-b-lg transition-all duration-300"
             style={{
               height: `${rollHeight * 100}%`,
               backgroundColor: filamentColor,
+              opacity: 0.9,
               border: filamentColor === '#f8fafc' ? '1px solid #e2e8f0' : 'none'
             }}
           />
           {/* Roll Core */}
-          <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-4 h-4 bg-gray-400 rounded-full border border-gray-500" />
+          <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-4 h-4 bg-white bg-opacity-80 rounded-full border border-gray-400" />
           
           {/* Status Indicator */}
           {isCritical && (

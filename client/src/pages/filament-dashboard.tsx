@@ -135,10 +135,7 @@ export function FilamentDashboard() {
   };
 
   const formatCurrency = (amount: number) => {
-    return new Intl.NumberFormat('en-US', {
-      style: 'currency',
-      currency: 'USD',
-    }).format(amount);
+    return `R${amount.toFixed(2)}`;
   };
 
   if (isLoading) {
@@ -262,12 +259,48 @@ export function FilamentDashboard() {
                     >
                       {/* Visual Filament Roll */}
                       <div className="flex flex-col items-center mb-3">
-                        <div className="relative w-16 h-16 border-2 border-gray-300 rounded-full bg-gray-100 overflow-hidden">
+                        <div 
+                          className="relative w-16 h-16 border-2 rounded-full overflow-hidden"
+                          style={{
+                            backgroundColor: stock.color.toLowerCase() === 'white' ? '#f8fafc' : 
+                                           stock.color.toLowerCase() === 'black' ? '#1e293b' :
+                                           stock.color.toLowerCase() === 'red' ? '#ef4444' :
+                                           stock.color.toLowerCase() === 'blue' ? '#3b82f6' :
+                                           stock.color.toLowerCase() === 'green' ? '#22c55e' :
+                                           stock.color.toLowerCase() === 'yellow' ? '#eab308' :
+                                           stock.color.toLowerCase() === 'orange' ? '#f97316' :
+                                           stock.color.toLowerCase() === 'purple' ? '#a855f7' :
+                                           stock.color.toLowerCase() === 'pink' ? '#ec4899' :
+                                           stock.color.toLowerCase() === 'gray' || stock.color.toLowerCase() === 'grey' ? '#6b7280' :
+                                           '#64748b',
+                            borderColor: stock.color.toLowerCase() === 'white' ? '#e2e8f0' : 
+                                        stock.color.toLowerCase() === 'black' ? '#1e293b' :
+                                        stock.color.toLowerCase() === 'red' ? '#ef4444' :
+                                        stock.color.toLowerCase() === 'blue' ? '#3b82f6' :
+                                        stock.color.toLowerCase() === 'green' ? '#22c55e' :
+                                        stock.color.toLowerCase() === 'yellow' ? '#eab308' :
+                                        stock.color.toLowerCase() === 'orange' ? '#f97316' :
+                                        stock.color.toLowerCase() === 'purple' ? '#a855f7' :
+                                        stock.color.toLowerCase() === 'pink' ? '#ec4899' :
+                                        stock.color.toLowerCase() === 'gray' || stock.color.toLowerCase() === 'grey' ? '#6b7280' :
+                                        '#64748b'
+                          }}
+                        >
                           <div
-                            className="absolute bottom-0 left-0 right-0 transition-all duration-300"
+                            className="absolute bottom-0 left-0 right-0 transition-all duration-300 opacity-90"
                             style={{
                               height: `${fillLevel}%`,
-                              backgroundColor: stock.color.toLowerCase(),
+                              backgroundColor: stock.color.toLowerCase() === 'white' ? '#f1f5f9' : 
+                                             stock.color.toLowerCase() === 'black' ? '#0f172a' :
+                                             stock.color.toLowerCase() === 'red' ? '#dc2626' :
+                                             stock.color.toLowerCase() === 'blue' ? '#2563eb' :
+                                             stock.color.toLowerCase() === 'green' ? '#16a34a' :
+                                             stock.color.toLowerCase() === 'yellow' ? '#ca8a04' :
+                                             stock.color.toLowerCase() === 'orange' ? '#ea580c' :
+                                             stock.color.toLowerCase() === 'purple' ? '#9333ea' :
+                                             stock.color.toLowerCase() === 'pink' ? '#db2777' :
+                                             stock.color.toLowerCase() === 'gray' || stock.color.toLowerCase() === 'grey' ? '#4b5563' :
+                                             '#475569',
                             }}
                           />
                           {fillLevel <= stock.lowStockThreshold && (
