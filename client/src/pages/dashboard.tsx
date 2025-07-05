@@ -32,10 +32,12 @@ const EnhancedFilamentDashboard = ({ isFilamentStockModalOpen, setIsFilamentStoc
 
   const { data: filamentStock = [], isLoading } = useQuery({
     queryKey: ["/api/filament-stock"],
+    refetchInterval: 5000, // Refresh every 5 seconds to show real-time updates
   });
 
   const { data: alerts = [] } = useQuery({
     queryKey: ["/api/filament-stock/alerts"],
+    refetchInterval: 10000, // Check for alerts every 10 seconds
   });
 
   const deleteStockMutation = useMutation({
@@ -150,10 +152,23 @@ const EnhancedFilamentDashboard = ({ isFilamentStockModalOpen, setIsFilamentStoc
           <h2 className="text-2xl font-bold text-gray-900">Filament Inventory</h2>
           <p className="text-gray-600 mt-1">Manage your 3D printing filament stock</p>
         </div>
-        <Button onClick={() => setIsFilamentStockModalOpen(true)} className="flex items-center gap-2">
-          <Plus className="h-4 w-4" />
-          Add Filament Roll
-        </Button>
+        <div className="flex gap-2">
+          <Button 
+            variant="outline" 
+            onClick={() => {
+              queryClient.invalidateQueries({ queryKey: ["/api/filament-stock"] });
+              queryClient.invalidateQueries({ queryKey: ["/api/filament-stock/alerts"] });
+            }} 
+            className="flex items-center gap-2"
+          >
+            <TrendingUp className="h-4 w-4" />
+            Refresh
+          </Button>
+          <Button onClick={() => setIsFilamentStockModalOpen(true)} className="flex items-center gap-2">
+            <Plus className="h-4 w-4" />
+            Add Filament Roll
+          </Button>
+        </div>
       </div>
 
       {/* KPI Dashboard */}

@@ -60,9 +60,11 @@ export function OrderDetails({ order, onUpdate, onEdit, onDelete, getStatusColor
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["orders"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/filament-stock"] }); // Refresh filament stock
+      queryClient.invalidateQueries({ queryKey: ["/api/filament-stock/alerts"] }); // Refresh alerts
       toast({
         title: "Success",
-        description: "Print status updated successfully",
+        description: "Print status updated successfully. Filament inventory updated automatically.",
       });
       onUpdate();
     },
