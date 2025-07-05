@@ -4,7 +4,7 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { z } from "zod";
-import { Plus, AlertTriangle, Package, Trash2, Edit } from "lucide-react";
+import { Plus, AlertTriangle, Package, Trash2, Edit, TrendingUp, TrendingDown, Minus } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -13,6 +13,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/u
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Textarea } from "@/components/ui/textarea";
+import { Progress } from "@/components/ui/progress";
 import { apiRequest } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
 
@@ -31,6 +32,101 @@ interface FilamentStockModalProps {
   isOpen: boolean;
   onClose: () => void;
 }
+
+// Filament Roll Component
+const FilamentRoll = ({ 
+  percentage, 
+  color, 
+  material, 
+  brand, 
+  current, 
+  total,
+  isLowStock,
+  isCritical 
+}: {
+  percentage: number;
+  color: string;
+  material: string;
+  brand?: string;
+  current: number;
+  total: number;
+  isLowStock: boolean;
+  isCritical: boolean;
+}) => {
+  const getColorClass = (colorName: string) => {
+    const colorMap: { [key: string]: string } = {
+      'white': '#f8fafc',
+      'black': '#1e293b',
+      'red': '#ef4444',
+      'blue': '#3b82f6',
+      'green': '#22c55e',
+      'yellow': '#eab308',
+      'orange': '#f97316',
+      'purple': '#a855f7',
+      'pink': '#ec4899',
+      'gray': '#6b7280',
+      'grey': '#6b7280',
+      'transparent': '#e2e8f0',
+      'natural': '#f1f5f9',
+      'clear': '#e2e8f0',
+    };
+    return colorMap[colorName.toLowerCase()] || '#64748b';
+  };
+
+  const filamentColor = getColorClass(color);
+  const rollHeight = Math.max(percentage * 0.8, 0.1); // Minimum 10% height for visibility
+
+  return (
+    <div className="flex flex-col items-center space-y-2">
+      {/* Roll Visual */}
+      <div className="relative w-16 h-20 flex items-end justify-center">
+        {/* Roll Base */}
+        <div className="w-14 h-16 bg-gray-200 rounded-lg border-2 border-gray-300 relative overflow-hidden shadow-md">
+          {/* Filament Fill */}
+          <div 
+            className="absolute bottom-0 left-0 right-0 rounded-b-lg transition-all duration-300"
+            style={{
+              height: `${rollHeight * 100}%`,
+              backgroundColor: filamentColor,
+              border: filamentColor === '#f8fafc' ? '1px solid #e2e8f0' : 'none'
+            }}
+          />
+          {/* Roll Core */}
+          <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-4 h-4 bg-gray-400 rounded-full border border-gray-500" />
+          
+          {/* Status Indicator */}
+          {isCritical && (
+            <div className="absolute -top-1 -right-1 w-3 h-3 bg-red-500 rounded-full animate-pulse" />
+          )}
+          {isLowStock && !isCritical && (
+            <div className="absolute -top-1 -right-1 w-3 h-3 bg-yellow-500 rounded-full" />
+          )}
+        </div>
+      </div>
+
+      {/* Roll Info */}
+      <div className="text-center">
+        <div className="text-xs font-medium text-gray-800">
+          {material}
+        </div>
+        <div className="text-xs text-gray-500">
+          {color}
+        </div>
+        {brand && (
+          <div className="text-xs text-gray-400">
+            {brand}
+          </div>
+        )}
+        <div className="text-xs font-semibold mt-1">
+          {percentage.toFixed(0)}%
+        </div>
+        <div className="text-xs text-gray-500">
+          {(current / 1000).toFixed(1)}kg
+        </div>
+      </div>
+    </div>
+  );
+};
 
 export function FilamentStockModal({ isOpen, onClose }: FilamentStockModalProps) {
   const { toast } = useToast();
@@ -186,34 +282,114 @@ export function FilamentStockModal({ isOpen, onClose }: FilamentStockModalProps)
     }
   };
 
+  // Calculate KPIs
+  const totalRolls = filamentStock.length;
+  const totalWeight = filamentStock.reduce((sum: number, stock: any) => sum + stock.currentWeightGrams, 0);
+  const totalValue = filamentStock.reduce((sum: number, stock: any) => 
+    sum + (stock.costPerKg ? (stock.currentWeightGrams / 1000) * stock.costPerKg : 0), 0
+  );
+  const lowStockCount = filamentStock.filter((stock: any) => 
+    getStockStatus(stock.currentWeightGrams, stock.lowStockThresholdGrams) !== "good"
+  ).length;
+  const averagePercentage = totalRolls > 0 ? 
+    filamentStock.reduce((sum: number, stock: any) => 
+      sum + (stock.currentWeightGrams / stock.totalWeightGrams), 0
+    ) / totalRolls * 100 : 0;
+
+  // Group by material for better organization
+  const groupedStock = filamentStock.reduce((groups: any, stock: any) => {
+    const material = stock.material;
+    if (!groups[material]) {
+      groups[material] = [];
+    }
+    groups[material].push(stock);
+    return groups;
+  }, {});
+
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="max-w-6xl max-h-[90vh] overflow-y-auto">
+      <DialogContent className="max-w-7xl max-h-[95vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
-            <Package className="h-5 w-5" />
-            Filament Stock Management
+            <Package className="h-6 w-6 text-blue-600" />
+            Filament Inventory Dashboard
           </DialogTitle>
         </DialogHeader>
 
+        {/* KPI Cards */}
+        <div className="grid grid-cols-2 md:grid-cols-5 gap-4 mb-6">
+          <Card className="bg-gradient-to-br from-blue-50 to-blue-100">
+            <CardContent className="p-4 text-center">
+              <div className="text-2xl font-bold text-blue-600">{totalRolls}</div>
+              <div className="text-sm text-blue-700">Total Rolls</div>
+              <Package className="h-6 w-6 mx-auto mt-2 text-blue-500" />
+            </CardContent>
+          </Card>
+
+          <Card className="bg-gradient-to-br from-green-50 to-green-100">
+            <CardContent className="p-4 text-center">
+              <div className="text-2xl font-bold text-green-600">{(totalWeight / 1000).toFixed(1)}kg</div>
+              <div className="text-sm text-green-700">Total Weight</div>
+              <TrendingUp className="h-6 w-6 mx-auto mt-2 text-green-500" />
+            </CardContent>
+          </Card>
+
+          <Card className="bg-gradient-to-br from-purple-50 to-purple-100">
+            <CardContent className="p-4 text-center">
+              <div className="text-2xl font-bold text-purple-600">{averagePercentage.toFixed(0)}%</div>
+              <div className="text-sm text-purple-700">Avg. Fill Level</div>
+              <div className="w-full bg-purple-200 rounded-full h-2 mt-2">
+                <div 
+                  className="bg-purple-600 h-2 rounded-full transition-all duration-300" 
+                  style={{ width: `${averagePercentage}%` }}
+                />
+              </div>
+            </CardContent>
+          </Card>
+
+          <Card className="bg-gradient-to-br from-orange-50 to-orange-100">
+            <CardContent className="p-4 text-center">
+              <div className="text-2xl font-bold text-orange-600">{lowStockCount}</div>
+              <div className="text-sm text-orange-700">Low Stock</div>
+              <AlertTriangle className="h-6 w-6 mx-auto mt-2 text-orange-500" />
+            </CardContent>
+          </Card>
+
+          <Card className="bg-gradient-to-br from-emerald-50 to-emerald-100">
+            <CardContent className="p-4 text-center">
+              <div className="text-2xl font-bold text-emerald-600">R{totalValue.toFixed(0)}</div>
+              <div className="text-sm text-emerald-700">Total Value</div>
+              <TrendingUp className="h-6 w-6 mx-auto mt-2 text-emerald-500" />
+            </CardContent>
+          </Card>
+        </div>
+
+        {/* Low Stock Alerts */}
         {lowStockAlerts.length > 0 && (
-          <div className="bg-red-50 border border-red-200 rounded-lg p-4">
+          <div className="bg-red-50 border border-red-200 rounded-lg p-4 mb-6">
             <div className="flex items-center gap-2 mb-2">
               <AlertTriangle className="h-5 w-5 text-red-600" />
               <h3 className="font-semibold text-red-800">Low Stock Alerts</h3>
             </div>
-            <div className="space-y-1">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-2">
               {lowStockAlerts.map((alert: any) => (
-                <p key={alert.id} className="text-sm text-red-700">
-                  {alert.material} - {alert.color} ({alert.brand}): {alert.currentWeightGrams}g remaining
-                </p>
+                <div key={alert.id} className="bg-white p-3 rounded border border-red-200">
+                  <div className="font-medium text-red-800">
+                    {alert.material} - {alert.color}
+                  </div>
+                  <div className="text-sm text-red-600">
+                    {alert.brand && `${alert.brand} • `}
+                    {alert.currentWeightGrams}g remaining
+                  </div>
+                </div>
               ))}
             </div>
           </div>
         )}
 
-        <div className="flex justify-between items-center">
-          <h3 className="text-lg font-semibold">Current Stock</h3>
+        {/* Actions */}
+        <div className="flex justify-between items-center mb-6">
+          <h3 className="text-lg font-semibold">Filament Inventory</h3>
           <Button
             onClick={() => {
               setIsAddingStock(true);
@@ -223,14 +399,15 @@ export function FilamentStockModal({ isOpen, onClose }: FilamentStockModalProps)
             className="bg-blue-600 hover:bg-blue-700"
           >
             <Plus className="h-4 w-4 mr-2" />
-            Add Filament
+            Add Filament Roll
           </Button>
         </div>
 
+        {/* Add/Edit Form */}
         {isAddingStock && (
-          <Card>
+          <Card className="mb-6">
             <CardHeader>
-              <CardTitle>{editingStock ? "Edit" : "Add New"} Filament Stock</CardTitle>
+              <CardTitle>{editingStock ? "Edit" : "Add New"} Filament Roll</CardTitle>
             </CardHeader>
             <CardContent>
               <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
@@ -328,54 +505,121 @@ export function FilamentStockModal({ isOpen, onClose }: FilamentStockModalProps)
           </Card>
         )}
 
-        <div className="grid gap-4">
-          {filamentStock.map((stock: any) => {
-            const status = getStockStatus(stock.currentWeightGrams, stock.lowStockThresholdGrams);
-            const percentageRemaining = (stock.currentWeightGrams / stock.totalWeightGrams) * 100;
+        {/* Filament Rolls Display */}
+        {Object.keys(groupedStock).length > 0 ? (
+          <div className="space-y-6">
+            {Object.entries(groupedStock).map(([material, stocks]: [string, any]) => (
+              <Card key={material}>
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2">
+                    <div className="w-3 h-3 bg-blue-500 rounded-full" />
+                    {material} Filament ({stocks.length} roll{stocks.length > 1 ? 's' : ''})
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="grid grid-cols-2 sm:grid-cols-4 md:grid-cols-6 lg:grid-cols-8 gap-4 mb-4">
+                    {stocks.map((stock: any) => {
+                      const percentage = (stock.currentWeightGrams / stock.totalWeightGrams) * 100;
+                      const status = getStockStatus(stock.currentWeightGrams, stock.lowStockThresholdGrams);
+                      const isLowStock = status === "low";
+                      const isCritical = status === "critical";
 
-            return (
-              <Card key={stock.id} className={status === "critical" ? "border-red-300" : ""}>
-                <CardContent className="pt-6">
-                  <div className="flex items-center justify-between">
-                    <div className="flex-1">
-                      <div className="flex items-center gap-2 mb-2">
-                        <h4 className="font-semibold">
-                          {stock.material} - {stock.color}
-                        </h4>
-                        {stock.brand && <Badge variant="secondary">{stock.brand}</Badge>}
-                        {getStockBadge(status)}
+                      return (
+                        <div key={stock.id} className="relative">
+                          <FilamentRoll
+                            percentage={percentage}
+                            color={stock.color}
+                            material={stock.material}
+                            brand={stock.brand}
+                            current={stock.currentWeightGrams}
+                            total={stock.totalWeightGrams}
+                            isLowStock={isLowStock}
+                            isCritical={isCritical}
+                          />
+                          
+                          {/* Action Buttons */}
+                          <div className="absolute -top-2 -right-2 flex gap-1 opacity-0 hover:opacity-100 transition-opacity">
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              className="h-6 w-6 p-0 bg-white shadow-sm border"
+                              onClick={() => handleEdit(stock)}
+                            >
+                              <Edit className="h-3 w-3" />
+                            </Button>
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              className="h-6 w-6 p-0 bg-white shadow-sm border text-red-500 hover:text-red-600"
+                              onClick={() => handleDelete(stock.id)}
+                            >
+                              <Trash2 className="h-3 w-3" />
+                            </Button>
+                          </div>
+
+                          {/* Detailed Info on Hover */}
+                          <div className="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 opacity-0 hover:opacity-100 transition-opacity pointer-events-none">
+                            <div className="bg-black text-white text-xs rounded py-1 px-2 whitespace-nowrap">
+                              {stock.currentWeightGrams}g / {stock.totalWeightGrams}g
+                              {stock.costPerKg && <div>R{((stock.currentWeightGrams / 1000) * stock.costPerKg).toFixed(2)}</div>}
+                            </div>
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+
+                  {/* Material Summary */}
+                  <div className="bg-gray-50 rounded-lg p-3">
+                    <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm">
+                      <div>
+                        <div className="font-medium text-gray-700">Total Rolls</div>
+                        <div className="text-lg font-semibold">{stocks.length}</div>
                       </div>
-                      <div className="text-sm text-gray-600 space-y-1">
-                        <p>
-                          Weight: {stock.currentWeightGrams}g / {stock.totalWeightGrams}g ({percentageRemaining.toFixed(1)}%)
-                        </p>
-                        <p>Low stock threshold: {stock.lowStockThresholdGrams}g</p>
-                        {stock.costPerKg && <p>Cost per KG: R{stock.costPerKg}</p>}
-                        {stock.supplierInfo && <p>Supplier: {stock.supplierInfo}</p>}
+                      <div>
+                        <div className="font-medium text-gray-700">Total Weight</div>
+                        <div className="text-lg font-semibold">
+                          {(stocks.reduce((sum: number, s: any) => sum + s.currentWeightGrams, 0) / 1000).toFixed(1)}kg
+                        </div>
                       </div>
-                    </div>
-                    <div className="flex gap-2">
-                      <Button variant="ghost" size="sm" onClick={() => handleEdit(stock)}>
-                        <Edit className="h-4 w-4" />
-                      </Button>
-                      <Button variant="ghost" size="sm" onClick={() => handleDelete(stock.id)}>
-                        <Trash2 className="h-4 w-4" />
-                      </Button>
+                      <div>
+                        <div className="font-medium text-gray-700">Avg. Fill Level</div>
+                        <div className="text-lg font-semibold">
+                          {(stocks.reduce((sum: number, s: any) => sum + (s.currentWeightGrams / s.totalWeightGrams), 0) / stocks.length * 100).toFixed(0)}%
+                        </div>
+                      </div>
+                      <div>
+                        <div className="font-medium text-gray-700">Total Value</div>
+                        <div className="text-lg font-semibold">
+                          R{stocks.reduce((sum: number, s: any) => 
+                            sum + (s.costPerKg ? (s.currentWeightGrams / 1000) * s.costPerKg : 0), 0
+                          ).toFixed(0)}
+                        </div>
+                      </div>
                     </div>
                   </div>
                 </CardContent>
               </Card>
-            );
-          })}
-
-          {filamentStock.length === 0 && (
-            <div className="text-center py-12">
-              <Package className="h-12 w-12 text-gray-400 mx-auto mb-4" />
-              <h3 className="text-lg font-medium text-gray-800 mb-2">No filament stock yet</h3>
-              <p className="text-gray-500">Add your first filament to start tracking inventory!</p>
-            </div>
-          )}
-        </div>
+            ))}
+          </div>
+        ) : (
+          <div className="text-center py-12">
+            <Package className="h-12 w-12 text-gray-400 mx-auto mb-4" />
+            <h3 className="text-lg font-medium text-gray-800 mb-2">No filament stock yet</h3>
+            <p className="text-gray-500 mb-4">Add your first filament roll to start tracking inventory!</p>
+            <Button 
+              onClick={() => {
+                setIsAddingStock(true);
+                setEditingStock(null);
+                form.reset();
+              }}
+              className="bg-blue-600 hover:bg-blue-700"
+            >
+              <Plus className="h-4 w-4 mr-2" />
+              Add First Roll
+            </Button>
+          </div>
+        )}
       </DialogContent>
     </Dialog>
   );
